@@ -1,50 +1,13 @@
-# Welcome to your Expo app 👋
+# life-tracker
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+todo:
+ - implement knex-like migrations
 
-## Get started
+as to monetization, offer a premium sub that:
+- adds sync (use [this lib](https://github.com/kuatsu/react-native-cloud-storage) and just do a full upload regularly, should be fine for now)
+- removes the limit of 50 goals in the archive
+- gives some intangible benefits that make you feel better: a thank you, some ui changes maybe, a badge etc.
 
-1. Install dependencies
+looks like performance benefits of WAL aren't that crazy (6+ times and more) to deal with WAL syncing so i'm not gonna use it here
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+you can't use any kinds of dynamic import with react native... i mean it's supported but only with fixed asset strings, not variables or imported data. this makes migrations much harder
