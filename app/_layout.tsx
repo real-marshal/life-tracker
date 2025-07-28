@@ -7,6 +7,7 @@ import 'react-native-reanimated'
 import '../global.css'
 
 import { useColorScheme } from '@/hooks/useColorScheme'
+import { initSqlite } from '@/utils/init-sqlite'
 
 export default function RootLayout() {
   const colorScheme = useColorScheme()
@@ -21,7 +22,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <SQLiteProvider databaseName='main.db'>
+      <SQLiteProvider databaseName='main.db' onInit={initSqlite}>
         <Stack>
           <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
           <Stack.Screen name='+not-found' />

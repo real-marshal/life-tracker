@@ -1,12 +1,11 @@
 import { SQLiteDatabase } from 'expo-sqlite'
 import { toCamelCase } from '@/utils/object'
+import { Row } from '@/utils/types'
 
 export interface Migration {
   name: string
   createdAt: string
 }
-
-type MigrationSnakeCase = Record<string, Migration[keyof Migration]>
 
 export function initMigrations(db: SQLiteDatabase): Promise<void> {
   return db.execAsync(`create table if not exists migration
@@ -16,8 +15,8 @@ export function initMigrations(db: SQLiteDatabase): Promise<void> {
                        )`)
 }
 
-export async function getMigratons(db: SQLiteDatabase): Promise<Migration[]> {
-  const rows = await db.getAllAsync<MigrationSnakeCase>(
+export async function getMigrations(db: SQLiteDatabase): Promise<Migration[]> {
+  const rows = await db.getAllAsync<Row<Migration>>(
     'select name, created_at from migration order by created_at'
   )
 

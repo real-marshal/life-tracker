@@ -1,7 +1,13 @@
 # life-tracker
 
+tips:
+ - use `yarn sync-device-db` to have a fresh copy of the device db locally (android only)
+ - use `yarn make-migration` to create a new migration - it'll be automatically applied on device on app launch. if you need to rollback, create a new migration.
+
 todo:
- - implement knex-like migrations
+ - implement knex-like migrations - done
+ - handle sorting and user saved sort order
+ - windowsify migration names (: is not supported...)
 
 as to monetization, offer a premium sub that:
 - adds sync (use [this lib](https://github.com/kuatsu/react-native-cloud-storage) and just do a full upload regularly, should be fine for now)

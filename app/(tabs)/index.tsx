@@ -13,7 +13,11 @@ export default function HomeScreen() {
   const db = useSQLiteContext()
   const [message, setMessage] = useState('')
 
-  useMigrations()
+  const migrationError = useMigrations()
+
+  useEffect(() => {
+    migrationError && console.log(migrationError)
+  }, [migrationError])
 
   useEffect(() => {
     db.getAllAsync('select * from sqlite_master').then((rows) => setMessage(JSON.stringify(rows)))
