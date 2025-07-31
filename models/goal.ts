@@ -2,6 +2,7 @@ import { SQLiteDatabase } from 'expo-sqlite'
 import { Row } from '@/utils/types'
 import { toCamelCase } from '@/utils/object'
 import { Duration, interval, intervalToDuration } from 'date-fns'
+import { getTrackers, Tracker } from '@/models/tracker'
 
 export interface GoalRenderData {
   index: number
@@ -35,7 +36,7 @@ export interface LtGoal {
   createdAt: Date
   closeDate?: Date
   why: string
-  // relatedTrackers: Tra
+  relatedTrackers: Tracker[]
   relatedGoals: GoalPreview[]
   completedRelatedGoals: GoalPreview[]
   abandonedRelatedGoals: GoalPreview[]
@@ -48,7 +49,7 @@ export interface Goal {
   createdAt: Date
   closeDate?: Date
   why: string
-  // relatedTrackers: Tra
+  relatedTrackers: Tracker[]
   prerequisites: GoalPreview[]
   consequences: GoalPreview[]
 }
@@ -114,14 +115,22 @@ export async function getArchiveGoals(db: SQLiteDatabase): Promise<GoalPreview[]
   return rows.map(toCamelCase<GoalPreview>)
 }
 
-type RowLtGoal = Omit<LtGoal, 'progressDuration' | 'createdAt' | 'closeDate'> & {
+type RowLtGoal = Omit<
+  LtGoal,
+  'progressDuration' | 'createdAt' | 'closeDate' | 'relatedTrackers'
+> & {
   createdAt: string
   closeDate: string
 }
 
 export async function getLtGoal(db: SQLiteDatabase, id: number): Promise<LtGoal> {
-  const row = await db.getFirstAsync<Row<RowLtGoal>>(
-    `
+  let ltGoalRow: Row<RowLtGoal> | null = null,
+    trackers: Tracker[] = []
+
+  await db.withExclusiveTransactionAsync(async (tx) => {
+    ;[ltGoalRow, trackers] = await Promise.all([
+      tx.getFirstAsync<Row<RowLtGoal>>(
+        `
       select goal.id,
              goal.name,
              goal.created_at,
@@ -148,14 +157,18 @@ export async function getLtGoal(db: SQLiteDatabase, id: number): Promise<LtGoal>
                           abandoned_related_goal.status = 'abandoned'
       where goal.id = $id
     `,
-    { $id: id }
-  )
+        { $id: id }
+      ),
+      getTrackers(tx, id),
+    ])
+  })
 
-  if (!row) {
+  // noinspection PointlessBooleanExpressionJS
+  if (!ltGoalRow) {
     throw new Error(`No goal found with id ${id} - wtf?`)
   }
 
-  const ltGoal = toCamelCase<RowLtGoal>(row)
+  const ltGoal = toCamelCase<RowLtGoal>(ltGoalRow)
 
   const createdAt = new Date(Date.parse(ltGoal.createdAt))
   const closeDate = new Date(Date.parse(ltGoal.closeDate))
@@ -165,17 +178,23 @@ export async function getLtGoal(db: SQLiteDatabase, id: number): Promise<LtGoal>
     createdAt,
     closeDate,
     progressDuration: intervalToDuration(interval(createdAt, closeDate ?? new Date())),
+    relatedTrackers: trackers,
   }
 }
 
-type RowGoal = Omit<Goal, 'progressDuration' | 'createdAt' | 'closeDate'> & {
+type RowGoal = Omit<Goal, 'progressDuration' | 'createdAt' | 'closeDate' | 'relatedTrackers'> & {
   createdAt: string
   closeDate: string
 }
 
 export async function getGoal(db: SQLiteDatabase, id: number): Promise<Goal> {
-  const row = await db.getFirstAsync<Row<RowGoal>>(
-    `
+  let goalRow: Row<RowGoal> | null = null,
+    trackers: Tracker[] = []
+
+  await db.withExclusiveTransactionAsync(async (tx) => {
+    ;[goalRow, trackers] = await Promise.all([
+      tx.getFirstAsync<Row<RowGoal>>(
+        `
       select goal.id,
              goal.name,
              goal.created_at,
@@ -196,14 +215,18 @@ export async function getGoal(db: SQLiteDatabase, id: number): Promise<Goal> {
                        on consequence.id = gl.next_goal_id
       where goal.id = $id
     `,
-    { $id: id }
-  )
+        { $id: id }
+      ),
+      getTrackers(tx, id),
+    ])
+  })
 
-  if (!row) {
+  // noinspection PointlessBooleanExpressionJS
+  if (!goalRow) {
     throw new Error(`No goal found with id ${id} - wtf?`)
   }
 
-  const goal = toCamelCase<RowGoal>(row)
+  const goal = toCamelCase<RowGoal>(goalRow)
 
   const createdAt = new Date(Date.parse(goal.createdAt))
   const closeDate = new Date(Date.parse(goal.closeDate))
@@ -213,5 +236,6 @@ export async function getGoal(db: SQLiteDatabase, id: number): Promise<Goal> {
     createdAt,
     closeDate,
     progressDuration: intervalToDuration(interval(createdAt, closeDate ?? new Date())),
+    relatedTrackers: trackers,
   }
 }

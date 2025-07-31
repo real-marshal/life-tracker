@@ -8,6 +8,8 @@ todo:
  - implement knex-like migrations - done
  - handle sorting and user saved sort order
  - windowsify migration names (: is not supported...)
+ - global search
+ - delayed until time?
 
 as to monetization, offer a premium sub that:
 - adds sync (use [this lib](https://github.com/kuatsu/react-native-cloud-storage) and just do a full upload regularly, should be fine for now)

@@ -14,7 +14,7 @@ module.exports = (db) => {
       render_data text not null check (json_valid(render_data))
     );
 
-    -- prerequisites/consequences
+    -- prerequisites/consequences - m2m junction table
     create table if not exists goal_link
     (
       goal_id      integer not null references goal (id),
@@ -22,8 +22,9 @@ module.exports = (db) => {
       primary key (goal_id, next_goal_id)
     );
 
-    -- related goals, currently only used for longterm goals in a way
+    -- related goals, currently unidirectional and only used for longterm goals in a way
     -- that goal_id refers to an LT goal and related_goal_id is a normal related goal
+    -- this makes it o2m atm, but it's still modeled as a junction table due to very possible future changes
     create table if not exists goal_relation
     (
       goal_id         integer not null references goal (id),
@@ -39,6 +40,7 @@ module.exports = (db) => {
       render_data text not null check (json_valid(render_data))
     );
 
+    -- goal trackers - m2m junction table
     create table if not exists goal_tracker
     (
       goal_id    integer not null references goal (id),
@@ -48,15 +50,13 @@ module.exports = (db) => {
 
     create table if not exists date_tracker
     (
-      id         integer primary key autoincrement,
-      tracker_id integer not null references tracker (id),
-      date       text    not null
+      tracker_id integer primary key references tracker (id),
+      date       text not null
     );
 
     create table if not exists stat_tracker
     (
-      id         integer primary key autoincrement,
-      tracker_id integer not null references tracker (id),
+      tracker_id integer primary key references tracker (id),
       prefix     text,
       suffix     text
     );
@@ -64,10 +64,10 @@ module.exports = (db) => {
 
     create table if not exists stat_value
     (
-      id              integer primary key autoincrement,
-      stat_tracker_id integer not null references stat_tracker (id),
-      value           numeric not null,
-      created_at      text    not null
+      id         integer primary key autoincrement,
+      tracker_id integer not null references tracker (id),
+      value      numeric not null,
+      created_at text    not null
     );
 
     create table if not exists goal_update
