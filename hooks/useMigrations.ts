@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react'
 import { SQLiteDatabase, useSQLiteContext } from 'expo-sqlite'
 import { getMigrations, initMigrations, insertMigration } from '@/models/migration'
 
-// currently not used
+// this line is currently not used
 // will be filled by babel-plugin-add-migration
 // const migrations: ((db: SQLiteDatabase) => Promise<void>)[] = []
 
 export function useMigrations() {
   const db = useSQLiteContext()
-  const [error, setError] = useState<Error>()
+  const [error, setError] = useState<any>(null)
+  const [isDone, setIsDone] = useState<boolean>(false)
 
   useEffect(() => {
     async function processMigrations() {
@@ -33,8 +34,10 @@ export function useMigrations() {
       }
     }
 
-    processMigrations().catch((e) => setError(e))
+    processMigrations()
+      .catch((e) => setError(e))
+      .then(() => setIsDone(true))
   }, [db])
 
-  return error
+  return [isDone, error] as const
 }

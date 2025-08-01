@@ -1,6 +1,6 @@
 import { SQLiteDatabase } from 'expo-sqlite'
-import { Row } from '@/utils/types'
-import { toCamelCase } from '@/utils/object'
+import { Row } from '@/common/utils/types'
+import { toCamelCase } from '@/common/utils/object'
 import { Duration, interval, intervalToDuration } from 'date-fns'
 import { getTrackers, Tracker } from '@/models/tracker'
 
@@ -22,7 +22,6 @@ export type LtGoalPreviewRender = LtGoalPreview & {
 export interface GoalPreview {
   id: number
   name: string
-  renderData: GoalRenderData
 }
 
 export type GoalPreviewRender = GoalPreview & {
@@ -170,8 +169,8 @@ export async function getLtGoal(db: SQLiteDatabase, id: number): Promise<LtGoal>
 
   const ltGoal = toCamelCase<RowLtGoal>(ltGoalRow)
 
-  const createdAt = new Date(Date.parse(ltGoal.createdAt))
-  const closeDate = new Date(Date.parse(ltGoal.closeDate))
+  const createdAt = new Date(ltGoal.createdAt)
+  const closeDate = new Date(ltGoal.closeDate)
 
   return {
     ...ltGoal,
@@ -228,8 +227,8 @@ export async function getGoal(db: SQLiteDatabase, id: number): Promise<Goal> {
 
   const goal = toCamelCase<RowGoal>(goalRow)
 
-  const createdAt = new Date(Date.parse(goal.createdAt))
-  const closeDate = new Date(Date.parse(goal.closeDate))
+  const createdAt = new Date(goal.createdAt)
+  const closeDate = new Date(goal.closeDate)
 
   return {
     ...goal,

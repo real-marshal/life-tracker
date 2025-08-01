@@ -1,6 +1,6 @@
 import { SQLiteDatabase } from 'expo-sqlite'
-import { toCamelCase } from '@/utils/object'
-import { Row } from '@/utils/types'
+import { toCamelCase } from '@/common/utils/object'
+import { Row } from '@/common/utils/types'
 
 export interface Migration {
   name: string

@@ -75,7 +75,7 @@ module.exports = (db) => {
       id           integer primary key autoincrement,
       goal_id      integer not null references goal (id),
       type         text    not null check (type in ('normal', 'closing')),
-      sentiment    text    not null check (type in ('positive', 'neutral', 'negative')),
+      sentiment    text    not null check (sentiment in ('positive', 'neutral', 'negative')),
       related_goal integer references goal (id),
       content      text    not null check (length(content) < 10000),
       is_pinned    integer not null check (is_pinned in (0, 1)) default 0,
@@ -89,6 +89,13 @@ module.exports = (db) => {
       value      real not null default 0.0,
       level      integer,
       decay_data text check (json_valid(decay_data))
+    );
+
+    create table if not exists user
+    (
+      id           integer primary key autoincrement,
+      name         text    not null check (length(name) < 255),
+      is_onboarded integer not null check (is_onboarded in (0, 1)) default 0
     )
   `)
 }
