@@ -5,6 +5,7 @@ import { useSQLiteContext } from 'expo-sqlite'
 import { useMutator } from '@/hooks/useMutator'
 import { stringifyError } from '@/common/utils/error'
 import { useEffect } from 'react'
+import { useErrorToasts } from '@/hooks/useErrorToasts'
 
 export default function OnboardScreen() {
   const db = useSQLiteContext()
@@ -15,6 +16,8 @@ export default function OnboardScreen() {
   useEffect(() => {
     isDone && !onboardingError && router.replace('/')
   }, [isDone, onboardingError, router])
+
+  useErrorToasts({ title: 'Error finishing onboarding', errorData: onboardingError })
 
   return (
     <View>

@@ -7,7 +7,8 @@ tips:
 todo:
  - implement knex-like migrations - done
  - handle sorting and user saved sort order
- - windowsify migration names (: is not supported...)
+ - windowsify migration names (: is not supported...) - low priority
+ - decide on trackers' size rendering
  - global search
  - delayed until time?
 
@@ -19,3 +20,7 @@ as to monetization, offer a premium sub that:
 looks like performance benefits of WAL aren't that crazy (6+ times and more) to deal with WAL syncing so i'm not gonna use it here
 
 you can't use any kinds of dynamic import with react native... i mean it's supported but only with fixed asset strings, not variables or imported data. this makes migrations much harder
+
+turned out i was using require.context incorrectly...
+
+using nativewind might've been a mistake...

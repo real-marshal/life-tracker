@@ -51,6 +51,10 @@ function RootView() {
         name='settings'
         options={{ animation: 'slide_from_right', animationDuration: 200 }}
       />
+      <Stack.Screen
+        name='goal/[id]'
+        options={{ animation: 'slide_from_right', animationDuration: 200, headerShown: false }}
+      />
       <Stack.Screen name='+not-found' />
     </Stack>
   )

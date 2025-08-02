@@ -13,7 +13,8 @@ export function useLoader<T extends (...args: any[]) => Promise<any>>(
       .then((r) => setData(r))
       .catch((e) => setError(e))
       .then(() => setIsLoading(false))
-  }, [args, load])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [...args, load])
 
   return [data, isLoading, error] as const
 }

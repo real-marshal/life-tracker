@@ -1,9 +1,9 @@
 import { SQLiteDatabase } from 'expo-sqlite'
 import { toCamelCase } from '@/common/utils/object'
-import { Row } from '@/common/utils/types'
+import { Row, RowCamelCase } from '@/common/utils/types'
 import { GoalPreview } from '@/models/goal'
 
-interface GoalUpdate {
+export interface GoalUpdate {
   id: number
   type: 'normal' | 'closing'
   sentiment: 'positive' | 'negative' | 'neutral'
@@ -13,10 +13,8 @@ interface GoalUpdate {
   createdAt: Date
 }
 
-type RowGoalUpdate = Omit<GoalUpdate, 'createdAt'> & { createdAt: string }
-
 export async function getGoalUpdates(db: SQLiteDatabase, goalId: number): Promise<GoalUpdate[]> {
-  const rows = await db.getAllAsync<Row<RowGoalUpdate>>(
+  const rows = await db.getAllAsync<Row<GoalUpdate>>(
     `
       select goal_update.id,
              goal_update.type,
@@ -30,17 +28,19 @@ export async function getGoalUpdates(db: SQLiteDatabase, goalId: number): Promis
              goal_update.created_at
       from goal_update
              left join goal on related_goal = goal_id
-      where goal_id = $goal_id
+      where goal_id = $goalId
+      order by goal_update.created_at desc
     `,
     { $goalId: goalId }
   )
 
-  return rows.map(toCamelCase<RowGoalUpdate>).map((u) => {
+  return rows.map(toCamelCase<RowCamelCase<GoalUpdate>>).map((u) => {
     const { createdAt, ...updateData } = u
 
     return {
       ...updateData,
       createdAt: new Date(createdAt),
+      relatedGoal: updateData.relatedGoal ? JSON.parse(updateData.relatedGoal) : undefined,
     }
   })
 }

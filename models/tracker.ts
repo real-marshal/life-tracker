@@ -1,6 +1,7 @@
 import { SQLiteDatabase } from 'expo-sqlite'
-import { Row } from '@/common/utils/types'
+import { Row, RowCamelCase } from '@/common/utils/types'
 import { toCamelCase } from '@/common/utils/object'
+import { Duration, interval, intervalToDuration } from 'date-fns'
 
 export interface TrackerRenderData {
   index: number
@@ -16,7 +17,7 @@ export interface BaseTracker {
 
 export interface DateTracker extends BaseTracker {
   type: 'date'
-  date: Date
+  duration: Duration
 }
 
 export interface StatTracker extends BaseTracker {
@@ -35,6 +36,8 @@ export interface DetailedStatTracker {
   suffix?: string
   values: { date: string; value: number }[]
 }
+
+type RowTracker = (Omit<DateTracker, 'duration'> & { date: string }) | StatTracker
 
 export async function getTrackers(db: SQLiteDatabase, goalId?: number): Promise<Tracker[]> {
   const query = `
@@ -60,16 +63,31 @@ export async function getTrackers(db: SQLiteDatabase, goalId?: number): Promise<
   `
 
   const rows = await (goalId
-    ? db.getAllAsync<Row<Tracker>>(
+    ? db.getAllAsync<Row<RowTracker>>(
         `
         ${query}
         where goal_id = $goalId
         `,
         { $goalId: goalId }
       )
-    : db.getAllAsync<Row<Tracker>>(query))
+    : db.getAllAsync<Row<RowTracker>>(query))
 
-  return rows.map(toCamelCase<Tracker>)
+  return rows.map(toCamelCase<RowCamelCase<RowTracker>>).map((rowTracker) => {
+    if (rowTracker.type === 'stat') {
+      return {
+        ...rowTracker,
+        renderData: JSON.parse(rowTracker.renderData),
+      }
+    }
+
+    const { date, ...dateTrackerRest } = rowTracker
+
+    return {
+      ...dateTrackerRest,
+      duration: intervalToDuration(interval(new Date(), new Date(date))),
+      renderData: JSON.parse(dateTrackerRest.renderData),
+    }
+  })
 }
 
 type RowStatTracker = Omit<DetailedStatTracker, 'values'> & {
@@ -97,10 +115,10 @@ export async function getStatTracker(db: SQLiteDatabase, id: number): Promise<De
     throw new Error(`No stat tracker found with tracker_id ${id} - wtf?`)
   }
 
-  const { trackerValues, ...values } = toCamelCase<RowStatTracker>(row)
+  const { trackerValues, ...values } = toCamelCase<RowCamelCase<RowStatTracker>>(row)
 
   return {
     ...values,
-    values: trackerValues,
+    values: JSON.parse(trackerValues),
   }
 }

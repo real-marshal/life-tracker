@@ -6,9 +6,12 @@ const toast = StyleSheet.create({
   style: {
     backgroundColor: colors.bgSecondary,
     borderRadius,
+    height: 'auto',
+    width: '95%',
   },
   contentContainerStyle: {
     paddingHorizontal: 15,
+    paddingVertical: 10,
   },
   text1Style: {
     fontSize: 16,
@@ -45,6 +48,8 @@ export function AppSuccessToast(props: BaseToastProps) {
       contentContainerStyle={toast.contentContainerStyle}
       text1Style={toast.text1Style}
       text2Style={toast.text2Style}
+      text1NumberOfLines={0}
+      text2NumberOfLines={0}
     />
   )
 }
@@ -57,6 +62,8 @@ export function AppErrorToast(props: BaseToastProps) {
       contentContainerStyle={toast.contentContainerStyle}
       text1Style={toast.text1Style}
       text2Style={toast.text2Style}
+      text1NumberOfLines={0}
+      text2NumberOfLines={0}
     />
   )
 }

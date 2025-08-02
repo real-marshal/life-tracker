@@ -6,7 +6,6 @@ export async function initSqlite(db: SQLiteDatabase) {
 
 export async function seed(db: SQLiteDatabase) {
   return db.execAsync(`
-    -- user
     insert into user(name)
     values ('Real_Marshal');
 
@@ -123,7 +122,7 @@ export async function seed(db: SQLiteDatabase) {
 
     insert into goal_tracker (goal_id, tracker_id)
     values (1, 1);
-    
+
     -- related goals
     insert into goal_relation (goal_id, related_goal_id)
     values (1, 4);
@@ -138,7 +137,36 @@ export async function seed(db: SQLiteDatabase) {
 
     -- prerequisites/consequences
     insert into goal_link (goal_id, next_goal_id)
+    values (4, 12);
+    insert into goal_link (goal_id, next_goal_id)
     values (4, 11);
+    insert into goal_link (goal_id, next_goal_id)
+    values (7, 4);
+
+    -- goal updates
+    insert into goal_update (goal_id, type, sentiment, content, created_at)
+    values (4, 'normal', 'positive',
+            'Created a notion database with some post ideas,  need to add more',
+            strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-5 days', '-14 hours', '-1 minute'));
+
+    insert into goal_update (goal_id, type, sentiment, content, created_at)
+    values (4, 'normal', 'positive',
+            'Added more ideas, now enough for about 9 months of posting every 2-3 days',
+            strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-3 days', '-6 hours', '-42 minutes'));
+
+    insert into goal_update (goal_id, type, sentiment, content, created_at)
+    values (4, 'normal', 'negative',
+            'Turned out you need ID verification to be able to make money. This makes things much more complicated...',
+            strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-3 days', '-4 hours', '-17 minutes'));
+
+    insert into goal_update (goal_id, type, sentiment, content, created_at)
+    values (4, 'normal', 'positive', 'Posted second idea',
+            strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-1 day', '-3 hours', '-8 minutes'));
+
+    insert into goal_update (goal_id, type, sentiment, content, created_at)
+    values (4, 'normal', 'neutral',
+            'How much time is actually needed to get somewhere without paying for ads I wonder...',
+            strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-1 day', '-1 hour', '-3 minutes'));
   `)
 }
 
