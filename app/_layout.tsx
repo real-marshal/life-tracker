@@ -13,6 +13,8 @@ import { useEffect } from 'react'
 import { AppErrorToast, AppSuccessToast } from '@/components/Toast'
 import { useFonts } from 'expo-font'
 import Feather from '@expo/vector-icons/Feather'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
 
 const toastConfig = {
   success: AppSuccessToast,
@@ -31,7 +33,11 @@ export default function RootLayout() {
     <ThemeProvider value={DarkTheme}>
       <SQLiteProvider databaseName='main.db' onInit={initSqlite}>
         <StatusBar style='auto' />
-        <RootView />
+        <GestureHandlerRootView>
+          <BottomSheetModalProvider>
+            <RootView />
+          </BottomSheetModalProvider>
+        </GestureHandlerRootView>
         <Toast config={toastConfig} />
       </SQLiteProvider>
     </ThemeProvider>

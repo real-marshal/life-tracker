@@ -107,7 +107,9 @@ export async function getStatTracker(db: SQLiteDatabase, id: number): Promise<De
       from tracker
              left join stat_tracker on tracker.id = stat_tracker.tracker_id
              left join stat_value on tracker.id = stat_value.tracker_id
-      where tracker.id = $id`,
+      where tracker.id = $id
+      order by stat_value.created_at
+    `,
     { $id: id }
   )
 

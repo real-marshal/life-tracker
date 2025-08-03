@@ -75,7 +75,19 @@ export async function seed(db: SQLiteDatabase) {
     values (1, '$');
 
     insert into stat_value (tracker_id, value, created_at)
-    values (1, 1000, '2025-05-22T15:53:00.000Z');
+    values (1, 3000, '2023-10-22T15:53:00.000Z');
+    insert into stat_value (tracker_id, value, created_at)
+    values (1, 2200, '2024-11-22T15:53:00.000Z');
+    insert into stat_value (tracker_id, value, created_at)
+    values (1, 1700, '2025-01-22T15:53:00.000Z');
+    insert into stat_value (tracker_id, value, created_at)
+    values (1, 4500, '2025-03-15T15:53:00.000Z');
+    insert into stat_value (tracker_id, value, created_at)
+    values (1, 2800, '2025-03-22T15:53:00.000Z');
+    insert into stat_value (tracker_id, value, created_at)
+    values (1, 1600, '2025-04-22T15:53:00.000Z');
+    insert into stat_value (tracker_id, value, created_at)
+    values (1, 1200, '2025-05-22T15:53:00.000Z');
     insert into stat_value (tracker_id, value, created_at)
     values (1, 2300, '2025-05-20T15:53:00.000Z');
     insert into stat_value (tracker_id, value, created_at)
