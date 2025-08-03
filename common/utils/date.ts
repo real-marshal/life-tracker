@@ -1,4 +1,56 @@
-import { Duration, formatDuration, startOfDay, subDays } from 'date-fns'
+import {
+  Duration,
+  format,
+  formatDuration,
+  isThisYear,
+  isToday,
+  isYesterday,
+  startOfDay,
+  subDays,
+} from 'date-fns'
+
+export interface DateTz {
+  // date with tz applied, not converted to local time! (1 part of an ISO datetime string)
+  date: Date
+  // 2 part of an ISO datetime string
+  tz: string
+}
+
+export function extractTzFromIso(date: string): string {
+  if (date.at(-1) === 'Z') {
+    return '+00:00'
+  }
+
+  const tz = date.match(/[+-]\d\d:\d\d$/)
+
+  if (tz) {
+    return tz[0]
+  }
+
+  throw new Error('Invalid date')
+}
+
+// creates a Date object from a UTC part of an ISO string without converting it into local time
+export function extractDateFromIso(date: string): Date {
+  if (date.at(-1) === 'Z') {
+    return new Date(date)
+  }
+
+  const tz = date.match(/[+-]\d\d:\d\d$/)
+
+  if (tz) {
+    return new Date(date.slice(0, -tz[0].length))
+  }
+
+  throw new Error('Invalid date')
+}
+
+export function makeDateTz(isoDate: string): DateTz {
+  return {
+    date: extractDateFromIso(isoDate),
+    tz: extractTzFromIso(isoDate),
+  }
+}
 
 // shows y, m, d if duration is longer than a day, otherwise h, m, s
 export function formatDurationShort(duration: Duration) {
@@ -32,30 +84,26 @@ export function formatDurationTwoLongValues(duration: Duration) {
   return formatDuration(duration, { format })
 }
 
-// THINK ABOUT TIMEZONES AGAIN
-
-// use today/yesterday, then weekdays before falling back to date strings
-function formatDateSmart(date: Date) {
+// use today/yesterday, then weekdays before falling back to date strings, excludes current year
+// doesn't convert time into local and instead keeps it in the original timezone!
+export function formatDateSmart({ date }: DateTz) {
   const isInTheLast7Days = date >= startOfDay(subDays(new Date(), 7))
 
   if (isToday(date)) {
-    return date.toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: !uses24HourClock(),
-    })
+    return 'Today'
   }
 
-  if (isMessageSentInTheLast7Days) {
-    return format(date, 'E')
+  if (isYesterday(date)) {
+    return 'Yesterday'
+  }
+
+  if (isInTheLast7Days) {
+    return format(date, 'EEEE')
   }
 
   if (isThisYear(date)) {
-    return date.toLocaleString([], { day: 'numeric', month: 'short' })
+    return date.toLocaleString('en-US', { day: 'numeric', month: 'long' })
   }
-  return date.toLocaleString([], {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
+
+  return date.toLocaleString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })
 }

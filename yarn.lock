@@ -1110,13 +1110,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@date-fns/tz@npm:^1.2.0":
-  version: 1.2.0
-  resolution: "@date-fns/tz@npm:1.2.0"
-  checksum: 2eb37e63fdbd5d72458c528ded6c2f7bdb76bae9c6875d3b827e33600b807cfbd72ab05c9291f258a6e6b7b360ec03e57f7e7d85fe6e0d5e989476dec908910e
-  languageName: node
-  linkType: hard
-
 "@egjs/hammerjs@npm:^2.0.17":
   version: 2.0.17
   resolution: "@egjs/hammerjs@npm:2.0.17"
@@ -4786,6 +4779,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"expo-localization@npm:~16.1.6":
+  version: 16.1.6
+  resolution: "expo-localization@npm:16.1.6"
+  dependencies:
+    rtl-detect: ^1.0.2
+  peerDependencies:
+    expo: "*"
+    react: "*"
+  checksum: 7bdebe54e5c13081e7d1e4be7333f2bcaf0331de6c1b804ce3fd7fe6052c43c7d03940ceab5625018d8e07b1d8419da5b0cb46607be6c906b2f303e19e1daf87
+  languageName: node
+  linkType: hard
+
 "expo-manifests@npm:~0.16.6":
   version: 0.16.6
   resolution: "expo-manifests@npm:0.16.6"
@@ -6418,7 +6423,6 @@ __metadata:
   resolution: "life-tracker@workspace:."
   dependencies:
     "@babel/core": ^7.25.2
-    "@date-fns/tz": ^1.2.0
     "@expo/vector-icons": ^14.1.0
     "@react-navigation/bottom-tabs": ^7.3.10
     "@react-navigation/elements": ^2.3.8
@@ -6436,6 +6440,7 @@ __metadata:
     expo-haptics: ~14.1.4
     expo-image: ~2.4.0
     expo-linking: ~7.1.7
+    expo-localization: ~16.1.6
     expo-router: ~5.1.4
     expo-splash-screen: ~0.30.10
     expo-sqlite: ~15.2.14
@@ -8701,6 +8706,13 @@ __metadata:
   bin:
     rimraf: bin.js
   checksum: 87f4164e396f0171b0a3386cc1877a817f572148ee13a7e113b238e48e8a9f2f31d009a92ec38a591ff1567d9662c6b67fd8818a2dbbaed74bc26a87a2a4a9a0
+  languageName: node
+  linkType: hard
+
+"rtl-detect@npm:^1.0.2":
+  version: 1.1.2
+  resolution: "rtl-detect@npm:1.1.2"
+  checksum: 4a43a1e5df0617eb86d5485640b318787d12b86acf53d840a3b2ff701ee941e95479d4e9ae97e907569ec763d1c47218cb87639bc87bcdad60a85747e5270cf0
   languageName: node
   linkType: hard
 

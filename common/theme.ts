@@ -1,4 +1,5 @@
 import { Goal } from '@/models/goal'
+import { GoalUpdate } from '@/models/goalUpdate'
 
 export const colors = {
   accent: '#A4EB1F',
@@ -8,8 +9,8 @@ export const colors = {
   positive: '#75FF4B',
   negative: '#FF4A4A',
   bg: '#000000',
-  bgSecondary: '#222222',
-  bgTertiary: '#444444',
+  bgSecondary: '#1a1a1a',
+  bgTertiary: '#383838',
   fg: '#ffffff',
   fgSecondary: '#a0a0a0',
 }
@@ -21,4 +22,10 @@ export const goalStatusColorMap: Record<Goal['status'], string> = {
   delayed: colors.delayedGoal,
   completed: colors.positive,
   abandoned: colors.negative,
+}
+
+export const goalUpdateColorMap: Record<GoalUpdate['sentiment'], string> = {
+  positive: colors.positive,
+  negative: colors.negative,
+  neutral: colors.fg,
 }

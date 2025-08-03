@@ -2,6 +2,7 @@ import { SQLiteDatabase } from 'expo-sqlite'
 import { toCamelCase } from '@/common/utils/object'
 import { Row, RowCamelCase } from '@/common/utils/types'
 import { GoalPreview } from '@/models/goal'
+import { DateTz, makeDateTz } from '@/common/utils/date'
 
 export interface GoalUpdate {
   id: number
@@ -10,7 +11,7 @@ export interface GoalUpdate {
   relatedGoal?: GoalPreview
   content: string
   isPinned: boolean
-  createdAt: Date
+  createdAt: DateTz
 }
 
 export async function getGoalUpdates(db: SQLiteDatabase, goalId: number): Promise<GoalUpdate[]> {
@@ -39,7 +40,7 @@ export async function getGoalUpdates(db: SQLiteDatabase, goalId: number): Promis
 
     return {
       ...updateData,
-      createdAt: new Date(createdAt),
+      createdAt: makeDateTz(createdAt),
       relatedGoal: updateData.relatedGoal ? JSON.parse(updateData.relatedGoal) : undefined,
     }
   })
