@@ -8,6 +8,7 @@ import {
   startOfDay,
   subDays,
 } from 'date-fns'
+import { getLocales } from 'expo-localization'
 
 export interface DateTz {
   // date with tz applied, not converted to local time! (1 part of an ISO datetime string)
@@ -106,4 +107,15 @@ export function formatDateSmart({ date }: DateTz) {
   }
 
   return date.toLocaleString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+// expo-localize's firstWeekday is absolutely useless...
+export function doesWeekStartWithMonday() {
+  const region = getLocales()[0].regionCode
+
+  if (!region) return true
+
+  const sundayCountries = ['US', 'CA', 'AU', 'IN', 'JP', 'KR']
+
+  return !sundayCountries.includes(region)
 }

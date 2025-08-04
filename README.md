@@ -26,3 +26,7 @@ turned out i was using require.context incorrectly...
 using nativewind might've been a mistake...
 
 regarding grid animation lag https://github.com/FormidableLabs/victory-native-xl/issues/538
+
+the problem with broken gestures outside viewport https://github.com/FormidableLabs/victory-native-xl/issues/515 :
+
+in CartesianChart.tsx, there's a function called `handleTouch`
