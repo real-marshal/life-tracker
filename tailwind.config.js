@@ -14,7 +14,7 @@ module.exports = {
       negative: '#FF4A4A',
       bg: '#000000',
       bgSecondary: '#181818',
-      bgTertiary: '#383838',
+      bgTertiary: '#3b3b3b',
       fg: '#ffffff',
       fgSecondary: '#a0a0a0',
     },
