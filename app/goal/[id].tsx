@@ -81,7 +81,7 @@ export default function GoalScreen() {
           </View>
           <Feather name='more-horizontal' size={24} color={accentColor} />
         </View>
-        <View className='flex flex-col gap-4 p-4 bg-bgSecondary rounded-lg border-hairline border-[#444] '>
+        <View className='flex flex-col gap-4 p-4 bg-bgSecondary rounded-lg border-hairline border-[#444]'>
           <View className='flex flex-row flex-wrap'>
             <Text className='text-fgSecondary'>
               {goal?.status && progressTextMap[goal?.status][0]}
