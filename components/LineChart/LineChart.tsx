@@ -21,156 +21,18 @@ import {
   RoundedRect,
   Matrix4,
 } from '@shopify/react-native-skia'
-import {
-  addMonths,
-  addWeeks,
-  format,
-  startOfMonth,
-  startOfWeek,
-  subMonths,
-  subYears,
-} from 'date-fns'
 import hairlineWidth = StyleSheet.hairlineWidth
-import { runOnJS, useDerivedValue } from 'react-native-reanimated'
+import { SharedValue, useDerivedValue, useSharedValue } from 'react-native-reanimated'
 import { clampWorklet } from '@/common/utils/worklet'
-import { useMemo, useState } from 'react'
-import { doesWeekStartWithMonday } from '@/common/utils/date'
+import { memo, useEffect, useMemo, useState } from 'react'
 import { ChartTransformState } from '@/node_modules/victory-native/src/cartesian/hooks/useChartTransformState'
+import { DateRange, dateRangeDetailsMap, dateRanges } from '@/components/LineChart/dateRanges'
+import {
+  useEnforceLineChartScrollBounds,
+  useLineChartExtraData,
+} from '@/components/LineChart/hooks'
 
 const fontAsset = require('@/assets/fonts/SpaceMono-Regular.ttf')
-
-const dateRanges = ['1M', '3M', '6M', '1Y', '2Y', 'ALL'] as const
-
-export type DateRange = (typeof dateRanges)[number]
-
-const dateRangeDetailsMap: Record<
-  DateRange,
-  {
-    label: string
-    getRangeTimestamps?: (data: LineChartData[]) => [number, number]
-    getTickTimestamps?: (data: LineChartData[]) => number[]
-  }
-> = {
-  '1M': {
-    label: '1M',
-    getRangeTimestamps: (data) => {
-      if (!data.length) return [0, 0]
-
-      const lastDate = new Date(data.at(-1)!.date)
-
-      return [startOfMonth(lastDate).getTime(), lastDate.getTime()]
-    },
-    getTickTimestamps: (data) => {
-      if (!data.length) return []
-
-      const firstDate = new Date(data[0].date)
-      const lastDate = new Date(data.at(-1)!.date)
-
-      const firstDateWeekStart = startOfWeek(firstDate, {
-        weekStartsOn: doesWeekStartWithMonday() ? 1 : 0,
-      })
-
-      const tickTimestamps: number[] = []
-
-      let currentDateWeekStart = firstDateWeekStart
-      while (currentDateWeekStart <= addWeeks(lastDate, 1)) {
-        tickTimestamps.push(currentDateWeekStart.getTime())
-
-        currentDateWeekStart = addWeeks(currentDateWeekStart, 1)
-      }
-
-      return tickTimestamps
-    },
-  },
-  '3M': {
-    label: '3M',
-    getRangeTimestamps: (data) => {
-      if (!data.length) return [0, 0]
-
-      const lastDate = new Date(data.at(-1)!.date)
-
-      return [startOfMonth(subMonths(lastDate, 3)).getTime(), lastDate.getTime()]
-    },
-    getTickTimestamps: (data) => {
-      if (!data.length) return []
-
-      const firstDate = new Date(data[0].date)
-      const lastDate = new Date(data.at(-1)!.date)
-
-      const firstDateWeekStart = startOfWeek(firstDate, {
-        weekStartsOn: doesWeekStartWithMonday() ? 1 : 0,
-      })
-
-      const tickTimestamps: number[] = []
-
-      let currentDateWeekStart = firstDateWeekStart
-      while (currentDateWeekStart <= addWeeks(lastDate, 1)) {
-        tickTimestamps.push(currentDateWeekStart.getTime())
-
-        currentDateWeekStart = addWeeks(currentDateWeekStart, 2)
-      }
-
-      return tickTimestamps
-    },
-  },
-  '6M': {
-    label: '6M',
-    getRangeTimestamps: (data) => {
-      if (!data.length) return [0, 0]
-
-      const lastDate = new Date(data.at(-1)!.date)
-
-      return [startOfMonth(subMonths(lastDate, 6)).getTime(), lastDate.getTime()]
-    },
-    getTickTimestamps: (data) => {
-      if (!data.length) return []
-
-      const firstDate = new Date(data[0].date)
-      const lastDate = new Date(data.at(-1)!.date)
-
-      const firstDateMonthStart = startOfMonth(firstDate)
-
-      const tickTimestamps: number[] = []
-
-      let currentDateMonthStart = firstDateMonthStart
-      while (currentDateMonthStart <= addMonths(lastDate, 1)) {
-        tickTimestamps.push(currentDateMonthStart.getTime())
-
-        currentDateMonthStart = addMonths(currentDateMonthStart, 1)
-      }
-
-      return tickTimestamps
-    },
-  },
-  '1Y': {
-    label: '1Y',
-    getRangeTimestamps: (data) => {
-      if (!data.length) return [0, 0]
-
-      const lastDate = new Date(data.at(-1)!.date)
-
-      return [startOfMonth(subYears(lastDate, 1)).getTime(), lastDate.getTime()]
-    },
-  },
-  '2Y': {
-    label: '2Y',
-    getRangeTimestamps: (data) => {
-      if (!data.length) return [0, 0]
-
-      const lastDate = new Date(data.at(-1)!.date)
-
-      return [startOfMonth(subYears(lastDate, 2)).getTime(), lastDate.getTime()]
-    },
-  },
-  ALL: {
-    label: 'ALL',
-    getRangeTimestamps: (data) => {
-      if (!data.length) return [0, 0]
-
-      return [new Date(data[0].date).getTime(), new Date(data.at(-1)!.date).getTime()]
-    },
-  },
-}
 
 // don't pass x as date objects until this is resolved
 // https://github.com/FormidableLabs/victory-native-xl/issues/591
@@ -179,18 +41,20 @@ export interface LineChartData {
   [K: string]: any
 }
 
-type LineChartDataNumber = Omit<LineChartData, 'date'> & { date: number }
+// the only way atm to have correct scaling between dates
+// https://github.com/FormidableLabs/victory-native-xl/issues/384
+type LineChartDataTimestamps = Omit<LineChartData, 'date'> & { date: number }
 
-// regarding grid animation lag
-// https://github.com/FormidableLabs/victory-native-xl/issues/538
-export function LineChart({
+function UnmemoedLineChart({
   data: passedData,
   x,
   y,
+  rightPadding = 25,
 }: {
   data: LineChartData[]
   x: string
   y: string
+  rightPadding?: number
 }) {
   const { state: transformState } = useChartTransformState()
   const { state: pressState, isActive } = useChartPressState({ x: 0, y: { [y]: 0 } })
@@ -198,19 +62,26 @@ export function LineChart({
   const font = useFont(fontAsset, 11)
   const [dateRange, setDateRange] = useState<DateRange>('1M')
 
-  const data = useMemo(() => {
-    return passedData.map(
-      (datum) =>
-        ({
-          ...datum,
-          date: new Date(datum.date).getTime(),
-        }) as LineChartDataNumber
-    )
+  const data: LineChartDataTimestamps[] = useMemo(() => {
+    return passedData.map((datum) => ({
+      ...datum,
+      date: new Date(datum.date).getTime(),
+    }))
   }, [passedData])
 
-  const tickTimestamps = dateRangeDetailsMap[dateRange]?.getTickTimestamps?.(passedData)
+  // add right padding in a somewhat hacky way
+  useEffect(() => {
+    const matrix = [...transformState.matrix.value]
+    matrix[3] = -rightPadding
 
-  console.log(tickTimestamps?.map((t) => new Date(t).toISOString()))
+    transformState.matrix.value = matrix as unknown as Matrix4
+  }, [rightPadding, transformState.matrix])
+
+  const minX = useSharedValue(300)
+
+  useEnforceLineChartScrollBounds({ transformState, minX, padding: rightPadding })
+
+  const { tickTimestamps, rangeTimestamps } = useLineChartExtraData(passedData)
 
   return (
     <View className='h-[300] flex flex-col gap-2'>
@@ -224,9 +95,11 @@ export function LineChart({
           lineColor: colors.fgSecondary,
           linePathEffect: <DashPathEffect intervals={[3, 3]} />,
           formatXLabel: (date) =>
-            typeof date === 'number' ? format(new Date(date), 'LLL d') : date?.toString(),
-          tickCount: tickTimestamps?.length,
-          tickValues: tickTimestamps,
+            typeof date === 'number'
+              ? dateRangeDetailsMap[dateRange]?.getLabel(date)
+              : date?.toString(),
+          tickCount: tickTimestamps[dateRange]?.length,
+          tickValues: tickTimestamps[dateRange],
         }}
         yAxis={[
           {
@@ -245,17 +118,19 @@ export function LineChart({
           pinch: { enabled: false },
         }}
         chartPressState={pressState}
-        domainPadding={{ top: 10, bottom: 10 }}
-        viewport={{ x: dateRangeDetailsMap[dateRange]?.getRangeTimestamps?.(passedData) }}
+        // setting left/right paddings will cause pan to stop working when running out of viewport...
+        domainPadding={{ top: 35, bottom: 10 }}
+        viewport={{ x: rangeTimestamps[dateRange] ?? [] }}
       >
         {({ points, chartBounds, xScale }) => (
-          <InteractiveLine
+          <MemoedInteractiveLine
             points={points[y]}
             isActive={isActive}
             pressState={pressState}
             y={y}
             chartBounds={chartBounds}
             minX={Math.min(xScale.range()[0]!, 0)}
+            minXSharedValue={minX}
           />
         )}
       </CartesianChart>
@@ -263,10 +138,13 @@ export function LineChart({
         dateRange={dateRange}
         setDateRange={setDateRange}
         transformState={transformState}
+        rightPadding={rightPadding}
       />
     </View>
   )
 }
+
+export const LineChart = memo(UnmemoedLineChart)
 
 function InteractiveLine({
   points,
@@ -279,6 +157,7 @@ function InteractiveLine({
   tooltipXPadding = 5,
   tooltipYPadding = 2,
   lineWidth = 2,
+  minXSharedValue,
 }: {
   points: PointsArray
   isActive: boolean
@@ -290,10 +169,16 @@ function InteractiveLine({
   tooltipXPadding?: number
   tooltipYPadding?: number
   lineWidth?: number
+  minXSharedValue: SharedValue<number>
 }) {
   const tooltipHeight = tooltipFontSize + tooltipYPadding * 2
 
   const font = useFont(fontAsset, tooltipFontSize)
+  const fontSmall = useFont(fontAsset, tooltipFontSize * 0.6)
+
+  useEffect(() => {
+    minXSharedValue.value = minX
+  }, [minX, minXSharedValue])
 
   const animatedLine = useDerivedValue(() => {
     const x = clampWorklet(
@@ -310,6 +195,13 @@ function InteractiveLine({
 
   const text = useDerivedValue(() => {
     return pressState.y[y].value.value.toString()
+  })
+
+  const dateText = useDerivedValue(() => {
+    return new Date(pressState.x.value.value).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    })
   })
 
   const textWidth = useDerivedValue(() => {
@@ -355,21 +247,30 @@ function InteractiveLine({
             x={tooltipX}
             y={0}
             width={tooltipWidth}
-            height={tooltipHeight}
+            height={tooltipHeight * 1.9}
             color={colors.bgTertiary}
             // radius prop is marked as optional, yet if you don't pass it, the app crashes with this error
             // ReanimatedError: Exception in HostFunction: Invalid properties for rounded rect, js engine: reanimated
             r={5}
           />
-          <SkText x={textX} y={tooltipFontSize} text={text} font={font} color={colors.fg} />
+          <SkText x={textX} y={tooltipFontSize + 2} text={text} font={font} color={colors.fg} />
+          <SkText
+            x={textX}
+            y={tooltipFontSize * 2}
+            text={dateText}
+            font={fontSmall}
+            color={colors.fg}
+          />
         </Group>
       ) : null}
     </>
   )
 }
 
+const MemoedInteractiveLine = memo(InteractiveLine)
+
 function LineWithCircles({ points }: { points: PointsArray }) {
-  const { path } = useLinePath(points, { curveType: 'linear' /*connectMissingData: true */ })
+  const { path } = useLinePath(points, { curveType: 'linear' })
 
   return (
     <Group>
@@ -395,10 +296,12 @@ function DateRangeControls({
   dateRange: currentDateRange,
   setDateRange,
   transformState,
+  rightPadding,
 }: {
   dateRange: DateRange
   setDateRange: (dateRange: DateRange) => void
   transformState: ChartTransformState
+  rightPadding: number
 }) {
   return (
     <View className='flex flex-row gap-6 self-center'>
@@ -408,8 +311,9 @@ function DateRangeControls({
           onPress={() => {
             setDateRange(dateRange)
 
+            // reset pan position
             const matrix = [...transformState.matrix.value]
-            matrix[3] = 0
+            matrix[3] = -rightPadding
 
             transformState.matrix.value = matrix as unknown as Matrix4
           }}

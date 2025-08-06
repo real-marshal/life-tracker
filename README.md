@@ -29,4 +29,4 @@ regarding grid animation lag https://github.com/FormidableLabs/victory-native-xl
 
 the problem with broken gestures outside viewport https://github.com/FormidableLabs/victory-native-xl/issues/515 :
 
-in CartesianChart.tsx, there's a function called `handleTouch`
+my fork solves the problems above, read my comments in those threads for more explanations.
