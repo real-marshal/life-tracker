@@ -11,7 +11,7 @@ export function GoalsSection({
   status,
 }: {
   title: string
-  goals: (GoalPreviewRender | GoalPreview)[] | null
+  goals?: (GoalPreviewRender | GoalPreview)[]
   status?: Goal['status']
 }) {
   return (

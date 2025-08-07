@@ -1,7 +1,6 @@
 import { View, Text, Pressable, ScrollView } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { useLoader } from '@/hooks/useLoader'
-import { getGoal, getLtGoal, Goal } from '@/models/goal'
+import { getGoal, getLtGoal, Goal, LtGoal } from '@/models/goal'
 import { useSQLiteContext } from 'expo-sqlite'
 import { useErrorToasts } from '@/hooks/useErrorToasts'
 import { colors, goalStatusColorMap, goalUpdateColorMap } from '@/common/theme'
@@ -11,6 +10,7 @@ import { Trackers } from '@/components/Trackers'
 import { GoalPreviewItem } from '@/components/Goals'
 import { getGoalUpdates, GoalUpdate } from '@/models/goalUpdate'
 import { getCalendars } from 'expo-localization'
+import { useQuery } from '@tanstack/react-query'
 
 const progressTextMap: Record<Goal['status'], [string, string]> = {
   active: ['In progress for ', ' since '],
@@ -26,16 +26,18 @@ export default function GoalScreen() {
 
   const isLongTerm = type === 'longterm'
 
-  const [goal, , goalError] = useLoader(
-    isLongTerm ? getLtGoal : getGoal,
-    db,
-    Number.parseInt(id as string)
-  )
-  const [goalUpdates, , goalUpdatesError] = useLoader(
-    getGoalUpdates,
-    db,
-    Number.parseInt(id as string)
-  )
+  const { data: goal, error: goalError } = useQuery<LtGoal | Goal>({
+    queryKey: ['goal', id],
+    queryFn: () =>
+      isLongTerm
+        ? getLtGoal(db, Number.parseInt(id as string))
+        : getGoal(db, Number.parseInt(id as string)),
+  })
+
+  const { data: goalUpdates, error: goalUpdatesError } = useQuery({
+    queryKey: ['goalUpdates', id],
+    queryFn: () => getGoalUpdates(db, Number.parseInt(id as string)),
+  })
 
   const goalUpdatesByDate =
     goalUpdates?.reduce(

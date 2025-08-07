@@ -1,7 +1,7 @@
 import { SQLiteDatabase } from 'expo-sqlite'
 import { Row, RowCamelCase } from '@/common/utils/types'
 import { toCamelCase } from '@/common/utils/object'
-import { Duration, interval, intervalToDuration } from 'date-fns'
+import { Duration, formatISO, interval, intervalToDuration } from 'date-fns'
 
 export interface TrackerRenderData {
   index: number
@@ -34,7 +34,7 @@ export interface DetailedStatTracker {
   name: string
   prefix?: string
   suffix?: string
-  values: { date: string; value: number }[]
+  values: { date: string; value: number; id: number }[]
 }
 
 type RowTracker = (Omit<DateTracker, 'duration'> & { date: string }) | StatTracker
@@ -102,7 +102,7 @@ export async function getStatTracker(db: SQLiteDatabase, id: number): Promise<De
              stat_tracker.prefix,
              stat_tracker.suffix,
              json_group_array(json_object('date', stat_value.created_at, 'value',
-                                          stat_value.value))
+                                          stat_value.value, 'id', stat_value.id))
                               filter (where stat_value.id is not null) as tracker_values
       from tracker
              left join stat_tracker on tracker.id = stat_tracker.tracker_id
@@ -123,4 +123,35 @@ export async function getStatTracker(db: SQLiteDatabase, id: number): Promise<De
     ...values,
     values: JSON.parse(trackerValues),
   }
+}
+
+export type AddStatValueParam = {
+  trackerId: number
+  value: number
+}
+
+export async function addStatValue(db: SQLiteDatabase, { trackerId, value }: AddStatValueParam) {
+  await db.runAsync(
+    `
+      insert into stat_value(tracker_id, value, created_at)
+      values ($trackerId, $value, $createdAt)
+    `,
+    { $trackerId: trackerId, $value: value, $createdAt: formatISO(new Date()) }
+  )
+}
+
+export type UpdateStatValueParam = {
+  id: number
+  value: number
+}
+
+export async function updateStatValue(db: SQLiteDatabase, { id, value }: UpdateStatValueParam) {
+  await db.runAsync(
+    `
+      update stat_value
+      set value = $value
+      where id = $id
+    `,
+    { $value: value, $id: id }
+  )
 }

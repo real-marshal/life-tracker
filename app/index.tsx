@@ -1,7 +1,6 @@
 import { View, Text, Pressable, ScrollView } from 'react-native'
 import { useSQLiteContext } from 'expo-sqlite'
 import { getUser } from '@/models/user'
-import { useLoader } from '@/hooks/useLoader'
 import { useRouter } from 'expo-router'
 import { useEffect } from 'react'
 import Feather from '@expo/vector-icons/Feather'
@@ -15,18 +14,41 @@ import { Trackers } from '@/components/Trackers'
 import { SectionTitle } from '@/components/SectionTitle'
 import { GoalsSection, LtGoalPreviewItem } from '@/components/Goals'
 import { MetastatItem } from '@/components/MetastatItem'
+import { useQuery } from '@tanstack/react-query'
 
 export default function HomeScreen() {
   const db = useSQLiteContext()
   const router = useRouter()
 
-  const [user, userIsLoading, userError] = useLoader(getUser, db)
-  const [metastats, , metaStatsError] = useLoader(getMetaStats, db)
-  const [trackers, , trackersError] = useLoader(getTrackers, db)
-  const [ltGoals, , ltGoalsError] = useLoader(getLtGoals, db)
-  const [goals, , goalsError] = useLoader(getGoals, db)
-  const [delayedGoals, , delayedGoalsError] = useLoader(getDelayedGoals, db)
-  const [archiveGoals, , archiveGoalsError] = useLoader(getArchiveGoals, db)
+  const {
+    data: user,
+    error: userError,
+    isLoading: userIsLoading,
+  } = useQuery({ queryKey: ['user'], queryFn: () => getUser(db) })
+  const { data: metastats, error: metaStatsError } = useQuery({
+    queryKey: ['metastats'],
+    queryFn: () => getMetaStats(db),
+  })
+  const { data: trackers, error: trackersError } = useQuery({
+    queryKey: ['trackers'],
+    queryFn: () => getTrackers(db),
+  })
+  const { data: ltGoals, error: ltGoalsError } = useQuery({
+    queryKey: ['goals', 'longterm'],
+    queryFn: () => getLtGoals(db),
+  })
+  const { data: goals, error: goalsError } = useQuery({
+    queryKey: ['goals', 'normal'],
+    queryFn: () => getGoals(db),
+  })
+  const { data: delayedGoals, error: delayedGoalsError } = useQuery({
+    queryKey: ['goals', 'delayed'],
+    queryFn: () => getDelayedGoals(db),
+  })
+  const { data: archiveGoals, error: archiveGoalsError } = useQuery({
+    queryKey: ['goals', 'archive'],
+    queryFn: () => getArchiveGoals(db),
+  })
 
   useEffect(() => {
     if (!userIsLoading && !userError && !user?.isOnboarded) {

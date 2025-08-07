@@ -15,11 +15,20 @@ import { useFonts } from 'expo-font'
 import Feather from '@expo/vector-icons/Feather'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 const toastConfig = {
   success: AppSuccessToast,
   error: AppErrorToast,
 } satisfies ToastConfig
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // staleTime: Infinity,
+    },
+  },
+})
 
 export default function RootLayout() {
   useEffect(() => {
@@ -32,13 +41,15 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={DarkTheme}>
       <SQLiteProvider databaseName='main.db' onInit={initSqlite}>
-        <StatusBar style='auto' />
-        <GestureHandlerRootView>
-          <BottomSheetModalProvider>
-            <RootView />
-          </BottomSheetModalProvider>
-        </GestureHandlerRootView>
-        <Toast config={toastConfig} />
+        <QueryClientProvider client={queryClient}>
+          <StatusBar style='auto' />
+          <GestureHandlerRootView>
+            <BottomSheetModalProvider>
+              <RootView />
+            </BottomSheetModalProvider>
+          </GestureHandlerRootView>
+          <Toast config={toastConfig} />
+        </QueryClientProvider>
       </SQLiteProvider>
     </ThemeProvider>
   )

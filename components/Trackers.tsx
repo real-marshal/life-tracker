@@ -1,16 +1,24 @@
 import { Keyboard, Modal, Pressable, Text, TouchableWithoutFeedback, View } from 'react-native'
-import { getStatTracker, Tracker } from '@/models/tracker'
+import {
+  addStatValue,
+  AddStatValueParam,
+  getStatTracker,
+  Tracker,
+  updateStatValue,
+  UpdateStatValueParam,
+} from '@/models/tracker'
 import { formatDurationShort, makeDateTz } from '@/common/utils/date'
 import { BottomSheetModal, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { colors } from '@/common/theme'
 import { LineChart } from '@/components/LineChart/LineChart'
 import Feather from '@expo/vector-icons/Feather'
-import { useLoader } from '@/hooks/useLoader'
 import { useSQLiteContext } from 'expo-sqlite'
 import { useErrorToasts } from '@/hooks/useErrorToasts'
 import { isToday } from 'date-fns'
 import { SheetBackdrop } from '@/components/SheetBackdrop'
+import { showErrorToast } from '@/common/utils/toast'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 export function Trackers({ trackers }: { trackers: Tracker[] }) {
   return (
@@ -43,9 +51,14 @@ function TrackerItem({
   return (
     <>
       <Pressable
+        // why does active modifier just not work sometimes, fucking nativewind...
         className='flex flex-row grow gap-2 bg-bgTertiary p-2 px-4 rounded-lg justify-between'
-        style={isLast && { width: '50%', flexGrow: 0 }}
+        style={({ pressed }) => ({
+          ...(isLast && { width: '50%', flexGrow: 0 }),
+          ...(pressed && { backgroundColor: colors.bgSecondary }),
+        })}
         onPress={onTrackerPress}
+        cssInterop={false}
       >
         <Text className='text-fgSecondary'>{name}:</Text>
         <Text className='text-fg font-bold'>{shownValue}</Text>
@@ -69,7 +82,10 @@ function TrackerItem({
 
 function TrackerSheet({ id }: { id: number }) {
   const db = useSQLiteContext()
-  const [statTracker, , statTrackerError] = useLoader(getStatTracker, db, id)
+  const { data: statTracker, error: statTrackerError } = useQuery({
+    queryKey: ['trackers', id],
+    queryFn: () => getStatTracker(db, id),
+  })
 
   useErrorToasts({ title: 'Error loading a stat tracker', errorData: statTrackerError })
 
@@ -106,16 +122,13 @@ function TrackerSheet({ id }: { id: number }) {
                   )}
                   <TrackerValueInput
                     value={isTodayTracked ? statTracker?.values.at(-1)?.value : undefined}
-                    isTodayTracked={isTodayTracked}
+                    isAdding={!isTodayTracked}
+                    trackerId={statTracker?.id}
+                    statValueId={statTracker?.values.at(-1)?.id}
                   />
                   {statTracker?.suffix && (
                     <Text className='text-accent font-bold text-xl'>{statTracker.suffix}</Text>
                   )}
-                  {/*<Feather*/}
-                  {/*  name={isTodayTracked ? 'edit-2' : 'plus'}*/}
-                  {/*  size={18}*/}
-                  {/*  color={colors.accent}*/}
-                  {/*/>*/}
                 </View>
               </View>
             </Pressable>
@@ -134,10 +147,14 @@ function TrackerSheet({ id }: { id: number }) {
 
 function TrackerValueInput({
   value: passedValue,
-  isTodayTracked,
+  isAdding,
+  trackerId,
+  statValueId,
 }: {
   value: number | undefined
-  isTodayTracked: boolean
+  isAdding: boolean
+  trackerId: number | undefined
+  statValueId: number | undefined
 }) {
   const [value, setValue] = useState(passedValue?.toString() ?? '')
 
@@ -155,12 +172,30 @@ function TrackerValueInput({
   const [placeholder, setPlaceholder] = useState<string | undefined>(undefined)
 
   useEffect(() => {
-    setPlaceholder(value ? undefined : isTodayTracked ? 'Modify value...' : 'Add new value...')
-  }, [isTodayTracked, value])
+    setPlaceholder(value ? undefined : isAdding ? 'Add new value...' : 'Modify value...')
+  }, [isAdding, value])
 
   const isSubmitted = useRef(false)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const queryClient = useQueryClient()
+
+  const { mutate: addStatValueMutator, error: addingError } = useMutation({
+    mutationFn: (param: AddStatValueParam) => addStatValue(db, param),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['trackers'] }),
+  })
+  const { mutate: updateStatValueMutator, error: updatingError } = useMutation({
+    mutationFn: (param: UpdateStatValueParam) => updateStatValue(db, param),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['trackers'] }),
+  })
+
+  useErrorToasts(
+    { title: 'Error adding a stat value', errorData: addingError },
+    { title: 'Error updating a stat value', errorData: updatingError }
+  )
+
+  const db = useSQLiteContext()
 
   return (
     <>
@@ -185,38 +220,74 @@ function TrackerValueInput({
         }}
         onSubmitEditing={() => (isSubmitted.current = true)}
       />
-      <AppModal isOpen={isModalOpen} setIsOpen={setIsModalOpen} />
+      <SaveModal
+        isOpen={isModalOpen}
+        isAdding={isAdding}
+        onCancel={() => {
+          setIsModalOpen(false)
+          setValue(isAdding ? '' : passedValue!.toString())
+        }}
+        onSave={() => {
+          setIsModalOpen(false)
+
+          const numValue = Number.parseFloat(value)
+
+          if (Number.isNaN(numValue)) {
+            showErrorToast('Bad input', 'Only numbers are allowed')
+
+            return
+          }
+
+          if (isAdding) {
+            if (!trackerId) return
+
+            addStatValueMutator({ trackerId, value: numValue })
+          } else {
+            if (!statValueId) return
+
+            updateStatValueMutator({ id: statValueId, value: numValue })
+          }
+        }}
+      />
     </>
   )
 }
 
-function AppModal({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (v: boolean) => void }) {
+function SaveModal({
+  isOpen,
+  isAdding,
+  onCancel,
+  onSave,
+}: {
+  isOpen: boolean
+  isAdding: boolean
+  onCancel: () => void
+  onSave: () => void
+}) {
   return (
-    <Modal
-      transparent
-      visible={isOpen}
-      onRequestClose={() => setIsOpen(false)}
-      animationType='none'
-    >
+    <Modal transparent visible={isOpen} onRequestClose={onCancel} animationType='none'>
       <View className='flex flex-col items-center justify-center bg-[rgba(0,0,0,0.5)] flex-1'>
         <View className='flex flex-col items-center justify-center bg-bgSecondary px-8 pb-8 pt-7 rounded-lg border-hairline border-[#444] gap-6'>
-          <Text className='text-fg self-center text-xl font-bold'>Save new value?</Text>
+          <Text className='text-fg self-center text-xl font-bold'>
+            {isAdding ? 'Save new value?' : 'Update the value?'}
+          </Text>
           <View className='flex flex-row gap-8'>
-            {/* This is a funny one - if animationType is set to none and I add vertical padding
-                directly to text or views (along with all other view styles),
-                the green/red buttons flicker at the top left corner of the screen when the keyboard
+            {/* This is a funny one - if animationType is set to none and I add both paddings
+                to view or text, the red/green button flickers at the top left corner of the screen when the keyboard
                 is getting dismissed and the modal shows up! The only way to prevent this that I found
-                is to just not have vertical padding and instead use vertical margin lol */}
-            <View className='bg-negative px-6 py-3 rounded-lg'>
-              <Text className='text-bg font-medium' onPress={() => setIsOpen(false)}>
-                Cancel
-              </Text>
-            </View>
-            <View className='bg-positive px-6 rounded-lg'>
-              <Text className='text-bg font-medium my-3' onPress={() => setIsOpen(false)}>
-                Save
-              </Text>
-            </View>
+                is to just put one padding on the view and another on the text lol */}
+            <Pressable
+              className='bg-negative px-6 rounded-lg active:bg-negativeActive'
+              onPress={onCancel}
+            >
+              <Text className='text-bg font-medium py-3'>Cancel</Text>
+            </Pressable>
+            <Pressable
+              className='bg-positive rounded-lg px-6 active:bg-positiveActive'
+              onPress={onSave}
+            >
+              <Text className='text-bg font-medium py-3'>Save</Text>
+            </Pressable>
           </View>
         </View>
       </View>
