@@ -1,38 +1,22 @@
-import { useEffect, useState } from 'react'
-import { DateRange, dateRangeDetailsMap, dateRanges } from '@/components/LineChart/dateRanges'
-import { LineChartData } from './LineChart'
 import { SharedValue, useAnimatedReaction } from 'react-native-reanimated'
 import { Matrix4 } from '@shopify/react-native-skia'
 import { ChartTransformState } from '@/node_modules/victory-native/src/cartesian/hooks/useChartTransformState'
+import { useEffect } from 'react'
 
-export function useLineChartExtraData(data: LineChartData[]) {
-  const [tickTimestamps, setTickTimestamps] = useState(
-    dateRanges.reduce(
-      (result, dateRange) => ({ ...result, [dateRange]: [] }),
-      {} as Record<DateRange, number[]>
-    )
-  )
-  const [rangeTimestamps, setRangeTimestamps] = useState(
-    dateRanges.reduce(
-      (result, dateRange) => ({ ...result, [dateRange]: [] }),
-      {} as Record<DateRange, [number, number]>
-    )
-  )
-
+// adds right padding in a somewhat hacky way
+export function useRightPadding({
+  transformState,
+  rightPadding,
+}: {
+  transformState: ChartTransformState
+  rightPadding: number
+}) {
   useEffect(() => {
-    dateRanges.forEach((dateRange) => {
-      setTickTimestamps((tickTimestamps) => ({
-        ...tickTimestamps,
-        [dateRange]: dateRangeDetailsMap[dateRange].getTickTimestamps?.(data),
-      }))
-      setRangeTimestamps((rangeTimestamps) => ({
-        ...rangeTimestamps,
-        [dateRange]: dateRangeDetailsMap[dateRange].getRangeTimestamps(data),
-      }))
-    })
-  }, [data])
+    const matrix = [...transformState.matrix.value]
+    matrix[3] = -rightPadding
 
-  return { tickTimestamps, rangeTimestamps } as const
+    transformState.matrix.value = matrix as unknown as Matrix4
+  }, [rightPadding, transformState.matrix])
 }
 
 export function useEnforceLineChartScrollBounds({

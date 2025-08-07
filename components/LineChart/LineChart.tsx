@@ -24,13 +24,11 @@ import {
 import hairlineWidth = StyleSheet.hairlineWidth
 import { SharedValue, useDerivedValue, useSharedValue } from 'react-native-reanimated'
 import { clampWorklet } from '@/common/utils/worklet'
-import { memo, useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { ChartTransformState } from '@/node_modules/victory-native/src/cartesian/hooks/useChartTransformState'
 import { DateRange, dateRangeDetailsMap, dateRanges } from '@/components/LineChart/dateRanges'
-import {
-  useEnforceLineChartScrollBounds,
-  useLineChartExtraData,
-} from '@/components/LineChart/hooks'
+import { useEnforceLineChartScrollBounds, useRightPadding } from '@/components/LineChart/hooks'
+import { memoize } from '@/common/utils/function'
 
 const fontAsset = require('@/assets/fonts/SpaceMono-Regular.ttf')
 
@@ -69,19 +67,34 @@ function UnmemoedLineChart({
     }))
   }, [passedData])
 
-  // add right padding in a somewhat hacky way
-  useEffect(() => {
-    const matrix = [...transformState.matrix.value]
-    matrix[3] = -rightPadding
+  useRightPadding({ transformState, rightPadding })
 
-    transformState.matrix.value = matrix as unknown as Matrix4
-  }, [rightPadding, transformState.matrix])
-
-  const minX = useSharedValue(300)
+  const minX = useSharedValue(0)
 
   useEnforceLineChartScrollBounds({ transformState, minX, padding: rightPadding })
 
-  const { tickTimestamps, rangeTimestamps } = useLineChartExtraData(passedData)
+  const memoizedDateRangeFns =
+    useRef<
+      Record<
+        DateRange,
+        Pick<(typeof dateRangeDetailsMap)[DateRange], 'getRangeTimestamps' | 'getTickTimestamps'>
+      >
+    >(null)
+
+  useEffect(() => {
+    // lol
+    memoizedDateRangeFns.current = {} as typeof memoizedDateRangeFns.current
+
+    dateRanges.forEach(
+      (dateRange) =>
+        (memoizedDateRangeFns.current![dateRange] = {
+          getRangeTimestamps: memoize(dateRangeDetailsMap[dateRange].getRangeTimestamps),
+          getTickTimestamps: dateRangeDetailsMap[dateRange].getTickTimestamps
+            ? memoize(dateRangeDetailsMap[dateRange].getTickTimestamps)
+            : undefined,
+        })
+    )
+  }, [])
 
   return (
     <View className='h-[300] flex flex-col gap-2'>
@@ -98,8 +111,9 @@ function UnmemoedLineChart({
             typeof date === 'number'
               ? dateRangeDetailsMap[dateRange]?.getLabel(date)
               : date?.toString(),
-          tickCount: tickTimestamps[dateRange]?.length,
-          tickValues: tickTimestamps[dateRange],
+          tickCount:
+            memoizedDateRangeFns.current?.[dateRange]?.getTickTimestamps?.(passedData)?.length ?? 0,
+          tickValues: memoizedDateRangeFns.current?.[dateRange]?.getTickTimestamps?.(passedData),
         }}
         yAxis={[
           {
@@ -120,7 +134,9 @@ function UnmemoedLineChart({
         chartPressState={pressState}
         // setting left/right paddings will cause pan to stop working when running out of viewport...
         domainPadding={{ top: 35, bottom: 10 }}
-        viewport={{ x: rangeTimestamps[dateRange] ?? [] }}
+        viewport={{
+          x: memoizedDateRangeFns.current?.[dateRange].getRangeTimestamps(passedData) ?? [0, 0],
+        }}
       >
         {({ points, chartBounds, xScale }) => (
           <MemoedInteractiveLine
