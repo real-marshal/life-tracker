@@ -30,7 +30,7 @@ export const dateRangeDetailsMap: Record<
 
       const lastDate = new Date(data.at(-1)!.date)
 
-      return [startOfMonth(lastDate).getTime(), lastDate.getTime()]
+      return [startOfMonth(subMonths(lastDate, 1)).getTime(), lastDate.getTime()]
     },
     getTickTimestamps: (data) => {
       if (!data.length) return []
