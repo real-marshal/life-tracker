@@ -6,6 +6,7 @@ import { useCallback, useRef } from 'react'
 import { colors } from '@/common/theme'
 import { SheetBackdrop } from '@/components/SheetBackdrop'
 import { TrackerSheet } from '@/components/TrackerSheet'
+import { useSheetBackHandler } from '@/hooks/useSheetBackHandler'
 
 export function Trackers({ trackers }: { trackers: Tracker[] }) {
   return (
@@ -29,6 +30,8 @@ function TrackerItem({
   const onTrackerPress = useCallback(() => {
     bottomSheetModalRef.current?.present()
   }, [])
+
+  const onSheetChange = useSheetBackHandler(bottomSheetModalRef)
 
   const shownValue =
     typeSpecificData.type === 'date'
@@ -60,6 +63,7 @@ function TrackerItem({
         keyboardBlurBehavior='restore'
         enableBlurKeyboardOnGesture
         backdropComponent={SheetBackdrop}
+        onChange={onSheetChange}
       >
         <TrackerSheet id={id} />
       </BottomSheetModal>
