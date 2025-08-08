@@ -16,14 +16,14 @@ export function ContextMenuSection({ label, first }: { label: string; first?: bo
 export function ContextMenuItem({
   label,
   onPress,
-  first,
+  last,
   color = colors.fg,
   iconName,
   iconSize = 18,
 }: {
   label: string
   onPress?: () => void
-  first?: boolean
+  last?: boolean
   color?: string
   iconName?: keyof (typeof Feather)['glyphMap']
   iconSize?: number
@@ -31,7 +31,7 @@ export function ContextMenuItem({
   return (
     <Pressable onPress={onPress}>
       <View
-        className={`flex flex-row gap-5 px-5 py-3 ${first ? '' : 'border-t-hairline'} border-bgTertiary items-center active:bg-bgTertiary`}
+        className={`flex flex-row gap-5 px-5 py-3 ${last ? 'rounded-b-lg' : 'border-b-hairline'} border-bgTertiary items-center active:bg-bgTertiary`}
       >
         <Text className='text-lg grow' style={{ color: color }}>
           {label}
