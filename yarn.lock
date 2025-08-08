@@ -4195,6 +4195,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"debounce@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "debounce@npm:2.2.0"
+  checksum: c78301e376677827ade07d423dac24266218ebee59e79ac135f4eadc4b5ff453c022fb00acb8cad1988ab65e8576631316a5cc263516716e2d7d4def69cf975b
+  languageName: node
+  linkType: hard
+
 "debug@npm:2.6.9, debug@npm:^2.2.0, debug@npm:^2.6.9":
   version: 2.6.9
   resolution: "debug@npm:2.6.9"
@@ -6789,6 +6796,7 @@ __metadata:
     "@tanstack/react-query": ^5.84.1
     "@types/react": ~19.0.10
     date-fns: ^4.1.0
+    debounce: ^2.2.0
     eslint: ^9.25.0
     eslint-config-expo: ~9.2.0
     eslint-config-prettier: ^10.1.8

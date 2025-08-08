@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   addStatValue,
   AddStatValueParam,
+  DetailedStatTracker,
   getStatTracker,
   updateStatValue,
   UpdateStatValueParam,
@@ -20,38 +21,19 @@ import { LineChart } from '@/components/LineChart/LineChart'
 import { Popover, usePopover } from '@/components/Popover'
 import { ContextMenuItem, ContextMenuSection } from '@/components/ContextMenu'
 import { Modal, useModal } from '@/components/Modal'
+import debounce from 'debounce'
 
 export function TrackerSheet({ id }: { id: number }) {
   const db = useSQLiteContext()
-  const queryClient = useQueryClient()
 
   const { data: statTracker, error: statTrackerError } = useQuery({
     queryKey: ['trackers', id],
     queryFn: () => getStatTracker(db, id),
   })
 
-  const { mutate: addStatValueMutator, error: addingError } = useMutation({
-    mutationFn: (param: AddStatValueParam) => addStatValue(db, param),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['trackers'] }),
-  })
-  const { mutate: updateStatValueMutator, error: updatingError } = useMutation({
-    mutationFn: (param: UpdateStatValueParam) => updateStatValue(db, param),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['trackers'] }),
-  })
-
-  useErrorToasts(
-    { title: 'Error loading a stat tracker', errorData: statTrackerError },
-    { title: 'Error adding a stat value', errorData: addingError },
-    { title: 'Error updating a stat value', errorData: updatingError }
-  )
+  useErrorToasts({ title: 'Error loading a stat tracker', errorData: statTrackerError })
 
   const { isPopoverShown, hidePopover, showPopover, animatedStyle } = usePopover()
-
-  const latestStatValue = statTracker?.values.at(-1)
-
-  const isTodayTracked = latestStatValue?.date
-    ? isToday(makeDateTz(latestStatValue.date).date)
-    : false
 
   return (
     <BottomSheetView className='pb-safe-offset-4 px-4'>
@@ -75,64 +57,7 @@ export function TrackerSheet({ id }: { id: number }) {
           </Pressable>
         </View>
         <LineChart data={statTracker?.values ?? []} x='date' y='value' />
-        <View className='flex flex-col gap-4 items-center my-4'>
-          <View className='flex flex-row gap-4'>
-            <Text className='text-fg bg-bgTertiary px-6 py-3 rounded-lg'>-1</Text>
-            <Text className='text-fg bg-bgTertiary px-6 py-3 rounded-lg'>-10</Text>
-            <Text className='text-fg bg-bgTertiary px-6 py-3 rounded-lg'>-100</Text>
-            <Pressable
-              onPress={() =>
-                isTodayTracked &&
-                updateStatValueMutator({
-                  id: latestStatValue!.id,
-                  value: latestStatValue!.value - 1000,
-                })
-              }
-              className='bg-bgTertiary px-6 py-3 rounded-lg active:bg-bgSecondary'
-            >
-              <Text className='text-fg'>-1000</Text>
-            </Pressable>
-          </View>
-          <View className='flex flex-col gap-2'>
-            <Pressable onPress={() => null}>
-              <View className='flex flex-row gap-2 px-4 py-2 bg-bgTertiary rounded-lg'>
-                <View className='flex flex-row gap-1 items-center border-b-2 border-accent px-2'>
-                  {statTracker?.prefix && (
-                    <Text className='text-accent font-bold text-xl'>{statTracker.prefix}</Text>
-                  )}
-                  <TrackerValueInput
-                    value={isTodayTracked ? latestStatValue?.value : undefined}
-                    isAdding={!isTodayTracked}
-                    trackerId={statTracker?.id}
-                    statValueId={latestStatValue?.id}
-                    onAddStatValue={addStatValueMutator}
-                    onUpdateStatValue={updateStatValueMutator}
-                  />
-                  {statTracker?.suffix && (
-                    <Text className='text-accent font-bold text-xl'>{statTracker.suffix}</Text>
-                  )}
-                </View>
-              </View>
-            </Pressable>
-          </View>
-          <View className='flex flex-row gap-4'>
-            <Text className='text-fg bg-bgTertiary px-6 py-3 rounded-lg'>+1</Text>
-            <Text className='text-fg bg-bgTertiary px-6 py-3 rounded-lg'>+10</Text>
-            <Text className='text-fg bg-bgTertiary px-6 py-3 rounded-lg'>+100</Text>
-            <Pressable
-              onPress={() =>
-                isTodayTracked &&
-                updateStatValueMutator({
-                  id: latestStatValue!.id,
-                  value: latestStatValue!.value + 1000,
-                })
-              }
-              className='bg-bgTertiary px-6 py-3 rounded-lg active:bg-bgSecondary'
-            >
-              <Text className='text-fg'>+1000</Text>
-            </Pressable>
-          </View>
-        </View>
+        <TrackerValueControls statTracker={statTracker} />
       </Pressable>
       <Popover isOpen={isPopoverShown} className='top-10 right-6' animatedStyle={animatedStyle}>
         <ContextMenuSection label='Tracker' first />
@@ -141,6 +66,113 @@ export function TrackerSheet({ id }: { id: number }) {
         <ContextMenuItem label='Delete tracker' iconName='trash' color={colors.negative} />
       </Popover>
     </BottomSheetView>
+  )
+}
+
+function TrackerValueControls({ statTracker }: { statTracker?: DetailedStatTracker }) {
+  const db = useSQLiteContext()
+  const queryClient = useQueryClient()
+
+  const { mutate: addStatValueMutator, error: addingError } = useMutation({
+    mutationFn: (param: AddStatValueParam) => addStatValue(db, param),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['trackers'] }),
+  })
+  const { mutate: updateStatValueMutator, error: updatingError } = useMutation({
+    mutationFn: (param: UpdateStatValueParam) => updateStatValue(db, param),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['trackers'] }),
+  })
+
+  useErrorToasts(
+    { title: 'Error adding a stat value', errorData: addingError },
+    { title: 'Error updating a stat value', errorData: updatingError }
+  )
+
+  const latestStatValue = statTracker?.values.at(-1)
+
+  const isTodayTracked = latestStatValue?.date
+    ? isToday(makeDateTz(latestStatValue.date).date)
+    : false
+
+  const [value, setValue] = useState(isTodayTracked ? latestStatValue?.value : undefined)
+
+  useEffect(() => {
+    isTodayTracked && setValue(latestStatValue?.value)
+  }, [isTodayTracked, latestStatValue?.value])
+
+  const debouncedUpdateStatValue = useMemo(
+    () => debounce(updateStatValueMutator, 500),
+    [updateStatValueMutator]
+  )
+
+  const onButtonPress = (change: number) => () => {
+    if (isTodayTracked) {
+      const newValue = value! + change
+      setValue(newValue)
+
+      debouncedUpdateStatValue({
+        id: latestStatValue!.id,
+        value: newValue!,
+      })
+    }
+  }
+
+  return (
+    <View className='flex flex-col gap-4 items-center my-4'>
+      <View className='flex flex-row gap-4'>
+        {[-1, -10, -100, -1000].map((change) => (
+          <TrackerValueButton key={change} change={change} onButtonPress={onButtonPress(change)} />
+        ))}
+      </View>
+      <View className='flex flex-col gap-2'>
+        <Pressable onPress={() => null}>
+          <View className='flex flex-row gap-2 px-4 py-2 bg-bgTertiary rounded-lg'>
+            <View className='flex flex-row gap-1 items-center border-b-2 border-accent px-2'>
+              {statTracker?.prefix && (
+                <Text className='text-accent font-bold text-xl'>{statTracker.prefix}</Text>
+              )}
+              <TrackerValueInput
+                value={value}
+                isAdding={!isTodayTracked}
+                trackerId={statTracker?.id}
+                statValueId={latestStatValue?.id}
+                onAddStatValue={addStatValueMutator}
+                onUpdateStatValue={updateStatValueMutator}
+              />
+              {statTracker?.suffix && (
+                <Text className='text-accent font-bold text-xl'>{statTracker.suffix}</Text>
+              )}
+            </View>
+          </View>
+        </Pressable>
+      </View>
+      <View className='flex flex-row gap-4'>
+        {[1, 10, 100, 1000].map((change) => (
+          <TrackerValueButton key={change} change={change} onButtonPress={onButtonPress(change)} />
+        ))}
+      </View>
+    </View>
+  )
+}
+
+function TrackerValueButton({
+  change,
+  onButtonPress,
+}: {
+  change: number
+  onButtonPress: () => void
+}) {
+  return (
+    <Pressable
+      onPress={onButtonPress}
+      className='bg-bgTertiary px-6 py-3 rounded-lg active:bg-bgSecondary'
+    >
+      {({ pressed }) => (
+        <Text style={{ color: pressed ? colors.accent : colors.fg }}>
+          {change > 0 ? '+' : ''}
+          {change}
+        </Text>
+      )}
+    </Pressable>
   )
 }
 
