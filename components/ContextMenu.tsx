@@ -1,6 +1,7 @@
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import Feather from '@expo/vector-icons/Feather'
 import { colors } from '@/common/theme'
+import { Pressable } from 'react-native-gesture-handler'
 
 export function ContextMenuSection({ label, first }: { label: string; first?: boolean }) {
   return (
