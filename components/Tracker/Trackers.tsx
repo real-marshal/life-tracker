@@ -44,7 +44,7 @@ function TrackerItem({
         // why does active modifier just not work sometimes, fucking nativewind...
         className='flex flex-row grow gap-2 bg-bgTertiary p-2 px-4 rounded-lg justify-between'
         style={({ pressed }) => ({
-          ...(isLast && { width: '50%', flexGrow: 0 }),
+          ...(isLast && name.length < 20 && { width: '50%', flexGrow: 0 }),
           ...(pressed && { backgroundColor: colors.bgSecondary }),
         })}
         onPress={onTrackerPress}
