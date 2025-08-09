@@ -48,7 +48,7 @@ function UnmemoedLineChart({
   data: passedData,
   x,
   y,
-  rightPadding = 25,
+  rightPadding = 30,
 }: {
   data: LineChartData[]
   x: string

@@ -117,7 +117,7 @@ export function TrackerSheet({ id }: { id: number }) {
       />
       <Modal {...deleteTrackerModalProps} containerClassName='max-w-[80%]'>
         <Text className='text-fg self-center text-xl font-bold text-center'>
-          Are you sure you want to delete this tracker?
+          Are you sure you want to delete this tracker and all its values?
         </Text>
         <View className='flex flex-row gap-8'>
           <Pressable

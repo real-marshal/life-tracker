@@ -8,6 +8,7 @@ import { isToday } from 'date-fns'
 import debounce from 'debounce'
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import { showErrorToast } from '@/common/utils/toast'
+import { ConfirmModal } from '@/components/ConfirmModal'
 
 export function TrackerValueControls({
   statTracker,
@@ -24,10 +25,10 @@ export function TrackerValueControls({
     ? isToday(makeDateTz(latestStatValue.date).date)
     : false
 
-  const [value, setValue] = useState(isTodayTracked ? latestStatValue?.value : undefined)
+  const [value, setValue] = useState(latestStatValue?.value)
 
   useEffect(() => {
-    setValue(isTodayTracked ? latestStatValue?.value : undefined)
+    setValue(latestStatValue?.value)
   }, [isTodayTracked, latestStatValue?.value])
 
   const debouncedUpdateStatValue = useMemo(() => debounce(updateStatValue, 500), [updateStatValue])
@@ -41,8 +42,17 @@ export function TrackerValueControls({
         id: latestStatValue!.id,
         value: newValue!,
       })
+    } else if (value) {
+      setAddChange(change)
+      showModal()
+    } else {
+      showErrorToast('Add a new value first')
     }
   }
+
+  const [addChange, setAddChange] = useState(0)
+
+  const { showModal, hideModal, ...modalProps } = useModal()
 
   return (
     <View className='flex flex-col gap-4 items-center my-4'>
@@ -76,6 +86,14 @@ export function TrackerValueControls({
           <TrackerValueButton key={change} change={change} onButtonPress={onButtonPress(change)} />
         ))}
       </View>
+      <ConfirmModal
+        text={`The value ${value! + addChange} (${value} ${addChange > 0 ? '+' : '-'} ${Math.abs(addChange)}) will be added?`}
+        hideModal={hideModal}
+        modalProps={modalProps}
+        onConfirm={() => {
+          addStatValue({ trackerId: statTracker!.id, value: value! + addChange })
+        }}
+      />
     </View>
   )
 }
@@ -138,7 +156,7 @@ function TrackerValueInput({
   }, [isAdding, value])
 
   const { showModal, hideModal, ...modalProps } = useModal(() =>
-    setValue(isAdding ? '' : passedValue!.toString())
+    setValue(passedValue?.toString() ?? '')
   )
 
   return (
@@ -161,49 +179,30 @@ function TrackerValueInput({
           value && Number.parseFloat(value) !== passedValue && showModal()
         }}
       />
-      <Modal {...modalProps}>
-        <Text className='text-fg self-center text-xl font-bold'>
-          {isAdding ? 'Save new value?' : 'Update the value?'}
-        </Text>
-        <View className='flex flex-row gap-8'>
-          {/* This is a funny one - if animationType is set to none and I add both paddings
-                to view or text, the red/green button flickers at the top left corner of the screen when the keyboard
-                is getting dismissed and the modal shows up! The only way to prevent this that I found
-                is to just put one padding on the view and another on the text lol */}
-          <Pressable
-            className='bg-negative px-6 rounded-lg active:bg-negativeActive'
-            onPress={modalProps.onCancel}
-          >
-            <Text className='text-bg font-medium py-3'>Cancel</Text>
-          </Pressable>
-          <Pressable
-            className='bg-positive rounded-lg px-6 active:bg-positiveActive'
-            onPress={() => {
-              hideModal()
+      <ConfirmModal
+        text={isAdding ? 'Add new value?' : 'Update the value?'}
+        hideModal={hideModal}
+        modalProps={modalProps}
+        onConfirm={() => {
+          const numValue = Number.parseFloat(value)
 
-              const numValue = Number.parseFloat(value)
+          if (Number.isNaN(numValue)) {
+            showErrorToast('Bad input', 'Only numbers are allowed')
 
-              if (Number.isNaN(numValue)) {
-                showErrorToast('Bad input', 'Only numbers are allowed')
+            return
+          }
 
-                return
-              }
+          if (isAdding) {
+            if (!trackerId) return
 
-              if (isAdding) {
-                if (!trackerId) return
+            onAddStatValue({ trackerId, value: numValue })
+          } else {
+            if (!statValueId) return
 
-                onAddStatValue({ trackerId, value: numValue })
-              } else {
-                if (!statValueId) return
-
-                onUpdateStatValue({ id: statValueId, value: numValue })
-              }
-            }}
-          >
-            <Text className='text-bg font-medium py-3'>Save</Text>
-          </Pressable>
-        </View>
-      </Modal>
+            onUpdateStatValue({ id: statValueId, value: numValue })
+          }
+        }}
+      />
     </>
   )
 }
