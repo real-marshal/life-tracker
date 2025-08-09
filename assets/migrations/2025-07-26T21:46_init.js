@@ -17,8 +17,8 @@ module.exports = (db) => {
     -- prerequisites/consequences - m2m junction table
     create table if not exists goal_link
     (
-      goal_id      integer not null references goal (id),
-      next_goal_id integer not null references goal (id),
+      goal_id      integer not null references goal (id) on delete cascade,
+      next_goal_id integer not null references goal (id) on delete cascade,
       primary key (goal_id, next_goal_id)
     );
 
@@ -27,8 +27,8 @@ module.exports = (db) => {
     -- this makes it o2m atm, but it's still modeled as a junction table due to very possible future changes
     create table if not exists goal_relation
     (
-      goal_id         integer not null references goal (id),
-      related_goal_id integer not null references goal (id),
+      goal_id         integer not null references goal (id) on delete cascade,
+      related_goal_id integer not null references goal (id) on delete cascade,
       primary key (goal_id, related_goal_id)
     );
 
@@ -43,20 +43,20 @@ module.exports = (db) => {
     -- goal trackers - m2m junction table
     create table if not exists goal_tracker
     (
-      goal_id    integer not null references goal (id),
-      tracker_id integer not null references tracker (id),
+      goal_id    integer not null references goal (id) on delete cascade,
+      tracker_id integer not null references tracker (id) on delete cascade,
       primary key (goal_id, tracker_id)
     );
 
     create table if not exists date_tracker
     (
-      tracker_id integer primary key references tracker (id),
+      tracker_id integer primary key references tracker (id) on delete cascade,
       date       text not null
     );
 
     create table if not exists stat_tracker
     (
-      tracker_id integer primary key references tracker (id),
+      tracker_id integer primary key references tracker (id) on delete cascade,
       prefix     text,
       suffix     text
     );
@@ -65,7 +65,7 @@ module.exports = (db) => {
     create table if not exists stat_value
     (
       id         integer primary key autoincrement,
-      tracker_id integer not null references tracker (id),
+      tracker_id integer not null references tracker (id) on delete cascade,
       value      numeric not null,
       created_at text    not null
     );
@@ -73,7 +73,7 @@ module.exports = (db) => {
     create table if not exists goal_update
     (
       id           integer primary key autoincrement,
-      goal_id      integer not null references goal (id),
+      goal_id      integer not null references goal (id) on delete cascade,
       type         text    not null check (type in ('normal', 'closing')),
       sentiment    text    not null check (sentiment in ('positive', 'neutral', 'negative')),
       related_goal integer references goal (id),
