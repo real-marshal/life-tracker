@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router'
 import { colors, goalStatusColorMap } from '@/common/theme'
 import { SectionTitle } from '@/components/SectionTitle'
 import Feather from '@expo/vector-icons/Feather'
+import { cn } from '@/common/utils/css'
 
 export function GoalsSection({
   title,
@@ -31,13 +32,23 @@ export function GoalPreviewItem({
   name,
   status,
   small,
-}: Omit<GoalPreview, 'status'> & { status?: Goal['status']; small?: boolean }) {
+  disableLink,
+  className,
+}: Omit<GoalPreview, 'status'> & {
+  status?: Goal['status']
+  small?: boolean
+  disableLink?: boolean
+  className?: string
+}) {
   const router = useRouter()
 
   return (
     <Pressable
-      onPress={() => router.navigate({ pathname: '/goal/[id]', params: { id } })}
-      className='flex flex-row gap-3 items-center py-1 px-2 active:bg-bgTertiary rounded-lg w-full'
+      onPress={() => !disableLink && router.navigate({ pathname: '/goal/[id]', params: { id } })}
+      className={cn(
+        'flex flex-row gap-3 items-center py-1 px-2 active:bg-bgTertiary rounded-lg w-full',
+        className
+      )}
     >
       <View
         className='w-[6] h-[6] rounded-sm'

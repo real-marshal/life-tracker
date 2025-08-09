@@ -19,6 +19,7 @@ import { ContextMenuItem, ContextMenuSection } from '@/components/ContextMenu'
 import { Modal, useModal } from '@/components/Modal'
 import { TrackerValueControls } from '@/components/Tracker/TrackerValueControls'
 import { HistoricalData } from './HistoricalData'
+import { LinkedGoals } from '@/components/Tracker/LinkedGoals'
 
 export function TrackerSheet({ id }: { id: number }) {
   const db = useSQLiteContext()
@@ -51,6 +52,11 @@ export function TrackerSheet({ id }: { id: number }) {
 
   const { isPopoverShown, hidePopover, showPopover, animatedStyle } = usePopover()
 
+  const {
+    showModal: showLinkedGoalsModal,
+    hideModal: hideLinkedGoalsModal,
+    ...linkedGoalsModalProps
+  } = useModal()
   const {
     showModal: showHistoricalDataModal,
     hideModal: hideHistoricalDataModal,
@@ -92,7 +98,14 @@ export function TrackerSheet({ id }: { id: number }) {
       </Pressable>
       <Popover isOpen={isPopoverShown} className='top-10 right-6' animatedStyle={animatedStyle}>
         <ContextMenuSection label='Tracker' first />
-        <ContextMenuItem label='Change linked goals' iconName='link-2' />
+        <ContextMenuItem
+          label='Remove linked goals'
+          iconName='link-2'
+          onPress={() => {
+            showLinkedGoalsModal()
+            hidePopover()
+          }}
+        />
         <ContextMenuItem
           label='Edit historical data'
           iconName='edit-3'
@@ -109,6 +122,11 @@ export function TrackerSheet({ id }: { id: number }) {
           onPress={showDeleteTrackerModal}
         />
       </Popover>
+      <LinkedGoals
+        trackerId={statTracker!.id}
+        modalProps={linkedGoalsModalProps}
+        hideModal={hideLinkedGoalsModal}
+      />
       <HistoricalData
         statTracker={statTracker}
         modalProps={historicalDataModalProps}

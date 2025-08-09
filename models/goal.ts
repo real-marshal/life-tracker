@@ -242,3 +242,26 @@ export async function getGoal(db: SQLiteDatabase, id: number): Promise<Goal> {
     consequences: JSON.parse(goal.consequences),
   }
 }
+
+export async function getGoalsLinkedToTracker(
+  db: SQLiteDatabase,
+  trackerId: number
+): Promise<GoalPreviewRender[]> {
+  const rows = await db.getAllAsync<Row<GoalPreviewRender>>(
+    `
+    select id,
+           name,
+           render_data
+    from goal
+           left join goal_tracker gt on goal.id = gt.goal_id
+    where status = 'active'
+      and gt.tracker_id = $trackerId
+    order by case when type = 'long' then 1 when type = 'normal' then 2 end
+  `,
+    { $trackerId: trackerId }
+  )
+
+  return rows
+    .map(toCamelCase<RowCamelCase<GoalPreviewRender>>)
+    .map((r) => ({ ...r, renderData: JSON.parse(r.renderData) }))
+}

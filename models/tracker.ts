@@ -176,3 +176,23 @@ export async function deleteStatValue(db: SQLiteDatabase, id: number) {
     { $id: id }
   )
 }
+
+export type DeleteGoalLinkParam = {
+  trackerId: number
+  goalId: number
+}
+
+export async function deleteGoalLink(
+  db: SQLiteDatabase,
+  { trackerId, goalId }: DeleteGoalLinkParam
+) {
+  await db.runAsync(
+    `
+      delete
+      from goal_tracker
+      where tracker_id = $trackerId
+        and goal_id = $goalId
+    `,
+    { $trackerId: trackerId, $goalId: goalId }
+  )
+}
