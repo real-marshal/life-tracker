@@ -24,7 +24,7 @@ export interface StatTracker extends BaseTracker {
   type: 'stat'
   prefix?: string
   suffix?: string
-  value: number
+  value?: number
 }
 
 export type Tracker = DateTracker | StatTracker

@@ -36,7 +36,7 @@ function TrackerItem({
   const shownValue =
     typeSpecificData.type === 'date'
       ? formatDurationShort(typeSpecificData.duration)
-      : `${typeSpecificData.prefix ?? ''}${typeSpecificData.value}${typeSpecificData.suffix ?? ''}`
+      : `${typeSpecificData.prefix ?? ''}${typeSpecificData.value ?? ''}${typeSpecificData.suffix ?? ''}`
 
   return (
     <>
