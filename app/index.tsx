@@ -24,6 +24,7 @@ export default function HomeScreen() {
     data: user,
     error: userError,
     isLoading: userIsLoading,
+    isFetching: userIsFetching,
   } = useQuery({ queryKey: ['user'], queryFn: () => getUser(db) })
   const { data: metastats, error: metaStatsError } = useQuery({
     queryKey: ['metastats'],
@@ -51,10 +52,10 @@ export default function HomeScreen() {
   })
 
   useEffect(() => {
-    if (!userIsLoading && !userError && !user?.isOnboarded) {
+    if (!userIsLoading && !userIsFetching && !userError && !user?.isOnboarded) {
       router.replace('/onboard')
     }
-  }, [userError, router, user?.isOnboarded, userIsLoading])
+  }, [userError, router, user?.isOnboarded, userIsLoading, userIsFetching])
 
   useErrorToasts(
     { title: 'Error getting user data', errorData: userError },

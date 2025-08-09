@@ -6,16 +6,20 @@ import { useMutator } from '@/hooks/useMutator'
 import { stringifyError } from '@/common/utils/error'
 import { useEffect } from 'react'
 import { useErrorToasts } from '@/hooks/useErrorToasts'
+import { useQueryClient } from '@tanstack/react-query'
 
 export default function OnboardScreen() {
   const db = useSQLiteContext()
   const router = useRouter()
+  const queryClient = useQueryClient()
 
   const [finishOnboardingMutator, isDone, onboardingError] = useMutator(finishOnboarding)
 
   useEffect(() => {
-    isDone && !onboardingError && router.replace('/')
-  }, [isDone, onboardingError, router])
+    isDone &&
+      !onboardingError &&
+      queryClient.invalidateQueries({ queryKey: ['user'] }).then(() => router.replace('/'))
+  }, [isDone, onboardingError, queryClient, router])
 
   useErrorToasts({ title: 'Error finishing onboarding', errorData: onboardingError })
 
