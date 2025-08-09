@@ -29,6 +29,7 @@ import { ChartTransformState } from '@/node_modules/victory-native/src/cartesian
 import { DateRange, dateRangeDetailsMap, dateRanges } from '@/components/LineChart/dateRanges'
 import { useEnforceLineChartScrollBounds, useRightPadding } from '@/components/LineChart/hooks'
 import { memoize } from '@/common/utils/function'
+import { makeDateTz } from '@/common/utils/date'
 
 const fontAsset = require('@/assets/fonts/SpaceMono-Regular.ttf')
 
@@ -63,7 +64,7 @@ function UnmemoedLineChart({
   const data: LineChartDataTimestamps[] = useMemo(() => {
     return passedData.map((datum) => ({
       ...datum,
-      date: new Date(datum.date).getTime(),
+      date: makeDateTz(datum.date).date.getTime(),
     }))
   }, [passedData])
 

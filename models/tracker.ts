@@ -130,6 +130,17 @@ export type AddStatValueParam = {
   value: number
 }
 
+export async function deleteTracker(db: SQLiteDatabase, id: number) {
+  await db.runAsync(
+    `
+      delete
+      from tracker
+      where id = $id
+  `,
+    { $id: id }
+  )
+}
+
 export async function addStatValue(db: SQLiteDatabase, { trackerId, value }: AddStatValueParam) {
   await db.runAsync(
     `
@@ -153,5 +164,15 @@ export async function updateStatValue(db: SQLiteDatabase, { id, value }: UpdateS
       where id = $id
     `,
     { $value: value, $id: id }
+  )
+}
+
+export async function deleteStatValue(db: SQLiteDatabase, id: number) {
+  await db.runAsync(
+    `
+      delete from stat_value
+      where id = $id
+    `,
+    { $id: id }
   )
 }

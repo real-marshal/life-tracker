@@ -5,7 +5,7 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet'
 import { useCallback, useRef } from 'react'
 import { colors } from '@/common/theme'
 import { SheetBackdrop } from '@/components/SheetBackdrop'
-import { TrackerSheet } from '@/components/TrackerSheet'
+import { TrackerSheet } from '@/components/Tracker/TrackerSheet'
 import { useSheetBackHandler } from '@/hooks/useSheetBackHandler'
 
 export function Trackers({ trackers }: { trackers: Tracker[] }) {

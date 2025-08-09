@@ -1,7 +1,8 @@
-import { Text, View } from 'react-native'
+import { Text, View, Pressable as RNPressable } from 'react-native'
 import Feather from '@expo/vector-icons/Feather'
 import { colors } from '@/common/theme'
 import { Pressable } from 'react-native-gesture-handler'
+import { cn } from '@/common/utils/css'
 
 export function ContextMenuSection({ label, first }: { label: string; first?: boolean }) {
   return (
@@ -20,6 +21,7 @@ export function ContextMenuItem({
   color = colors.fg,
   iconName,
   iconSize = 18,
+  rnPressable,
 }: {
   label: string
   onPress?: () => void
@@ -27,17 +29,26 @@ export function ContextMenuItem({
   color?: string
   iconName?: keyof (typeof Feather)['glyphMap']
   iconSize?: number
+  rnPressable?: boolean
 }) {
+  const PressableComponent = rnPressable ? RNPressable : Pressable
+
   return (
-    <Pressable onPress={onPress}>
-      <View
-        className={`flex flex-row gap-5 px-5 py-3 ${last ? 'rounded-b-lg' : 'border-b-hairline'} border-bgTertiary items-center active:bg-bgTertiary`}
-      >
-        <Text className='text-lg grow' style={{ color: color }}>
-          {label}
-        </Text>
-        <Feather name={iconName} size={iconSize} color={color} />
-      </View>
-    </Pressable>
+    <PressableComponent onPress={onPress}>
+      {({ pressed }) => (
+        <View
+          className={cn('flex flex-row gap-5 px-5 py-3 border-bgTertiary items-center', {
+            'bg-bgTertiary': pressed,
+            'rounded-b-lg': last,
+            'border-b-hairline': !last,
+          })}
+        >
+          <Text className='text-lg grow' style={{ color: color }}>
+            {label}
+          </Text>
+          <Feather name={iconName} size={iconSize} color={color} />
+        </View>
+      )}
+    </PressableComponent>
   )
 }
