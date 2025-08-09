@@ -1,5 +1,5 @@
 import { AddStatValueParam, DetailedStatTracker, UpdateStatValueParam } from '@/models/tracker'
-import { Modal, useModal } from '@/components/Modal'
+import { useModal } from '@/components/Modal'
 import { useEffect, useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { colors } from '@/common/theme'

@@ -54,7 +54,7 @@ export function HistoricalData({
             )}
           </Pressable>
         </View>
-        <ScrollView className='max-h-[100%] grow-0 px-5'>
+        <ScrollView className='max-h-[100%] grow-0 px-5 pb-12'>
           <View className='flex flex-col gap-2'>
             {statTracker?.values?.toReversed().map((trackerValue) => (
               <View
