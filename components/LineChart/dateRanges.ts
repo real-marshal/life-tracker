@@ -30,7 +30,7 @@ export const dateRangeDetailsMap: Record<
 
       const lastDate = new Date(data.at(-1)!.date)
 
-      return [startOfMonth(subMonths(lastDate, 1)).getTime(), lastDate.getTime()]
+      return [subMonths(lastDate, 1).getTime(), lastDate.getTime()]
     },
     getTickTimestamps: (data) => {
       if (!data.length) return []
@@ -62,7 +62,7 @@ export const dateRangeDetailsMap: Record<
 
       const lastDate = new Date(data.at(-1)!.date)
 
-      return [startOfMonth(subMonths(lastDate, 3)).getTime(), lastDate.getTime()]
+      return [subMonths(lastDate, 3).getTime(), lastDate.getTime()]
     },
     getTickTimestamps: (data) => {
       if (!data.length) return []
@@ -94,7 +94,7 @@ export const dateRangeDetailsMap: Record<
 
       const lastDate = new Date(data.at(-1)!.date)
 
-      return [startOfMonth(subMonths(lastDate, 6)).getTime(), lastDate.getTime()]
+      return [subMonths(lastDate, 6).getTime(), lastDate.getTime()]
     },
     getTickTimestamps: (data) => {
       if (!data.length) return []
