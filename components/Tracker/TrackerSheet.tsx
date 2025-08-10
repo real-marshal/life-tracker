@@ -122,17 +122,21 @@ export function TrackerSheet({ id }: { id: number }) {
           onPress={showDeleteTrackerModal}
         />
       </Popover>
-      <LinkedGoals
-        trackerId={statTracker!.id}
-        modalProps={linkedGoalsModalProps}
-        hideModal={hideLinkedGoalsModal}
-      />
-      <HistoricalData
-        statTracker={statTracker}
-        modalProps={historicalDataModalProps}
-        hideModal={hideHistoricalDataModal}
-        updateStatValue={updateStatValueMutator}
-      />
+      {statTracker && (
+        <LinkedGoals
+          trackerId={statTracker.id}
+          modalProps={linkedGoalsModalProps}
+          hideModal={hideLinkedGoalsModal}
+        />
+      )}
+      {statTracker && (
+        <HistoricalData
+          statTracker={statTracker}
+          modalProps={historicalDataModalProps}
+          hideModal={hideHistoricalDataModal}
+          updateStatValue={updateStatValueMutator}
+        />
+      )}
       <Modal {...deleteTrackerModalProps} containerClassName='max-w-[80%]'>
         <Text className='text-fg self-center text-xl font-bold text-center'>
           Are you sure you want to delete this tracker and all its values?

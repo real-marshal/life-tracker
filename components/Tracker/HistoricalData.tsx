@@ -19,7 +19,7 @@ export function HistoricalData({
   hideModal,
   updateStatValue,
 }: {
-  statTracker?: DetailedStatTracker
+  statTracker: DetailedStatTracker
   modalProps: RestModalProps
   hideModal: () => void
   updateStatValue: (param: UpdateStatValueParam) => void
@@ -56,7 +56,7 @@ export function HistoricalData({
         </View>
         <ScrollView className='max-h-[100%] grow-0 px-5 pb-12'>
           <View className='flex flex-col gap-2'>
-            {statTracker?.values?.toReversed().map((trackerValue) => (
+            {statTracker.values?.toReversed().map((trackerValue) => (
               <View
                 className='flex flex-row gap-5 justify-between items-center px-4 rounded-lg bg-bgTertiary'
                 key={trackerValue.id}
