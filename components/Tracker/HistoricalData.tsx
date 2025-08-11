@@ -4,14 +4,14 @@ import { useSQLiteContext } from 'expo-sqlite'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useErrorToasts } from '@/hooks/useErrorToasts'
 import { RefObject, useEffect, useRef, useState } from 'react'
-import { Keyboard, Pressable, Text, TextInput, View } from 'react-native'
+import { Keyboard, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import Feather from '@expo/vector-icons/Feather'
 import { colors } from '@/common/theme'
-import { ScrollView } from 'react-native-gesture-handler'
 import { format } from 'date-fns'
 import { makeDateTz } from '@/common/utils/date'
-import { Popover, usePopover } from '@/components/Popover'
+import { Popover } from '@/components/Popover'
 import { ContextMenuItem } from '@/components/ContextMenu'
+import { useContextMenu } from '@/hooks/useContextMenu'
 
 export function HistoricalData({
   statTracker,
@@ -34,7 +34,7 @@ export function HistoricalData({
 
   useErrorToasts({ title: 'Error deleting a stat tracker', errorData: deletingError })
 
-  const onModalPress = useRef<(() => void)[]>([() => null])
+  const onModalPress = useRef<() => void>(() => null)
 
   return (
     <Modal
@@ -42,7 +42,7 @@ export function HistoricalData({
       containerClassName='justify-start px-4'
       onPress={() => {
         Keyboard.dismiss()
-        onModalPress.current.forEach((f) => f())
+        onModalPress.current()
       }}
     >
       <View className='flex flex-col gap-6'>
@@ -55,7 +55,7 @@ export function HistoricalData({
           </Pressable>
         </View>
         <ScrollView className='max-h-[100%] grow-0 px-5 pb-12'>
-          <View className='flex flex-col gap-2'>
+          <View className='flex flex-col gap-2' onStartShouldSetResponder={() => true}>
             {statTracker.values?.toReversed().map((trackerValue) => (
               <View
                 className='flex flex-row gap-5 justify-between items-center px-4 rounded-lg bg-bgTertiary'
@@ -90,15 +90,11 @@ function HistoricalDataValueEdit({
   trackerValue: DetailedStatTracker['values'][0]
   updateStatValue: (param: UpdateStatValueParam) => void
   deleteStatValue: (id: number) => void
-  onModalPressRef: RefObject<(() => void)[]>
+  onModalPressRef: RefObject<() => void>
 }) {
   const textInputRef = useRef<TextInput>(null)
 
-  const { isPopoverShown, hidePopover, showPopover, animatedStyle } = usePopover()
-
-  useEffect(() => {
-    onModalPressRef.current.push(hidePopover)
-  }, [hidePopover, onModalPressRef])
+  const { isPopoverShown, hidePopover, showPopover, animatedStyle } = useContextMenu()
 
   return (
     <>
@@ -124,7 +120,14 @@ function HistoricalDataValueEdit({
           )}
         </Pressable>
       </View>
-      <Pressable onPress={showPopover} hitSlop={4}>
+      <Pressable
+        onPress={() => {
+          onModalPressRef.current()
+          onModalPressRef.current = hidePopover
+          setTimeout(() => showPopover(), 0)
+        }}
+        hitSlop={4}
+      >
         {({ pressed }) => (
           <Feather
             name='trash'

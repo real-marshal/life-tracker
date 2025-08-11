@@ -14,12 +14,13 @@ import { Keyboard, Pressable, Text, View } from 'react-native'
 import Feather from '@expo/vector-icons/Feather'
 import { colors } from '@/common/theme'
 import { LineChart } from '@/components/LineChart/LineChart'
-import { Popover, usePopover } from '@/components/Popover'
+import { Popover } from '@/components/Popover'
 import { ContextMenuItem, ContextMenuSection } from '@/components/ContextMenu'
 import { Modal, useModal } from '@/components/Modal'
 import { TrackerValueControls } from '@/components/Tracker/TrackerValueControls'
 import { HistoricalData } from './HistoricalData'
 import { LinkedGoals } from '@/components/Tracker/LinkedGoals'
+import { useContextMenu } from '@/hooks/useContextMenu'
 
 export function TrackerSheet({ id }: { id: number }) {
   const db = useSQLiteContext()
@@ -50,7 +51,7 @@ export function TrackerSheet({ id }: { id: number }) {
     { title: 'Error deleting a tracker', errorData: deletionError }
   )
 
-  const { isPopoverShown, hidePopover, showPopover, animatedStyle } = usePopover()
+  const { isPopoverShown, hidePopover, showPopover, animatedStyle } = useContextMenu()
 
   const {
     showModal: showLinkedGoalsModal,

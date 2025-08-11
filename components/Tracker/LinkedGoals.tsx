@@ -9,9 +9,10 @@ import { ScrollView } from 'react-native-gesture-handler'
 import { getGoalsLinkedToTracker } from '@/models/goal'
 import { GoalPreviewItem } from '@/components/Goals'
 import { deleteGoalLink, DeleteGoalLinkParam } from '@/models/tracker'
-import { RefObject, useEffect, useRef } from 'react'
-import { Popover, usePopover } from '@/components/Popover'
+import { RefObject, useRef } from 'react'
+import { Popover } from '@/components/Popover'
 import { ContextMenuItem } from '@/components/ContextMenu'
+import { useContextMenu } from '@/hooks/useContextMenu'
 
 export function LinkedGoals({
   trackerId,
@@ -41,14 +42,14 @@ export function LinkedGoals({
     { title: 'Error deleting a goal link', errorData: deletingError }
   )
 
-  const onModalPress = useRef<(() => void)[]>([() => null])
+  const onModalPress = useRef<() => void>(() => null)
 
   return (
     <Modal
       {...modalProps}
       containerClassName='justify-start px-4'
       onPress={() => {
-        onModalPress.current.forEach((f) => f())
+        onModalPress.current()
       }}
     >
       <View className='flex flex-col gap-6'>
@@ -62,7 +63,7 @@ export function LinkedGoals({
         </View>
         {goals?.length ? (
           <ScrollView className='max-h-[100%] grow-0 px-5 pb-12'>
-            <View className='flex flex-col gap-2'>
+            <View className='flex flex-col gap-2' onStartShouldSetResponder={() => true}>
               {goals?.map((goal) => (
                 <View key={goal.id} className='flex flex-row gap-4 items-center'>
                   <GoalPreviewItem {...goal} status='active' small className='w-[80%] grow' />
@@ -95,17 +96,21 @@ function LinkedGoalsDelete({
   trackerId: number
   goalId: number
   deleteGoalLink: (param: DeleteGoalLinkParam) => void
-  onModalPressRef: RefObject<(() => void)[]>
+  onModalPressRef: RefObject<() => void>
 }) {
-  const { isPopoverShown, hidePopover, showPopover, animatedStyle } = usePopover()
-
-  useEffect(() => {
-    onModalPressRef.current.push(hidePopover)
-  }, [hidePopover, onModalPressRef])
+  const { isPopoverShown, hidePopover, showPopover, animatedStyle } = useContextMenu()
 
   return (
     <>
-      <Pressable onPress={showPopover} hitSlop={4} className='flex-1'>
+      <Pressable
+        onPress={() => {
+          onModalPressRef.current()
+          onModalPressRef.current = hidePopover
+          setTimeout(() => showPopover(), 0)
+        }}
+        hitSlop={4}
+        className='flex-1'
+      >
         {({ pressed }) => (
           <Feather
             name='trash'
