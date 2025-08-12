@@ -3,6 +3,7 @@ import { toCamelCase } from '@/common/utils/object'
 import { Row, RowCamelCase } from '@/common/utils/types'
 import { GoalPreview } from '@/models/goal'
 import { DateTz, makeDateTz } from '@/common/utils/date'
+import { formatISO } from 'date-fns'
 
 export interface GoalUpdate {
   id: number
@@ -44,4 +45,54 @@ export async function getGoalUpdates(db: SQLiteDatabase, goalId: number): Promis
       relatedGoal: updateData.relatedGoal ? JSON.parse(updateData.relatedGoal) : undefined,
     }
   })
+}
+
+export async function addGoalUpdate(
+  db: SQLiteDatabase,
+  goalId: number,
+  { type, sentiment, content, isPinned, createdAt }: GoalUpdate
+) {
+  await db.runAsync(
+    `
+    insert into goal_update(goal_id, type, sentiment, content, is_pinned, created_at)
+    values ($goalId, $type, $sentiment, $content, $isPinned, $createdAt)
+  `,
+    {
+      $goalId: goalId,
+      $type: type,
+      $sentiment: sentiment,
+      $content: content,
+      $isPinned: isPinned,
+      $createdAt: formatISO(createdAt.date),
+    }
+  )
+}
+
+export type UpdateGoalUpdateParam = Pick<GoalUpdate, 'id' | 'content'>
+
+export async function updateGoalUpdate(db: SQLiteDatabase, { id, content }: UpdateGoalUpdateParam) {
+  await db.runAsync(
+    `
+      update goal_update
+      set content = $content
+      where id = $id
+    `,
+    {
+      $id: id,
+      $content: content,
+    }
+  )
+}
+
+export async function deleteGoalUpdate(db: SQLiteDatabase, id: number) {
+  await db.runAsync(
+    `
+      delete
+      from goal_update
+      where id = $id
+    `,
+    {
+      $id: id,
+    }
+  )
 }

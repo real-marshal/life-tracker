@@ -16,6 +16,7 @@ import Feather from '@expo/vector-icons/Feather'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { KeyboardProvider } from 'react-native-keyboard-controller'
 
 const toastConfig = {
   success: AppSuccessToast,
@@ -42,13 +43,15 @@ export default function RootLayout() {
     <ThemeProvider value={DarkTheme}>
       <SQLiteProvider databaseName='main.db' onInit={initSqlite}>
         <QueryClientProvider client={queryClient}>
-          <StatusBar style='auto' />
-          <GestureHandlerRootView>
-            <BottomSheetModalProvider>
-              <RootView />
-            </BottomSheetModalProvider>
-          </GestureHandlerRootView>
-          <Toast config={toastConfig} />
+          <KeyboardProvider>
+            <StatusBar style='auto' />
+            <GestureHandlerRootView>
+              <BottomSheetModalProvider>
+                <RootView />
+              </BottomSheetModalProvider>
+            </GestureHandlerRootView>
+            <Toast config={toastConfig} />
+          </KeyboardProvider>
         </QueryClientProvider>
       </SQLiteProvider>
     </ThemeProvider>

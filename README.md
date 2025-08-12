@@ -12,6 +12,7 @@ todo:
  - global search
  - delayed until time?
  - optimize HistoricalData (it feels very bad atm)
+ - virtualize goal and goal update lists
 
 as to monetization, offer a premium sub that:
 - adds sync (use [this lib](https://github.com/kuatsu/react-native-cloud-storage) and just do a full upload regularly, should be fine for now)
