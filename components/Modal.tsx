@@ -8,7 +8,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated'
-import { ReactNode, useEffect, useState } from 'react'
+import { ReactNode, useCallback, useEffect, useState } from 'react'
 import { cn } from '@/common/utils/css'
 
 export function Modal({
@@ -104,13 +104,16 @@ export function useModal(onCancelPassed?: () => void) {
     )
   }, [opacity, scale])
 
-  const hideModal = (isCanceling?: boolean) => {
-    scale.value = withTiming(0, { duration: 200 }, (finished) => {
-      finished && runOnJS(setIsShown)(false)
-      isCanceling && onCancelPassed && runOnJS(onCancelPassed)()
-    })
-    opacity.value = withTiming(0, { duration: 200 })
-  }
+  const hideModal = useCallback(
+    (isCanceling?: boolean) => {
+      scale.value = withTiming(0, { duration: 200 }, (finished) => {
+        finished && runOnJS(setIsShown)(false)
+        isCanceling && onCancelPassed && runOnJS(onCancelPassed)()
+      })
+      opacity.value = withTiming(0, { duration: 200 })
+    },
+    [onCancelPassed, opacity, scale]
+  )
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -118,9 +121,9 @@ export function useModal(onCancelPassed?: () => void) {
 
   return {
     isModalShown,
-    showModal: () => setIsShown(true),
+    showModal: useCallback(() => setIsShown(true), []),
     onCancel: () => hideModal(true),
-    hideModal: () => hideModal(),
+    hideModal: useCallback(() => hideModal(), [hideModal]),
     opacitySharedValue: opacity,
     scaleSharedValue: scale,
     animatedStyle,

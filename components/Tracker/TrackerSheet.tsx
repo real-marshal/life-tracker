@@ -16,11 +16,12 @@ import { colors } from '@/common/theme'
 import { LineChart } from '@/components/LineChart/LineChart'
 import { Popover } from '@/components/Popover'
 import { ContextMenuItem, ContextMenuSection } from '@/components/ContextMenu'
-import { Modal, useModal } from '@/components/Modal'
+import { useModal } from '@/components/Modal'
 import { TrackerValueControls } from '@/components/Tracker/TrackerValueControls'
 import { HistoricalData } from './HistoricalData'
 import { LinkedGoals } from '@/components/Tracker/LinkedGoals'
 import { useContextMenu } from '@/hooks/useContextMenu'
+import { ConfirmModal } from '@/components/ConfirmModal'
 
 export function TrackerSheet({ id }: { id: number }) {
   const db = useSQLiteContext()
@@ -138,29 +139,16 @@ export function TrackerSheet({ id }: { id: number }) {
           updateStatValue={updateStatValueMutator}
         />
       )}
-      <Modal {...deleteTrackerModalProps} containerClassName='max-w-[80%]'>
-        <Text className='text-fg self-center text-xl font-bold text-center'>
-          Are you sure you want to delete this tracker and all its values?
-        </Text>
-        <View className='flex flex-row gap-8'>
-          <Pressable
-            className='bg-fg px-6 rounded-lg active:bg-fgSecondary'
-            onPress={deleteTrackerModalProps.onCancel}
-          >
-            <Text className='text-bg font-medium py-3'>Cancel</Text>
-          </Pressable>
-          <Pressable
-            className='bg-negative rounded-lg px-6 active:bg-negativeActive'
-            onPress={() => {
-              hideDeleteTrackerModal()
-
-              deleteTrackerMutator(id)
-            }}
-          >
-            <Text className='text-bg font-medium py-3'>Delete</Text>
-          </Pressable>
-        </View>
-      </Modal>
+      <ConfirmModal
+        text='Are you sure you want to delete this tracker and all its values?'
+        hideModal={hideDeleteTrackerModal}
+        modalProps={deleteTrackerModalProps}
+        onConfirm={() => {
+          deleteTrackerMutator(id)
+        }}
+        deletion
+        containerClassName='max-w-[80%]'
+      />
     </BottomSheetView>
   )
 }

@@ -36,6 +36,7 @@ import Animated, {
   withDelay,
   withTiming,
 } from 'react-native-reanimated'
+import { structuralSharingWithDateTz } from '@/common/utils/object'
 
 const progressTextMap: Record<Goal['status'], [string, string]> = {
   active: ['In progress for ', ' since '],
@@ -62,6 +63,7 @@ export default function GoalScreen() {
   const { data: goalUpdatesSaved, error: goalUpdatesError } = useQuery({
     queryKey: ['goalUpdates', id],
     queryFn: () => getGoalUpdates(db, Number.parseInt(id as string)),
+    structuralSharing: structuralSharingWithDateTz,
   })
   const { mutate: addGoalUpdateMutator, error: goalUpdateAddingError } = useMutation({
     mutationFn: (goalUpdate: GoalUpdate) =>
@@ -242,43 +244,60 @@ export default function GoalScreen() {
               )}
             </View>
             <View className='flex flex-col gap-4'>
-              {Object.values(goalUpdatesByDate).map((dateGoalUpdates) => {
-                const date = formatDateSmart(dateGoalUpdates[0].createdAt)
+              {useMemo(
+                () =>
+                  Object.values(goalUpdatesByDate).map((dateGoalUpdates) => {
+                    const date = formatDateSmart(dateGoalUpdates[0].createdAt)
 
-                return (
-                  <View key={date} className='flex flex-col gap-2'>
-                    <Text className='text-fgSecondary text-center font-light border-b-hairline border-fgSecondary pb-[1] text-lg'>
-                      {date}
-                    </Text>
-                    <View className='flex flex-col gap-3'>
-                      {dateGoalUpdates.map((goalUpdate) => (
-                        <GoalUpdateRecord
-                          key={goalUpdate.id}
-                          {...goalUpdate}
-                          onAddGoalUpdate={(value) => {
-                            showSaveNewModal()
+                    return (
+                      <View key={date} className='flex flex-col gap-2'>
+                        <Text className='text-fgSecondary text-center font-light border-b-hairline border-fgSecondary pb-[1] text-lg'>
+                          {date}
+                        </Text>
+                        <View className='flex flex-col gap-3'>
+                          {dateGoalUpdates.map((goalUpdate) => (
+                            <GoalUpdateRecord
+                              key={goalUpdate.id}
+                              {...goalUpdate}
+                              onAddGoalUpdate={(value) => {
+                                showSaveNewModal()
 
-                            const [addedGoalUpdate] = goalUpdates ?? []
-                            onAddConfirm.current = () =>
-                              addGoalUpdateMutator({ ...addedGoalUpdate, content: value })
-                          }}
-                          onDeleteGoalUpdate={() => {
-                            showDeleteModal()
-                            onDeleteConfirm.current = () => deleteGoalUpdateMutator(goalUpdate.id)
-                          }}
-                          onUpdateGoalUpdate={(newContent) => {
-                            showUpdateModal()
-                            onUpdateConfirm.current = () =>
-                              updateGoalUpdateMutator({ id: goalUpdate.id, content: newContent })
-                          }}
-                          onContextMenuCancelRef={onContextMenuCancel}
-                          onModalCancelRef={onModalCancelRef}
-                        />
-                      ))}
-                    </View>
-                  </View>
-                )
-              })}
+                                const [addedGoalUpdate] = goalUpdates ?? []
+                                onAddConfirm.current = () =>
+                                  addGoalUpdateMutator({ ...addedGoalUpdate, content: value })
+                              }}
+                              onDeleteGoalUpdate={() => {
+                                showDeleteModal()
+                                onDeleteConfirm.current = () =>
+                                  deleteGoalUpdateMutator(goalUpdate.id)
+                              }}
+                              onUpdateGoalUpdate={(newContent) => {
+                                showUpdateModal()
+                                onUpdateConfirm.current = () =>
+                                  updateGoalUpdateMutator({
+                                    id: goalUpdate.id,
+                                    content: newContent,
+                                  })
+                              }}
+                              onContextMenuCancelRef={onContextMenuCancel}
+                              onModalCancelRef={onModalCancelRef}
+                            />
+                          ))}
+                        </View>
+                      </View>
+                    )
+                  }),
+                [
+                  addGoalUpdateMutator,
+                  deleteGoalUpdateMutator,
+                  goalUpdates,
+                  goalUpdatesByDate,
+                  showDeleteModal,
+                  showSaveNewModal,
+                  showUpdateModal,
+                  updateGoalUpdateMutator,
+                ]
+              )}
             </View>
           </View>
         </KeyboardAwareScrollView>
@@ -325,6 +344,7 @@ export default function GoalScreen() {
             hideModal={hideDeleteModal}
             modalProps={deleteModalProps}
             onConfirm={() => onDeleteConfirm.current?.()}
+            deletion
           />
           <ConfirmModal
             text='Update this goal update?'
@@ -355,6 +375,7 @@ function GoalUpdateRecord({
   onContextMenuCancelRef: RefObject<() => void>
   onModalCancelRef: RefObject<() => void>
 }) {
+  console.log(id)
   const isNew = id === -1
 
   const [value, setValue] = useState(content)
@@ -411,7 +432,18 @@ function GoalUpdateRecord({
             className='text-fg p-0'
             textAlignVertical='top'
             scrollEnabled={false}
-            onBlur={() => (isNew ? onAddGoalUpdate(value) : onUpdateGoalUpdate(value))}
+            onBlur={() => {
+              if (isNew && value) {
+                return onAddGoalUpdate(value)
+              }
+              if (value !== content) {
+                setEditable(false)
+                onUpdateGoalUpdate(value)
+              } else {
+                setValue(content)
+                setEditable(false)
+              }
+            }}
           />
         </View>
       ) : (
@@ -426,7 +458,7 @@ function GoalUpdateRecord({
                 },
               ]}
             >
-              <Text className='text-fg'>{content}</Text>
+              <Text className='text-fg'>{value}</Text>
             </Animated.View>
           </GestureDetector>
           <Popover
