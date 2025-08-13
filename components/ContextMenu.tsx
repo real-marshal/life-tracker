@@ -18,7 +18,7 @@ export function ContextMenuItem({
   label,
   onPress,
   last,
-  color = colors.fg,
+  color: passedColor,
   iconName,
   iconSize = 18,
   rnPressable,
@@ -33,11 +33,14 @@ export function ContextMenuItem({
 }) {
   const PressableComponent = rnPressable ? RNPressable : Pressable
 
+  const iconColor = passedColor ?? colors.fgSecondary
+  const color = passedColor ?? colors.fg
+
   return (
     <PressableComponent onPress={onPress}>
       {({ pressed }) => (
         <View
-          className={cn('flex flex-row gap-5 px-5 py-3 border-bgTertiary items-center', {
+          className={cn('flex flex-row gap-8 px-5 py-3 border-bgTertiary items-center', {
             'bg-bgTertiary': pressed,
             'rounded-b-lg': last,
             'border-b-hairline': !last,
@@ -46,7 +49,7 @@ export function ContextMenuItem({
           <Text className='text-lg grow' style={{ color: color }}>
             {label}
           </Text>
-          <Feather name={iconName} size={iconSize} color={color} />
+          <Feather name={iconName} size={iconSize} color={iconColor} />
         </View>
       )}
     </PressableComponent>

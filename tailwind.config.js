@@ -13,6 +13,7 @@ module.exports = {
       currentGoal: '#33CBF5',
       currentGoalActive: '#17586b',
       delayedGoal: '#C9C191',
+      delayedGoalActive: '#7c7346',
       positive: '#75FF4B',
       positiveActive: '#3a931f',
       negative: '#FF4A4A',

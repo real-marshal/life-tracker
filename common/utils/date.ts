@@ -8,7 +8,7 @@ import {
   startOfDay,
   subDays,
 } from 'date-fns'
-import { getLocales } from 'expo-localization'
+import { getCalendars, getLocales } from 'expo-localization'
 
 export interface DateTz {
   // date with tz applied, not converted to local time! (1 part of an ISO datetime string)
@@ -119,3 +119,6 @@ export function doesWeekStartWithMonday() {
 
   return !sundayCountries.includes(region)
 }
+
+// this function is surprisingly heavy so I decided to memoize it
+export const uses24hourClock = !getCalendars()[0].uses24hourClock

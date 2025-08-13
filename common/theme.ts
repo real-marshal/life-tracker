@@ -9,6 +9,7 @@ export const colors = {
   currentGoal: '#33CBF5',
   currentGoalActive: '#17586b',
   delayedGoal: '#C9C191',
+  delayedGoalActive: '#7c7346',
   positive: '#75FF4B',
   positiveActive: '#3a931f',
   negative: '#FF4A4A',
@@ -27,6 +28,13 @@ export const goalStatusColorMap: Record<Goal['status'], string> = {
   delayed: colors.delayedGoal,
   completed: colors.positive,
   abandoned: colors.negative,
+}
+
+export const goalStatusActiveColorMap: Record<Goal['status'], string> = {
+  active: colors.currentGoalActive,
+  delayed: colors.delayedGoalActive,
+  completed: colors.positiveActive,
+  abandoned: colors.negativeActive,
 }
 
 export const goalUpdateColorMap: Record<GoalUpdate['sentiment'], string> = {

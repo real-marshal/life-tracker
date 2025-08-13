@@ -1,13 +1,13 @@
-import { View, Text, TextInput } from 'react-native'
+import { Text, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { getGoal, getLtGoal, Goal, LtGoal } from '@/models/goal'
 import { useSQLiteContext } from 'expo-sqlite'
 import { useErrorToasts } from '@/hooks/useErrorToasts'
-import { colors, goalStatusColorMap, goalUpdateColorMap } from '@/common/theme'
+import { colors, goalStatusActiveColorMap, goalStatusColorMap } from '@/common/theme'
 import Feather from '@expo/vector-icons/Feather'
 import { formatDateSmart, formatDurationTwoLongValues, makeDateTz } from '@/common/utils/date'
 import { Trackers } from '@/components/Tracker/Trackers'
-import { GoalPreviewItem } from '@/components/Goals'
+import { GoalPreviewItem } from '@/components/Goal/Goals'
 import {
   addGoalUpdate,
   deleteGoalUpdate,
@@ -16,27 +16,18 @@ import {
   updateGoalUpdate,
   UpdateGoalUpdateParam,
 } from '@/models/goalUpdate'
-import { getCalendars } from 'expo-localization'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FloatingButton, FloatingMenuItem } from '@/components/FloatingMenu'
 import { Popover } from '@/components/Popover'
 import { useFloatingMenu } from '@/hooks/useFloatingMenu'
-import { Gesture, GestureDetector, Pressable } from 'react-native-gesture-handler'
-import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Pressable, TouchableWithoutFeedback } from 'react-native-gesture-handler'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
 import { ConfirmModal } from '@/components/ConfirmModal'
 import { useModal } from '@/components/Modal'
+import { GoalUpdateRecord } from '@/components/Goal/GoalUpdateRecord'
 import { useContextMenu } from '@/hooks/useContextMenu'
-import { ContextMenuItem } from '@/components/ContextMenu'
-import { performContextMenuHaptics } from '@/common/utils/haptics'
-import Animated, {
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withTiming,
-} from 'react-native-reanimated'
-import { structuralSharingWithDateTz } from '@/common/utils/object'
+import { ContextMenuItem, ContextMenuSection } from '@/components/ContextMenu'
 
 const progressTextMap: Record<Goal['status'], [string, string]> = {
   active: ['In progress for ', ' since '],
@@ -60,10 +51,16 @@ export default function GoalScreen() {
         ? getLtGoal(db, Number.parseInt(id as string))
         : getGoal(db, Number.parseInt(id as string)),
   })
-  const { data: goalUpdatesSaved, error: goalUpdatesError } = useQuery({
+  const { data: goalUpdatesStored, error: goalUpdatesError } = useQuery({
     queryKey: ['goalUpdates', id],
     queryFn: () => getGoalUpdates(db, Number.parseInt(id as string)),
-    structuralSharing: structuralSharingWithDateTz,
+    // screens in react native navigator aren't completely recreated on navigation
+    // so when the goal updates are cached, react thread gets stuck trying to render all those components,
+    // creating ~50ms animation delay. but if they are not cached, the first render is much simpler,
+    // removing this delay, while the list is rendered during the animation itself
+    // we are kinda decreasing our TTL here
+    // structuralSharing: structuralSharingWithDateTz,
+    gcTime: 0,
   })
   const { mutate: addGoalUpdateMutator, error: goalUpdateAddingError } = useMutation({
     mutationFn: (goalUpdate: GoalUpdate) =>
@@ -86,12 +83,12 @@ export default function GoalScreen() {
     { title: 'Error updating a goal update', errorData: goalUpdateUpdatingError },
     { title: 'Error deleting a goal update', errorData: goalUpdateDeletingError }
   )
-
-  const [goalUpdates, setGoalUpdates] = useState(goalUpdatesSaved)
+  console.log(goalUpdatesStored?.length)
+  const [goalUpdates, setGoalUpdates] = useState(goalUpdatesStored)
 
   useEffect(() => {
-    setGoalUpdates(goalUpdatesSaved)
-  }, [goalUpdatesSaved])
+    setGoalUpdates(goalUpdatesStored)
+  }, [goalUpdatesStored])
 
   const goalUpdatesByDate = useMemo(
     () =>
@@ -109,10 +106,22 @@ export default function GoalScreen() {
     [goalUpdates]
   )
 
-  const onContextMenuCancel = useRef<() => void>(() => null)
+  const onContextMenuCancelRef = useRef<() => void>(() => null)
   const onModalCancelRef = useRef<() => void>(() => null)
 
-  const { isPopoverShown, hidePopover, showPopover, animatedStyle } = useFloatingMenu()
+  const {
+    isPopoverShown: isFloatingMenuShown,
+    hidePopover: hideFloatingMenu,
+    showPopover: showFloatingMenu,
+    animatedStyle: floatingMenuStyle,
+  } = useFloatingMenu()
+
+  const {
+    isPopoverShown: isContextMenuShown,
+    hidePopover: hideContextMenu,
+    showPopover: showContextMenu,
+    animatedStyle: contextMenuStyle,
+  } = useContextMenu()
 
   const {
     showModal: showSaveNewModal,
@@ -132,8 +141,12 @@ export default function GoalScreen() {
     ...updateModalProps
   } = useModal(() => onModalCancelRef.current())
 
+  const onAddConfirm = useRef<() => void>(null)
+  const onDeleteConfirm = useRef<() => void>(null)
+  const onUpdateConfirm = useRef<() => void>(null)
+
   const onAddGoalUpdate = (sentiment: GoalUpdate['sentiment']) => {
-    hidePopover()
+    hideFloatingMenu()
 
     setGoalUpdates((goalUpdates) => [
       {
@@ -148,10 +161,6 @@ export default function GoalScreen() {
     ])
   }
 
-  const onAddConfirm = useRef<() => void>(null)
-  const onDeleteConfirm = useRef<() => void>(null)
-  const onUpdateConfirm = useRef<() => void>(null)
-
   const accentColor =
     goal?.status && goal.status !== 'active'
       ? goalStatusColorMap[goal.status]
@@ -159,35 +168,51 @@ export default function GoalScreen() {
         ? colors.ltGoal
         : colors.currentGoal
 
+  const accentColorActive =
+    goal?.status && goal.status !== 'active'
+      ? goalStatusActiveColorMap[goal.status]
+      : isLongTerm
+        ? colors.ltGoalActive
+        : colors.currentGoalActive
+
   return (
     <>
-      <Pressable
+      <TouchableWithoutFeedback
         onPress={() => {
-          hidePopover()
-          onContextMenuCancel.current()
+          hideFloatingMenu()
+          hideContextMenu()
+          onContextMenuCancelRef.current()
         }}
       >
-        <KeyboardAwareScrollView bottomOffset={10}>
+        <KeyboardAwareScrollView bottomOffset={10} stickyHeaderIndices={[0]}>
+          <View className='flex flex-row gap-2 items-center justify-between pt-safe-offset-3 pb-3 px-3 bg-bg'>
+            <View className='flex flex-row gap-4 items-center flex-1'>
+              <Pressable onPress={() => router.back()}>
+                <Feather name='chevron-left' size={30} color={accentColor} />
+              </Pressable>
+              <Text
+                className='text-fg text-2xl flex-1'
+                style={{ color: accentColor }}
+                numberOfLines={2}
+                ellipsizeMode='tail'
+              >
+                {goal?.name}
+              </Text>
+            </View>
+            <Pressable onPress={showContextMenu}>
+              {({ pressed }) => (
+                <Feather
+                  name='more-horizontal'
+                  size={24}
+                  color={pressed ? accentColorActive : accentColor}
+                />
+              )}
+            </Pressable>
+          </View>
           <View
-            className='m-safe p-3 pb-5 flex flex-col gap-6 min-h-screen'
+            className='mb-safe mx-safe px-3 pb-5 pt-3 flex flex-col gap-6 min-h-screen'
             onStartShouldSetResponder={() => true}
           >
-            <View className='flex flex-row gap-2 items-center justify-between'>
-              <View className='flex flex-row gap-4 items-center flex-1'>
-                <Pressable onPress={() => router.back()}>
-                  <Feather name='chevron-left' size={30} color={accentColor} />
-                </Pressable>
-                <Text
-                  className='text-fg text-2xl flex-1'
-                  style={{ color: accentColor }}
-                  numberOfLines={2}
-                  ellipsizeMode='tail'
-                >
-                  {goal?.name}
-                </Text>
-              </View>
-              <Feather name='more-horizontal' size={24} color={accentColor} />
-            </View>
             <View className='flex flex-col gap-4 p-4 bg-bgSecondary rounded-lg border-hairline border-[#444]'>
               <View className='flex flex-row flex-wrap'>
                 <Text className='text-fgSecondary'>
@@ -279,7 +304,7 @@ export default function GoalScreen() {
                                     content: newContent,
                                   })
                               }}
-                              onContextMenuCancelRef={onContextMenuCancel}
+                              onContextMenuCancelRef={onContextMenuCancelRef}
                               onModalCancelRef={onModalCancelRef}
                             />
                           ))}
@@ -301,19 +326,19 @@ export default function GoalScreen() {
             </View>
           </View>
         </KeyboardAwareScrollView>
-      </Pressable>
+      </TouchableWithoutFeedback>
       {goal?.status === 'active' && (
         <>
           <FloatingButton
-            onPress={() => (isPopoverShown ? hidePopover() : showPopover())}
+            onPress={() => (isFloatingMenuShown ? hideFloatingMenu() : showFloatingMenu())}
             color={isLongTerm ? colors.ltGoal : colors.currentGoal}
             activeColor={isLongTerm ? colors.ltGoalActive : colors.currentGoalActive}
-            active={isPopoverShown}
+            active={isFloatingMenuShown}
           />
           <Popover
-            isOpen={isPopoverShown}
+            isOpen={isFloatingMenuShown}
             className='right-safe-offset-7 bottom-[90px] z-[9999999]'
-            animatedStyle={animatedStyle}
+            animatedStyle={floatingMenuStyle}
           >
             <FloatingMenuItem
               title='Add a negative update'
@@ -352,191 +377,36 @@ export default function GoalScreen() {
             modalProps={updateModalProps}
             onConfirm={() => onUpdateConfirm.current?.()}
           />
+          <Popover
+            isOpen={isContextMenuShown}
+            className='right-safe-offset-7 top-[90px] z-[9999999]'
+            animatedStyle={contextMenuStyle}
+          >
+            <ContextMenuSection label='Change status' first />
+            <ContextMenuItem
+              label='Abandon'
+              iconName='x'
+              color={colors.negative}
+              onPress={() => null}
+            />
+            <ContextMenuItem
+              label='Complete'
+              iconName='check'
+              color={colors.positive}
+              onPress={() => null}
+            />
+            <ContextMenuItem
+              label='Delay'
+              iconName='clock'
+              color={colors.delayedGoal}
+              onPress={() => null}
+            />
+            <ContextMenuSection label='Add a continuation' />
+            <ContextMenuItem label='Prerequisite' iconName='arrow-down-left' onPress={() => null} />
+            <ContextMenuItem label='Consequence' iconName='arrow-up-right' onPress={() => null} />
+          </Popover>
         </>
       )}
     </>
   )
-}
-
-function GoalUpdateRecord({
-  id,
-  content,
-  createdAt,
-  sentiment,
-  onAddGoalUpdate,
-  onDeleteGoalUpdate,
-  onUpdateGoalUpdate,
-  onContextMenuCancelRef,
-  onModalCancelRef,
-}: GoalUpdate & {
-  onAddGoalUpdate: (value: string) => void
-  onDeleteGoalUpdate: () => void
-  onUpdateGoalUpdate: (newContent: string) => void
-  onContextMenuCancelRef: RefObject<() => void>
-  onModalCancelRef: RefObject<() => void>
-}) {
-  console.log(id)
-  const isNew = id === -1
-
-  const [value, setValue] = useState(content)
-  const [editable, setEditable] = useState(isNew)
-
-  const { isPopoverShown, hidePopover, showPopover, animatedStyle } = useContextMenu()
-
-  const onContextMenu = () => {
-    performContextMenuHaptics()
-
-    onContextMenuCancelRef.current !== onCancel && onContextMenuCancelRef.current()
-
-    onContextMenuCancelRef.current = onCancel
-    onModalCancelRef.current = () => {
-      setEditable(false)
-      setValue(content)
-    }
-
-    setTimeout(() => showPopover(), 0)
-  }
-
-  const {
-    gesture,
-    resetAnimation,
-    animatedStyle: contentAnimatedStyle,
-  } = useGoalUpdateRecordAnimation(onContextMenu)
-
-  const onCancel = useCallback(() => {
-    hidePopover()
-    resetAnimation()
-  }, [hidePopover, resetAnimation])
-
-  const time = isNew
-    ? 'Now'
-    : createdAt.date.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: !getCalendars()[0].uses24hourClock,
-      })
-
-  return (
-    <View className='flex flex-col gap-1 relative'>
-      <Text className='text-fgSecondary text-xs'>{time}</Text>
-      {editable ? (
-        <View
-          className='bg-bgTertiary p-3 border-l-2 rounded-md leading-5'
-          style={{ borderColor: goalUpdateColorMap[sentiment] }}
-        >
-          <TextInput
-            onChangeText={setValue}
-            value={value}
-            multiline
-            autoFocus
-            className='text-fg p-0'
-            textAlignVertical='top'
-            scrollEnabled={false}
-            onBlur={() => {
-              if (isNew && value) {
-                return onAddGoalUpdate(value)
-              }
-              if (value !== content) {
-                setEditable(false)
-                onUpdateGoalUpdate(value)
-              } else {
-                setValue(content)
-                setEditable(false)
-              }
-            }}
-          />
-        </View>
-      ) : (
-        <>
-          <GestureDetector gesture={gesture}>
-            <Animated.View
-              className='bg-bgSecondary p-3 border-l-2 rounded-md leading-5'
-              style={[
-                contentAnimatedStyle,
-                {
-                  borderColor: goalUpdateColorMap[sentiment],
-                },
-              ]}
-            >
-              <Text className='text-fg'>{value}</Text>
-            </Animated.View>
-          </GestureDetector>
-          <Popover
-            isOpen={isPopoverShown}
-            className='top-10 left-0 z-[9999999]'
-            animatedStyle={animatedStyle}
-          >
-            <ContextMenuItem
-              label='Edit'
-              iconName='edit-3'
-              onPress={() => {
-                hidePopover()
-                setEditable(true)
-                resetAnimation()
-              }}
-              rnPressable
-            />
-            <ContextMenuItem
-              label='Delete goal update'
-              iconName='trash'
-              color={colors.negative}
-              onPress={() => {
-                hidePopover()
-                onDeleteGoalUpdate()
-                resetAnimation()
-              }}
-              last
-              rnPressable
-            />
-          </Popover>
-        </>
-      )}
-    </View>
-  )
-}
-
-function useGoalUpdateRecordAnimation(onStart: () => void) {
-  const scale = useSharedValue(1)
-  const opacity = useSharedValue(1)
-  const bgColor = useSharedValue(colors.bgSecondary)
-  const hasLongPressStarted = useSharedValue(false)
-
-  const resetAnimation = useCallback(() => {
-    scale.value = withTiming(1, { duration: 150 })
-    opacity.value = withTiming(1, { duration: 150 })
-    bgColor.value = colors.bgSecondary
-  }, [scale, opacity, bgColor])
-
-  const gesture = Gesture.LongPress()
-    .minDuration(250)
-    .onTouchesDown(() => {
-      scale.value = withDelay(200, withTiming(0.95, { duration: 100 }))
-      opacity.value = withDelay(200, withTiming(0.8, { duration: 100 }))
-      bgColor.value = withDelay(100, withTiming(colors.bgTertiary, { duration: 250 }))
-    })
-    .onStart(() => {
-      hasLongPressStarted.value = true
-
-      bgColor.value = colors.bgTertiary
-
-      runOnJS(onStart)()
-    })
-    .onFinalize(() => {
-      if (hasLongPressStarted.value) {
-        hasLongPressStarted.value = false
-        return
-      }
-
-      scale.value = withTiming(1, { duration: 150 })
-      opacity.value = withTiming(1, { duration: 150 })
-      bgColor.value = colors.bgSecondary
-    })
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
-    backgroundColor: bgColor.value,
-  }))
-
-  return { gesture, resetAnimation, animatedStyle }
 }
