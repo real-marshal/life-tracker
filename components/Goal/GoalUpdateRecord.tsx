@@ -2,12 +2,13 @@ import { Text, TextInput, View, ViewStyle } from 'react-native'
 
 import { colors, goalUpdateColorMap } from '@/common/theme'
 import { GoalUpdate } from '@/models/goalUpdate'
-import { Popover } from '@/components/Popover'
-import { Gesture, GestureDetector } from 'react-native-gesture-handler'
-import { RefObject, useCallback, useMemo, useRef, useState } from 'react'
-import { useContextMenu } from '@/hooks/useContextMenu'
-import { ContextMenuItem } from '@/components/ContextMenu'
-import { performContextMenuHaptics } from '@/common/utils/haptics'
+import {
+  Gesture,
+  GestureDetector,
+  GestureStateChangeEvent,
+  LongPressGestureHandlerEventPayload,
+} from 'react-native-gesture-handler'
+import { memo, RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Animated, {
   runOnJS,
   useAnimatedStyle,
@@ -16,59 +17,54 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { uses24hourClock } from '@/common/utils/date'
+import { performContextMenuHaptics } from '@/common/utils/haptics'
+import { NEW_ID } from '@/components/Goal/constants'
 
-export function GoalUpdateRecord({
+function GoalUpdateRecordUnmemoed({
   id,
   content,
   createdAt,
   sentiment,
-  onAddGoalUpdate,
-  onDeleteGoalUpdate,
-  onUpdateGoalUpdate,
-  onContextMenuCancelRef,
-  onModalCancelRef,
+  editable,
+  onContextMenu,
+  onSubmit,
 }: GoalUpdate & {
-  onAddGoalUpdate: (value: string) => void
-  onDeleteGoalUpdate: () => void
-  onUpdateGoalUpdate: (newContent: string) => void
-  onContextMenuCancelRef: RefObject<() => void>
-  onModalCancelRef: RefObject<() => void>
+  onContextMenu: ({
+    event,
+    resetAnimation,
+  }: {
+    event: GestureStateChangeEvent<LongPressGestureHandlerEventPayload>
+    resetAnimation: () => void
+  }) => void
+  editable?: boolean
+  onSubmit: (newContent?: string) => void
 }) {
-  const isNew = id === -1
+  const isNew = id === NEW_ID
 
   const [value, setValue] = useState(content)
-  const [editable, setEditable] = useState(isNew)
 
-  const { isPopoverShown, hidePopover, showPopover, animatedStyle } = useContextMenu()
+  useEffect(() => {
+    !editable && setValue(content)
+  }, [content, editable])
 
-  const onCancelRef = useRef(() => {})
-
-  const onContextMenu = useCallback(() => {
-    performContextMenuHaptics()
-
-    onContextMenuCancelRef.current !== onCancelRef.current && onContextMenuCancelRef.current()
-
-    onContextMenuCancelRef.current = onCancelRef.current
-    onModalCancelRef.current = () => {
-      setEditable(false)
-      setValue(content)
-    }
-
-    setTimeout(() => showPopover(), 0)
-  }, [content, onCancelRef, onContextMenuCancelRef, onModalCancelRef, showPopover])
+  const onAnimationStartRef = useRef<
+    (event: GestureStateChangeEvent<LongPressGestureHandlerEventPayload>) => void
+  >(() => {})
 
   const {
     gesture,
     resetAnimation,
     animatedStyle: contentAnimatedStyle,
-  } = useGoalUpdateRecordAnimation(onContextMenu, {
+  } = useGoalUpdateRecordAnimation((e) => onAnimationStartRef.current(e), {
     borderColor: goalUpdateColorMap[sentiment],
   })
 
-  onCancelRef.current = useCallback(() => {
-    hidePopover()
-    resetAnimation()
-  }, [hidePopover, resetAnimation])
+  onAnimationStartRef.current = useCallback(
+    (event: GestureStateChangeEvent<LongPressGestureHandlerEventPayload>) => {
+      onContextMenu({ event, resetAnimation })
+    },
+    [onContextMenu, resetAnimation]
+  )
 
   const time = isNew
     ? 'Now'
@@ -78,6 +74,7 @@ export function GoalUpdateRecord({
         hour12: !uses24hourClock,
       })
 
+  console.log(id)
   return (
     <View className='flex flex-col gap-1 relative'>
       <Text className='text-fgSecondary text-xs'>{time}</Text>
@@ -95,64 +92,33 @@ export function GoalUpdateRecord({
             textAlignVertical='top'
             scrollEnabled={false}
             onBlur={() => {
-              if (isNew && value) {
-                return onAddGoalUpdate(value)
-              }
-              if (value !== content) {
-                setEditable(false)
-                onUpdateGoalUpdate(value)
+              if ((isNew && value) || value !== content) {
+                onSubmit(value)
               } else {
                 setValue(content)
-                setEditable(false)
+                onSubmit()
               }
             }}
           />
         </View>
       ) : (
-        <>
-          <GestureDetector gesture={gesture}>
-            <Animated.View
-              className='bg-bgSecondary p-3 border-l-2 rounded-md leading-5'
-              style={contentAnimatedStyle}
-            >
-              <Text className='text-fg'>{value}</Text>
-            </Animated.View>
-          </GestureDetector>
-          <Popover
-            isOpen={isPopoverShown}
-            className='top-10 left-0 z-[9999999]'
-            animatedStyle={animatedStyle}
+        <GestureDetector gesture={gesture}>
+          <Animated.View
+            className='bg-bgSecondary p-3 border-l-2 rounded-md leading-5'
+            style={contentAnimatedStyle}
           >
-            <ContextMenuItem
-              label='Edit'
-              iconName='edit-3'
-              onPress={() => {
-                hidePopover()
-                setEditable(true)
-                resetAnimation()
-              }}
-              rnPressable
-            />
-            <ContextMenuItem
-              label='Delete goal update'
-              iconName='trash'
-              color={colors.negative}
-              onPress={() => {
-                hidePopover()
-                onDeleteGoalUpdate()
-                resetAnimation()
-              }}
-              last
-              rnPressable
-            />
-          </Popover>
-        </>
+            <Text className='text-fg'>{value}</Text>
+          </Animated.View>
+        </GestureDetector>
       )}
     </View>
   )
 }
 
-function useGoalUpdateRecordAnimation(onStart: () => void, style: ViewStyle) {
+function useGoalUpdateRecordAnimation(
+  onStart: (event: GestureStateChangeEvent<LongPressGestureHandlerEventPayload>) => void,
+  style: ViewStyle
+) {
   const scale = useSharedValue(1)
   const opacity = useSharedValue(1)
   const bgColor = useSharedValue(colors.bgSecondary)
@@ -173,12 +139,12 @@ function useGoalUpdateRecordAnimation(onStart: () => void, style: ViewStyle) {
           opacity.value = withDelay(200, withTiming(0.8, { duration: 100 }))
           bgColor.value = withDelay(100, withTiming(colors.bgTertiary, { duration: 250 }))
         })
-        .onStart(() => {
+        .onStart((event) => {
           hasLongPressStarted.value = true
 
           bgColor.value = colors.bgTertiary
 
-          runOnJS(onStart)()
+          runOnJS(onStart)(event)
         })
         .onFinalize(() => {
           if (hasLongPressStarted.value) {
@@ -201,4 +167,118 @@ function useGoalUpdateRecordAnimation(onStart: () => void, style: ViewStyle) {
   }))
 
   return { gesture, resetAnimation, animatedStyle }
+}
+
+export const GoalUpdateRecord = memo(GoalUpdateRecordUnmemoed)
+
+// exists solely to make onContextMenu and onSubmit stable to facilitate memo()
+// (can't execute hooks in a loop so this became a separate component)
+export function GoalUpdateRecordWrapper({
+  id,
+  content,
+  createdAt,
+  sentiment,
+  editable,
+  type,
+  isPinned,
+  setGoalUpdateModificationState,
+  setGoalUpdateContextMenuPosition,
+  onContextMenuCancelRef,
+  showContextMenu,
+  setGoalUpdates,
+  showSaveNewModal,
+  showUpdateModal,
+}: GoalUpdate & {
+  editable?: boolean
+  setGoalUpdateModificationState: (state: any) => void
+  setGoalUpdateContextMenuPosition: (state: any) => void
+  onContextMenuCancelRef: RefObject<() => void>
+  showContextMenu: () => void
+  showSaveNewModal: () => void
+  showUpdateModal: () => void
+  setGoalUpdates: (state: any) => void
+  type: GoalUpdate['type']
+  isPinned: boolean
+}) {
+  const onContextMenu = useCallback(
+    ({
+      event,
+      resetAnimation,
+    }: {
+      event: GestureStateChangeEvent<LongPressGestureHandlerEventPayload>
+      resetAnimation: () => void
+    }) => {
+      setGoalUpdateModificationState({ id })
+      setGoalUpdateContextMenuPosition(event.absoluteY)
+
+      onContextMenuCancelRef.current !== resetAnimation && onContextMenuCancelRef.current()
+      onContextMenuCancelRef.current = resetAnimation
+
+      showContextMenu()
+      performContextMenuHaptics()
+    },
+    [
+      id,
+      onContextMenuCancelRef,
+      setGoalUpdateContextMenuPosition,
+      setGoalUpdateModificationState,
+      showContextMenu,
+    ]
+  )
+
+  const onSubmit = useCallback(
+    (newContent?: string) => {
+      const isAdding = id === NEW_ID
+
+      if (isAdding) {
+        if (!newContent) {
+          setGoalUpdates((goalUpdates: GoalUpdate[]) =>
+            goalUpdates?.filter((goalUpdate) => goalUpdate.id !== NEW_ID)
+          )
+
+          return setGoalUpdateModificationState(undefined)
+        }
+
+        setGoalUpdateModificationState({
+          id: NEW_ID,
+          editable: true,
+          modification: {
+            type: 'create',
+            content: newContent,
+          },
+        })
+        return showSaveNewModal()
+      }
+
+      if (!newContent) {
+        return setGoalUpdateModificationState(undefined)
+      }
+
+      showUpdateModal()
+
+      setGoalUpdateModificationState({
+        id,
+        editable: true,
+        modification: {
+          type: 'update',
+          newContent,
+        },
+      })
+    },
+    [id, setGoalUpdateModificationState, setGoalUpdates, showSaveNewModal, showUpdateModal]
+  )
+
+  return (
+    <GoalUpdateRecord
+      id={id}
+      editable={editable}
+      content={content}
+      createdAt={createdAt}
+      sentiment={sentiment}
+      type={type}
+      isPinned={isPinned}
+      onContextMenu={onContextMenu}
+      onSubmit={onSubmit}
+    />
+  )
 }

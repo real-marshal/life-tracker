@@ -20,20 +20,25 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FloatingButton, FloatingMenuItem } from '@/components/FloatingMenu'
 import { Popover } from '@/components/Popover'
 import { useFloatingMenu } from '@/hooks/useFloatingMenu'
-import { Pressable, TouchableWithoutFeedback } from 'react-native-gesture-handler'
+import { Pressable } from 'react-native-gesture-handler'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
 import { ConfirmModal } from '@/components/ConfirmModal'
 import { useModal } from '@/components/Modal'
-import { GoalUpdateRecord } from '@/components/Goal/GoalUpdateRecord'
+import { structuralSharingWithDateTz } from '@/common/utils/object'
+import { GoalUpdateRecordWrapper } from '@/components/Goal/GoalUpdateRecord'
 import { useContextMenu } from '@/hooks/useContextMenu'
 import { ContextMenuItem, ContextMenuSection } from '@/components/ContextMenu'
+import { Backdrop } from '@/components/Backdrop'
+import { NEW_ID, progressTextMap } from '@/components/Goal/constants'
 
-const progressTextMap: Record<Goal['status'], [string, string]> = {
-  active: ['In progress for ', ' since '],
-  delayed: ['In progress for ', ' since '],
-  completed: ['Completed in ', ', started '],
-  abandoned: ['Abandoned after ', ', started '],
+interface GoalUpdateModificationState {
+  id: number
+  editable?: boolean
+  modification?:
+    | { type: 'delete' }
+    | { type: 'create'; content: string }
+    | { type: 'update'; newContent: string }
 }
 
 export default function GoalScreen() {
@@ -54,13 +59,7 @@ export default function GoalScreen() {
   const { data: goalUpdatesStored, error: goalUpdatesError } = useQuery({
     queryKey: ['goalUpdates', id],
     queryFn: () => getGoalUpdates(db, Number.parseInt(id as string)),
-    // screens in react native navigator aren't completely recreated on navigation
-    // so when the goal updates are cached, react thread gets stuck trying to render all those components,
-    // creating ~50ms animation delay. but if they are not cached, the first render is much simpler,
-    // removing this delay, while the list is rendered during the animation itself
-    // we are kinda decreasing our TTL here
-    // structuralSharing: structuralSharingWithDateTz,
-    gcTime: 0,
+    structuralSharing: structuralSharingWithDateTz,
   })
   const { mutate: addGoalUpdateMutator, error: goalUpdateAddingError } = useMutation({
     mutationFn: (goalUpdate: GoalUpdate) =>
@@ -83,7 +82,7 @@ export default function GoalScreen() {
     { title: 'Error updating a goal update', errorData: goalUpdateUpdatingError },
     { title: 'Error deleting a goal update', errorData: goalUpdateDeletingError }
   )
-  console.log(goalUpdatesStored?.length)
+
   const [goalUpdates, setGoalUpdates] = useState(goalUpdatesStored)
 
   useEffect(() => {
@@ -106,6 +105,11 @@ export default function GoalScreen() {
     [goalUpdates]
   )
 
+  const [goalUpdateModificationState, setGoalUpdateModificationState] =
+    useState<GoalUpdateModificationState>()
+
+  const [goalUpdateContextMenuPosition, setGoalUpdateContextMenuPosition] = useState(0)
+
   const onContextMenuCancelRef = useRef<() => void>(() => null)
   const onModalCancelRef = useRef<() => void>(() => null)
 
@@ -115,6 +119,13 @@ export default function GoalScreen() {
     showPopover: showFloatingMenu,
     animatedStyle: floatingMenuStyle,
   } = useFloatingMenu()
+
+  const {
+    isPopoverShown: isMenuShown,
+    hidePopover: hideMenu,
+    showPopover: showMenu,
+    animatedStyle: menuStyle,
+  } = useContextMenu()
 
   const {
     isPopoverShown: isContextMenuShown,
@@ -128,29 +139,34 @@ export default function GoalScreen() {
     hideModal: hideSaveNewModal,
     ...saveNewModalProps
   } = useModal(() =>
-    setGoalUpdates((goalUpdates) => goalUpdates?.filter((goalUpdate) => goalUpdate.id !== -1))
+    setGoalUpdates((goalUpdates) => {
+      setGoalUpdateModificationState(undefined)
+      return goalUpdates?.filter((goalUpdate) => goalUpdate.id !== NEW_ID)
+    })
   )
   const {
     showModal: showDeleteModal,
     hideModal: hideDeleteModal,
     ...deleteModalProps
-  } = useModal(() => onModalCancelRef.current())
+  } = useModal(() => {
+    setGoalUpdateModificationState(undefined)
+    onModalCancelRef.current()
+  })
   const {
     showModal: showUpdateModal,
     hideModal: hideUpdateModal,
     ...updateModalProps
-  } = useModal(() => onModalCancelRef.current())
-
-  const onAddConfirm = useRef<() => void>(null)
-  const onDeleteConfirm = useRef<() => void>(null)
-  const onUpdateConfirm = useRef<() => void>(null)
+  } = useModal(() => {
+    setGoalUpdateModificationState(undefined)
+    onModalCancelRef.current()
+  })
 
   const onAddGoalUpdate = (sentiment: GoalUpdate['sentiment']) => {
     hideFloatingMenu()
 
     setGoalUpdates((goalUpdates) => [
       {
-        id: -1,
+        id: NEW_ID,
         content: '',
         createdAt: makeDateTz(new Date().toISOString()),
         sentiment,
@@ -159,6 +175,11 @@ export default function GoalScreen() {
       },
       ...(goalUpdates ?? []),
     ])
+    setGoalUpdateModificationState({
+      id: NEW_ID,
+      editable: true,
+      modification: { type: 'create', content: '' },
+    })
   }
 
   const accentColor =
@@ -174,18 +195,12 @@ export default function GoalScreen() {
       : isLongTerm
         ? colors.ltGoalActive
         : colors.currentGoalActive
-
+  console.log('rerender main')
   return (
     <>
-      <TouchableWithoutFeedback
-        onPress={() => {
-          hideFloatingMenu()
-          hideContextMenu()
-          onContextMenuCancelRef.current()
-        }}
-      >
-        <KeyboardAwareScrollView bottomOffset={10} stickyHeaderIndices={[0]}>
-          <View className='flex flex-row gap-2 items-center justify-between pt-safe-offset-3 pb-3 px-3 bg-bg'>
+      <KeyboardAwareScrollView bottomOffset={10}>
+        <View className='m-safe p-3 pb-24 flex flex-col gap-6 min-h-screen'>
+          <View className='flex flex-row gap-2 items-center justify-between'>
             <View className='flex flex-row gap-4 items-center flex-1'>
               <Pressable onPress={() => router.back()}>
                 <Feather name='chevron-left' size={30} color={accentColor} />
@@ -199,7 +214,7 @@ export default function GoalScreen() {
                 {goal?.name}
               </Text>
             </View>
-            <Pressable onPress={showContextMenu}>
+            <Pressable onPress={showMenu}>
               {({ pressed }) => (
                 <Feather
                   name='more-horizontal'
@@ -209,124 +224,120 @@ export default function GoalScreen() {
               )}
             </Pressable>
           </View>
-          <View
-            className='mb-safe mx-safe px-3 pb-5 pt-3 flex flex-col gap-6 min-h-screen'
-            onStartShouldSetResponder={() => true}
-          >
-            <View className='flex flex-col gap-4 p-4 bg-bgSecondary rounded-lg border-hairline border-[#444]'>
-              <View className='flex flex-row flex-wrap'>
-                <Text className='text-fgSecondary'>
-                  {goal?.status && progressTextMap[goal?.status][0]}
-                </Text>
-                <Text className='font-bold' style={{ color: accentColor }}>
-                  {goal?.progressDuration && formatDurationTwoLongValues(goal?.progressDuration)}
-                </Text>
-                <Text className='text-fgSecondary'>
-                  {goal?.status && progressTextMap[goal?.status][1]}
-                </Text>
-                <Text className='font-bold' style={{ color: accentColor }}>
-                  {goal?.createdAt.toLocaleDateString('en-US', {
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </Text>
+          <View className='flex flex-col gap-4 p-4 bg-bgSecondary rounded-lg border-hairline border-[#444]'>
+            <View className='flex flex-row flex-wrap'>
+              <Text className='text-fgSecondary'>
+                {goal?.status && progressTextMap[goal?.status][0]}
+              </Text>
+              <Text className='font-bold' style={{ color: accentColor }}>
+                {goal?.progressDuration && formatDurationTwoLongValues(goal?.progressDuration)}
+              </Text>
+              <Text className='text-fgSecondary'>
+                {goal?.status && progressTextMap[goal?.status][1]}
+              </Text>
+              <Text className='font-bold' style={{ color: accentColor }}>
+                {goal?.createdAt.toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </Text>
+            </View>
+            {goal?.why && (
+              <View className='flex flex-col gap-[2]'>
+                <Text className='text-fgSecondary text-sm'>Why:</Text>
+                <Text className='text-fg leading-5'>{goal?.why}</Text>
               </View>
-              {goal?.why && (
-                <View className='flex flex-col gap-[2]'>
-                  <Text className='text-fgSecondary text-sm'>Why:</Text>
-                  <Text className='text-fg leading-5'>{goal?.why}</Text>
+            )}
+            {!!goal?.relatedTrackers?.length && (
+              <View className='flex flex-col gap-1'>
+                <Text className='text-fgSecondary text-sm'>Related trackers:</Text>
+                <Trackers trackers={goal.relatedTrackers} />
+              </View>
+            )}
+            {!isLongTerm && !!(goal as Goal)?.prerequisites?.length && (
+              <View className='flex flex-col gap-[2]'>
+                <Text className='text-fgSecondary text-sm'>
+                  Prerequisites ({(goal as Goal).prerequisites.length}):
+                </Text>
+                <View className='flex flex-col flex-wrap'>
+                  {(goal as Goal).prerequisites?.map((goal) => (
+                    <GoalPreviewItem {...goal} key={goal.id} small />
+                  ))}
                 </View>
-              )}
-              {!!goal?.relatedTrackers?.length && (
-                <View className='flex flex-col gap-1'>
-                  <Text className='text-fgSecondary text-sm'>Related trackers:</Text>
-                  <Trackers trackers={goal.relatedTrackers} />
+              </View>
+            )}
+            {!isLongTerm && !!(goal as Goal)?.consequences?.length && (
+              <View className='flex flex-col gap-[2]'>
+                <Text className='text-fgSecondary text-sm'>
+                  Consequences ({(goal as Goal).consequences.length}):
+                </Text>
+                <View className='flex flex-col flex-wrap'>
+                  {(goal as Goal).consequences?.map((goal) => (
+                    <GoalPreviewItem {...goal} key={goal.id} small />
+                  ))}
                 </View>
-              )}
-              {!isLongTerm && !!(goal as Goal)?.prerequisites?.length && (
-                <View className='flex flex-col gap-[2]'>
-                  <Text className='text-fgSecondary text-sm'>
-                    Prerequisites ({(goal as Goal).prerequisites.length}):
-                  </Text>
-                  <View className='flex flex-col flex-wrap'>
-                    {(goal as Goal).prerequisites?.map((goal) => (
-                      <GoalPreviewItem {...goal} key={goal.id} small />
-                    ))}
-                  </View>
-                </View>
-              )}
-              {!isLongTerm && !!(goal as Goal)?.consequences?.length && (
-                <View className='flex flex-col gap-[2]'>
-                  <Text className='text-fgSecondary text-sm'>
-                    Consequences ({(goal as Goal).consequences.length}):
-                  </Text>
-                  <View className='flex flex-col flex-wrap'>
-                    {(goal as Goal).consequences?.map((goal) => (
-                      <GoalPreviewItem {...goal} key={goal.id} small />
-                    ))}
-                  </View>
-                </View>
-              )}
-            </View>
-            <View className='flex flex-col gap-4'>
-              {useMemo(
-                () =>
-                  Object.values(goalUpdatesByDate).map((dateGoalUpdates) => {
-                    const date = formatDateSmart(dateGoalUpdates[0].createdAt)
-
-                    return (
-                      <View key={date} className='flex flex-col gap-2'>
-                        <Text className='text-fgSecondary text-center font-light border-b-hairline border-fgSecondary pb-[1] text-lg'>
-                          {date}
-                        </Text>
-                        <View className='flex flex-col gap-3'>
-                          {dateGoalUpdates.map((goalUpdate) => (
-                            <GoalUpdateRecord
-                              key={goalUpdate.id}
-                              {...goalUpdate}
-                              onAddGoalUpdate={(value) => {
-                                showSaveNewModal()
-
-                                const [addedGoalUpdate] = goalUpdates ?? []
-                                onAddConfirm.current = () =>
-                                  addGoalUpdateMutator({ ...addedGoalUpdate, content: value })
-                              }}
-                              onDeleteGoalUpdate={() => {
-                                showDeleteModal()
-                                onDeleteConfirm.current = () =>
-                                  deleteGoalUpdateMutator(goalUpdate.id)
-                              }}
-                              onUpdateGoalUpdate={(newContent) => {
-                                showUpdateModal()
-                                onUpdateConfirm.current = () =>
-                                  updateGoalUpdateMutator({
-                                    id: goalUpdate.id,
-                                    content: newContent,
-                                  })
-                              }}
-                              onContextMenuCancelRef={onContextMenuCancelRef}
-                              onModalCancelRef={onModalCancelRef}
-                            />
-                          ))}
-                        </View>
-                      </View>
-                    )
-                  }),
-                [
-                  addGoalUpdateMutator,
-                  deleteGoalUpdateMutator,
-                  goalUpdates,
-                  goalUpdatesByDate,
-                  showDeleteModal,
-                  showSaveNewModal,
-                  showUpdateModal,
-                  updateGoalUpdateMutator,
-                ]
-              )}
-            </View>
+              </View>
+            )}
           </View>
-        </KeyboardAwareScrollView>
-      </TouchableWithoutFeedback>
+          <View className='flex flex-col gap-4'>
+            {useMemo(
+              () =>
+                Object.values(goalUpdatesByDate).map((dateGoalUpdates) => {
+                  const date = formatDateSmart(dateGoalUpdates[0].createdAt)
+
+                  return (
+                    <View key={date} className='flex flex-col gap-2'>
+                      <Text className='text-fgSecondary text-center font-light border-b-hairline border-fgSecondary pb-[1] text-lg'>
+                        {date}
+                      </Text>
+                      <View className='flex flex-col gap-3'>
+                        {dateGoalUpdates.map(({ id, ...goalUpdate }) => (
+                          <GoalUpdateRecordWrapper
+                            {...goalUpdate}
+                            key={id}
+                            id={id}
+                            editable={
+                              id === goalUpdateModificationState?.id &&
+                              goalUpdateModificationState?.editable
+                            }
+                            setGoalUpdateModificationState={setGoalUpdateModificationState}
+                            setGoalUpdateContextMenuPosition={setGoalUpdateContextMenuPosition}
+                            onContextMenuCancelRef={onContextMenuCancelRef}
+                            showContextMenu={showContextMenu}
+                            setGoalUpdates={setGoalUpdates}
+                            showSaveNewModal={showSaveNewModal}
+                            showUpdateModal={showUpdateModal}
+                          />
+                        ))}
+                      </View>
+                    </View>
+                  )
+                }),
+              [
+                goalUpdateModificationState?.editable,
+                goalUpdateModificationState?.id,
+                goalUpdatesByDate,
+                showContextMenu,
+                showSaveNewModal,
+                showUpdateModal,
+              ]
+            )}
+          </View>
+        </View>
+      </KeyboardAwareScrollView>
+
+      {(isMenuShown || isFloatingMenuShown || isContextMenuShown) && (
+        <Backdrop
+          onPress={() => {
+            hideFloatingMenu()
+            hideMenu()
+            hideContextMenu()
+            onContextMenuCancelRef.current()
+            setGoalUpdateModificationState(undefined)
+          }}
+        />
+      )}
+
       {goal?.status === 'active' && (
         <>
           <FloatingButton
@@ -358,29 +369,100 @@ export default function GoalScreen() {
               color={colors.positive}
             />
           </Popover>
+          <Popover
+            isOpen={isContextMenuShown}
+            className='left-0 z-[9999999]'
+            animatedStyle={contextMenuStyle}
+            style={{ top: goalUpdateContextMenuPosition }}
+          >
+            <ContextMenuItem
+              label='Edit'
+              iconName='edit-3'
+              onPress={() => {
+                hideContextMenu()
+                onContextMenuCancelRef.current()
+                setGoalUpdateModificationState((state) => {
+                  if (!state) throw new Error('shouldnt have happened - state has to contain id')
+
+                  return {
+                    ...state,
+                    editable: true,
+                  }
+                })
+              }}
+              rnPressable
+            />
+            <ContextMenuItem
+              label='Delete goal update'
+              iconName='trash'
+              color={colors.negative}
+              onPress={() => {
+                hideContextMenu()
+                onContextMenuCancelRef.current()
+                setGoalUpdateModificationState((state) => {
+                  if (!state) throw new Error('shouldnt have happened - state has to contain id')
+
+                  return {
+                    ...state,
+                    modification: { type: 'delete' },
+                  }
+                })
+                showDeleteModal()
+              }}
+              last
+              rnPressable
+            />
+          </Popover>
           <ConfirmModal
             text='Save this goal update?'
             hideModal={hideSaveNewModal}
             modalProps={saveNewModalProps}
-            onConfirm={() => onAddConfirm.current?.()}
+            onConfirm={() => {
+              if (goalUpdateModificationState?.modification?.type !== 'create') {
+                throw new Error('type is supposed to be set to create')
+              }
+
+              addGoalUpdateMutator({
+                ...goalUpdates![0],
+                content: goalUpdateModificationState.modification.content,
+              })
+              setGoalUpdateModificationState(undefined)
+            }}
           />
           <ConfirmModal
             text='Delete this goal update?'
             hideModal={hideDeleteModal}
             modalProps={deleteModalProps}
-            onConfirm={() => onDeleteConfirm.current?.()}
+            onConfirm={() => {
+              if (goalUpdateModificationState?.modification?.type !== 'delete') {
+                throw new Error('type is supposed to be set to delete')
+              }
+
+              deleteGoalUpdateMutator(goalUpdateModificationState.id)
+              setGoalUpdateModificationState(undefined)
+            }}
             deletion
           />
           <ConfirmModal
             text='Update this goal update?'
             hideModal={hideUpdateModal}
             modalProps={updateModalProps}
-            onConfirm={() => onUpdateConfirm.current?.()}
+            onConfirm={() => {
+              if (goalUpdateModificationState?.modification?.type !== 'update') {
+                throw new Error('type is supposed to be set to update')
+              }
+
+              updateGoalUpdateMutator({
+                id: goalUpdateModificationState.id,
+                content: goalUpdateModificationState!.modification.newContent,
+              })
+              setGoalUpdateModificationState(undefined)
+            }}
           />
           <Popover
-            isOpen={isContextMenuShown}
+            isOpen={isMenuShown}
             className='right-safe-offset-7 top-[90px] z-[9999999]'
-            animatedStyle={contextMenuStyle}
+            animatedStyle={menuStyle}
           >
             <ContextMenuSection label='Change status' first />
             <ContextMenuItem

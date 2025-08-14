@@ -52,3 +52,7 @@ hmm, nah, that's another nativewind moment I'm pretty sure, className isn't pass
 still it's so annoying that I used both Pressables in different places, because they seem to be incompatible, sometimes one works, sometimes the other...
 
 yep, the more I use it, the more I see the differences, their styling is completely different... insanity
+
+---
+
+making goal updates editing & deleting logic makes me wish i just used redux...
