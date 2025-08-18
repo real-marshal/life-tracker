@@ -25,7 +25,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
 import { ConfirmModal } from '@/components/ConfirmModal'
 import { useModal } from '@/components/Modal'
-import { structuralSharingWithDateTz } from '@/common/utils/object'
 import { GoalUpdateRecordWrapper } from '@/components/Goal/GoalUpdateRecord'
 import { useContextMenu } from '@/hooks/useContextMenu'
 import { ContextMenuItem, ContextMenuSection } from '@/components/ContextMenu'
@@ -59,7 +58,12 @@ export default function GoalScreen() {
   const { data: goalUpdatesStored, error: goalUpdatesError } = useQuery({
     queryKey: ['goalUpdates', id],
     queryFn: () => getGoalUpdates(db, Number.parseInt(id as string)),
-    structuralSharing: structuralSharingWithDateTz,
+    // when the goal updates are cached, react thread gets stuck trying to render all those components,
+    // creating a long animation delay. but if they are not cached, the first render is much simpler,
+    // removing this delay, while the list is rendered during the animation itself
+    // we are kinda decreasing our TTL here
+    // structuralSharing: structuralSharingWithDateTz,
+    gcTime: 0,
   })
   const { mutate: addGoalUpdateMutator, error: goalUpdateAddingError } = useMutation({
     mutationFn: (goalUpdate: GoalUpdate) =>
@@ -195,7 +199,7 @@ export default function GoalScreen() {
       : isLongTerm
         ? colors.ltGoalActive
         : colors.currentGoalActive
-  console.log('rerender main')
+
   return (
     <>
       <KeyboardAwareScrollView bottomOffset={10}>
