@@ -58,11 +58,11 @@ export async function getLtGoals(db: SQLiteDatabase): Promise<LtGoalPreviewRende
            render_data,
            (select count(*)
             from goal_relation
-            where goal_id = id)           as related_goals_num,
+            where goal_id = goal.id)           as related_goals_num,
            (select count(*)
             from goal_relation
                    left join goal g on g.id = related_goal_id
-            where goal_id = id
+            where goal_id = goal.id
               and g.status = 'completed') as completed_goals_num
     from goal
     where type = 'longterm'
