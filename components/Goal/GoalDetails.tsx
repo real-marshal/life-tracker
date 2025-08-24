@@ -3,7 +3,8 @@ import { progressTextMap } from '@/components/Goal/constants'
 import { formatDurationTwoLongValues } from '@/common/utils/date'
 import { Trackers } from '@/components/Tracker/Trackers'
 import { Goal, LtGoal } from '@/models/goal'
-import { GoalPreviewItem } from '@/components/Goal/Goals'
+import { RelatedGoals } from './RelatedGoals'
+import { getGoalColor } from '@/common/theme'
 
 export function GoalDetails({
   goal,
@@ -25,12 +26,16 @@ export function GoalDetails({
   return (
     <View className='flex flex-col gap-4 p-4 bg-bgSecondary rounded-lg border-hairline border-[#444]'>
       <View className='flex flex-row flex-wrap'>
-        <Text className='text-fgSecondary'>{goal?.status && progressTextMap[goal?.status][0]}</Text>
-        <Text className='font-bold' style={{ color: accentColor }}>
+        <Text className='text-fgSecondary text-lg'>
+          {goal?.status && progressTextMap[goal?.status][0]}
+        </Text>
+        <Text className='font-bold text-lg' style={{ color: accentColor }}>
           {formattedDuration}
         </Text>
-        <Text className='text-fgSecondary'>{goal?.status && progressTextMap[goal?.status][1]}</Text>
-        <Text className='font-bold' style={{ color: accentColor }}>
+        <Text className='text-fgSecondary text-lg'>
+          {goal?.status && progressTextMap[goal?.status][1]}
+        </Text>
+        <Text className='font-bold text-lg' style={{ color: accentColor }}>
           {formattedCreatedAt}
         </Text>
       </View>
@@ -47,28 +52,34 @@ export function GoalDetails({
         </View>
       )}
       {!isLongTerm && !!(goal as Goal)?.prerequisites?.length && (
-        <View className='flex flex-col gap-[2]'>
-          <Text className='text-fgSecondary text-sm'>
-            Prerequisites ({(goal as Goal).prerequisites.length}):
-          </Text>
-          <View className='flex flex-col flex-wrap'>
-            {(goal as Goal).prerequisites?.map((goal) => (
-              <GoalPreviewItem {...goal} key={goal.id} small />
-            ))}
-          </View>
-        </View>
+        <RelatedGoals goalPreviews={(goal as Goal).prerequisites} label='Prerequisites' />
       )}
       {!isLongTerm && !!(goal as Goal)?.consequences?.length && (
-        <View className='flex flex-col gap-[2]'>
-          <Text className='text-fgSecondary text-sm'>
-            Consequences ({(goal as Goal).consequences.length}):
-          </Text>
-          <View className='flex flex-col flex-wrap'>
-            {(goal as Goal).consequences?.map((goal) => (
-              <GoalPreviewItem {...goal} key={goal.id} small />
-            ))}
-          </View>
-        </View>
+        <RelatedGoals goalPreviews={(goal as Goal).consequences} label='Consequences' />
+      )}
+      {isLongTerm && !!(goal as LtGoal)?.relatedGoals?.length && (
+        <RelatedGoals goalPreviews={(goal as LtGoal).relatedGoals} label='Related goals' />
+      )}
+      {isLongTerm && !!(goal as LtGoal)?.delayedRelatedGoals?.length && (
+        <RelatedGoals
+          goalPreviews={(goal as LtGoal).delayedRelatedGoals}
+          label='Delayed related goals'
+          color={getGoalColor('delayed')}
+        />
+      )}
+      {isLongTerm && !!(goal as LtGoal)?.completedRelatedGoals?.length && (
+        <RelatedGoals
+          goalPreviews={(goal as LtGoal).completedRelatedGoals}
+          label='Completed related goals'
+          color={getGoalColor('completed')}
+        />
+      )}
+      {isLongTerm && !!(goal as LtGoal)?.abandonedRelatedGoals?.length && (
+        <RelatedGoals
+          goalPreviews={(goal as LtGoal).abandonedRelatedGoals}
+          label='Abandoned related goals'
+          color={getGoalColor('abandoned')}
+        />
       )}
     </View>
   )

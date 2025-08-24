@@ -1,7 +1,7 @@
 import { Goal, GoalPreview, GoalPreviewRender, LtGoalPreviewRender } from '@/models/goal'
 import { Pressable, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { colors, goalStatusColorMap } from '@/common/theme'
+import { colors, getGoalColor } from '@/common/theme'
 import { SectionTitle } from '@/components/SectionTitle'
 import Feather from '@expo/vector-icons/Feather'
 import { cn } from '@/common/utils/css'
@@ -20,7 +20,7 @@ export function GoalsSection({
       <SectionTitle className='px-2'>{title}</SectionTitle>
       <View className='flex flex-col flex-wrap'>
         {goals?.map((goal) => (
-          <GoalPreviewItem {...{ ...goal, status: goal.status ?? status }} key={goal.id} />
+          <GoalPreviewItem {...goal} color={getGoalColor(goal.status ?? status)} key={goal.id} />
         ))}
       </View>
     </View>
@@ -30,12 +30,12 @@ export function GoalsSection({
 export function GoalPreviewItem({
   id,
   name,
-  status,
+  color,
   small,
   disableLink,
   className,
 }: Omit<GoalPreview, 'status'> & {
-  status?: Goal['status']
+  color: string
   small?: boolean
   disableLink?: boolean
   className?: string
@@ -46,17 +46,18 @@ export function GoalPreviewItem({
     <Pressable
       onPress={() => !disableLink && router.navigate({ pathname: '/goal/[id]', params: { id } })}
       className={cn(
-        'flex flex-row gap-3 items-center py-1 px-2 active:bg-bgTertiary rounded-lg w-full',
+        'flex flex-row gap-3 items-center py-1 px-2 rounded-lg w-full',
+        {
+          'active:bg-bgTertiary': !disableLink,
+        },
         className
       )}
     >
       <View
         className='w-[6] h-[6] rounded-sm'
-        style={
-          status && {
-            backgroundColor: goalStatusColorMap[status],
-          }
-        }
+        style={{
+          backgroundColor: color,
+        }}
       />
       <Text className={`text-fg ${small ? 'text-md' : 'text-xl'}`}>{name}</Text>
     </Pressable>

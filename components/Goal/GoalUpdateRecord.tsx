@@ -74,7 +74,6 @@ function GoalUpdateRecordUnmemoed({
         hour12: !uses24hourClock,
       })
 
-  console.log(id)
   return (
     <View className='flex flex-col gap-1 relative'>
       <Text className='text-fgSecondary text-xs'>{time}</Text>

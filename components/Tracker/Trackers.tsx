@@ -4,9 +4,8 @@ import { formatDurationShort } from '@/common/utils/date'
 import { BottomSheetModal } from '@gorhom/bottom-sheet'
 import { useCallback, useRef } from 'react'
 import { colors } from '@/common/theme'
-import { SheetBackdrop } from '@/components/SheetBackdrop'
 import { TrackerSheet } from '@/components/Tracker/TrackerSheet'
-import { useSheetBackHandler } from '@/hooks/useSheetBackHandler'
+import { SheetModal } from '@/components/SheetModal'
 
 export function Trackers({ trackers }: { trackers: Tracker[] }) {
   return (
@@ -31,8 +30,6 @@ function TrackerItem({
     bottomSheetModalRef.current?.present()
   }, [])
 
-  const onSheetChange = useSheetBackHandler(bottomSheetModalRef)
-
   const shownValue =
     typeSpecificData.type === 'date'
       ? formatDurationShort(typeSpecificData.duration)
@@ -53,20 +50,9 @@ function TrackerItem({
         <Text className='text-fgSecondary'>{name}:</Text>
         <Text className='text-fg font-bold'>{shownValue}</Text>
       </Pressable>
-      <BottomSheetModal
-        ref={bottomSheetModalRef}
-        backgroundStyle={{
-          backgroundColor: colors.bgSecondary,
-          borderRadius: 40,
-        }}
-        handleIndicatorStyle={{ backgroundColor: colors.accent, width: 100, height: 3 }}
-        keyboardBlurBehavior='restore'
-        enableBlurKeyboardOnGesture
-        backdropComponent={SheetBackdrop}
-        onChange={onSheetChange}
-      >
+      <SheetModal ref={bottomSheetModalRef}>
         <TrackerSheet id={id} />
-      </BottomSheetModal>
+      </SheetModal>
     </>
   )
 }

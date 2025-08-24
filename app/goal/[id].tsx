@@ -31,8 +31,7 @@ import { NEW_ID } from '@/components/Goal/constants'
 import { GoalDetails } from '@/components/Goal/GoalDetails'
 import { BottomSheetModal } from '@gorhom/bottom-sheet'
 import { GoalSheet } from '@/components/Goal/GoalSheet'
-import { useSheetBackHandler } from '@/hooks/useSheetBackHandler'
-import { SheetBackdrop } from '@/components/SheetBackdrop'
+import { SheetModal } from '@/components/SheetModal'
 
 interface GoalUpdateModificationState {
   id: number
@@ -41,6 +40,10 @@ interface GoalUpdateModificationState {
     | { type: 'delete' }
     | { type: 'create'; content: string }
     | { type: 'update'; newContent: string }
+}
+
+export interface SheetModalData {
+  action: 'abandon' | 'complete' | 'delay'
 }
 
 export default function GoalScreen() {
@@ -186,9 +189,7 @@ export default function GoalScreen() {
     })
   }
 
-  const bottomSheetModalRef = useRef<BottomSheetModal>(null)
-
-  const onSheetChange = useSheetBackHandler(bottomSheetModalRef)
+  const bottomSheetModalRef = useRef<BottomSheetModal<SheetModalData>>(null)
 
   const accentColor =
     goal?.status && goal.status !== 'active'
@@ -226,7 +227,7 @@ export default function GoalScreen() {
               <Feather
                 name='more-horizontal'
                 size={24}
-                color={pressed ? accentColorActive : accentColor}
+                color={pressed || isMenuShown ? accentColorActive : accentColor}
               />
             )}
           </Pressable>
@@ -425,7 +426,7 @@ export default function GoalScreen() {
               color={colors.negative}
               onPress={() => {
                 hideMenu()
-                bottomSheetModalRef.current?.present()
+                bottomSheetModalRef.current?.present({ action: 'abandon' })
               }}
             />
             <ContextMenuItem
@@ -434,33 +435,27 @@ export default function GoalScreen() {
               color={colors.positive}
               onPress={() => {
                 hideMenu()
-                bottomSheetModalRef.current?.present()
+                bottomSheetModalRef.current?.present({ action: 'complete' })
               }}
             />
             <ContextMenuItem
               label='Delay'
               iconName='clock'
               color={colors.delayedGoal}
-              onPress={() => null}
+              onPress={() => {
+                hideMenu()
+                bottomSheetModalRef.current?.present({ action: 'delay' })
+              }}
             />
             <ContextMenuSection label='Add a continuation' />
             <ContextMenuItem label='Prerequisite' iconName='arrow-down-left' onPress={() => null} />
             <ContextMenuItem label='Consequence' iconName='arrow-up-right' onPress={() => null} />
           </Popover>
-          <BottomSheetModal
-            ref={bottomSheetModalRef}
-            backgroundStyle={{
-              backgroundColor: colors.bgSecondary,
-              borderRadius: 40,
-            }}
-            handleIndicatorStyle={{ backgroundColor: colors.accent, width: 100, height: 3 }}
-            keyboardBlurBehavior='restore'
-            enableBlurKeyboardOnGesture
-            backdropComponent={SheetBackdrop}
-            onChange={onSheetChange}
-          >
-            <GoalSheet id={id} action='abandon' />
-          </BottomSheetModal>
+          <SheetModal<SheetModalData> ref={bottomSheetModalRef}>
+            {({ data }) => (
+              <GoalSheet id={id} action={data?.action} goal={goal} isLongTerm={isLongTerm} />
+            )}
+          </SheetModal>
         </>
       )}
     </>

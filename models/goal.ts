@@ -42,6 +42,7 @@ export interface BaseGoal {
 
 export interface LtGoal extends BaseGoal {
   relatedGoals: GoalPreview[]
+  delayedRelatedGoals: GoalPreview[]
   completedRelatedGoals: GoalPreview[]
   abandonedRelatedGoals: GoalPreview[]
 }
@@ -49,6 +50,7 @@ export interface LtGoal extends BaseGoal {
 export interface Goal extends BaseGoal {
   prerequisites: GoalPreview[]
   consequences: GoalPreview[]
+  relatedLtGoals: GoalPreview[]
 }
 
 export async function getLtGoals(db: SQLiteDatabase): Promise<LtGoalPreviewRender[]> {
@@ -58,7 +60,7 @@ export async function getLtGoals(db: SQLiteDatabase): Promise<LtGoalPreviewRende
            render_data,
            (select count(*)
             from goal_relation
-            where goal_id = goal.id)           as related_goals_num,
+            where goal_id = goal.id)      as related_goals_num,
            (select count(*)
             from goal_relation
                    left join goal g on g.id = related_goal_id
@@ -138,6 +140,10 @@ export async function getLtGoal(db: SQLiteDatabase, id: number): Promise<LtGoal>
                  json_group_array(json_object('id', related_goal.id, 'name',
                                               related_goal.name, 'status', related_goal.status))
                                   filter (where related_goal.id is not null)           as related_goals,
+                 json_group_array(json_object('id', delayed_related_goal.id, 'name',
+                                              delayed_related_goal.name, 'status',
+                                              delayed_related_goal.status))
+                                  filter (where delayed_related_goal.id is not null)   as delayed_related_goals,
                  json_group_array(json_object('id', completed_related_goal.id, 'name',
                                               completed_related_goal.name))
                                   filter (where completed_related_goal.id is not null) as completed_related_goals,
@@ -149,6 +155,9 @@ export async function getLtGoal(db: SQLiteDatabase, id: number): Promise<LtGoal>
                  left join goal related_goal
                            on related_goal.id = gl.related_goal_id and
                               related_goal.status = 'active'
+                 left join goal delayed_related_goal
+                           on delayed_related_goal.id = gl.related_goal_id and
+                              delayed_related_goal.status = 'delayed'
                  left join goal completed_related_goal
                            on completed_related_goal.id = gl.related_goal_id and
                               completed_related_goal.status = 'completed'
@@ -180,6 +189,7 @@ export async function getLtGoal(db: SQLiteDatabase, id: number): Promise<LtGoal>
     progressDuration: intervalToDuration(interval(createdAt, closeDate ?? new Date())),
     relatedTrackers: trackers,
     relatedGoals: JSON.parse(ltGoal.relatedGoals),
+    delayedRelatedGoals: JSON.parse(ltGoal.delayedRelatedGoals),
     completedRelatedGoals: JSON.parse(ltGoal.completedRelatedGoals),
     abandonedRelatedGoals: JSON.parse(ltGoal.abandonedRelatedGoals),
   }
@@ -202,18 +212,27 @@ export async function getGoal(db: SQLiteDatabase, id: number): Promise<Goal> {
                  goal.close_date,
                  goal.status,
                  json_group_array(distinct json_object('id', prerequisite.id, 'name',
-                                              prerequisite.name, 'status', prerequisite.status))
-                                  filter (where prerequisite.id is not null) as prerequisites,
+                                                       prerequisite.name, 'status',
+                                                       prerequisite.status))
+                                  filter (where prerequisite.id is not null)    as prerequisites,
                  json_group_array(distinct json_object('id', consequence.id, 'name',
-                                              consequence.name, 'status', consequence.status))
-                                  filter (where consequence.id is not null)  as consequences
+                                                       consequence.name, 'status',
+                                                       consequence.status))
+                                  filter (where consequence.id is not null)     as consequences,
+                 json_group_array(distinct json_object('id', related_lt_goal.id, 'name',
+                                                       related_lt_goal.name, 'status',
+                                                       related_lt_goal.status))
+                                  filter (where related_lt_goal.id is not null) as related_lt_goals
           from goal
                  left join goal_link gl on gl.goal_id = goal.id
                  left join goal_link gln on gln.next_goal_id = goal.id
+                 left join goal_relation gr on gr.related_goal_id = goal.id
                  left join goal prerequisite
                            on prerequisite.id = gln.goal_id
                  left join goal consequence
                            on consequence.id = gl.next_goal_id
+                 left join goal related_lt_goal
+                           on related_lt_goal.id = gr.goal_id
           where goal.id = $id
         `,
         { $id: id }
@@ -240,6 +259,7 @@ export async function getGoal(db: SQLiteDatabase, id: number): Promise<Goal> {
     relatedTrackers: trackers,
     prerequisites: JSON.parse(goal.prerequisites),
     consequences: JSON.parse(goal.consequences),
+    relatedLtGoals: JSON.parse(goal.relatedLtGoals),
   }
 }
 
@@ -249,15 +269,15 @@ export async function getGoalsLinkedToTracker(
 ): Promise<GoalPreviewRender[]> {
   const rows = await db.getAllAsync<Row<GoalPreviewRender>>(
     `
-    select id,
-           name,
-           render_data
-    from goal
-           left join goal_tracker gt on goal.id = gt.goal_id
-    where status = 'active'
-      and gt.tracker_id = $trackerId
-    order by case when type = 'long' then 1 when type = 'normal' then 2 end
-  `,
+      select id,
+             name,
+             render_data
+      from goal
+             left join goal_tracker gt on goal.id = gt.goal_id
+      where status = 'active'
+        and gt.tracker_id = $trackerId
+      order by case when type = 'long' then 1 when type = 'normal' then 2 end
+    `,
     { $trackerId: trackerId }
   )
 
