@@ -28,6 +28,7 @@ export function Metastats({ metastats }: { metastats: MetaStat[] }) {
         []
       )}
       updateIndexes={updateMetaStatIndexMutator}
+      rowGap={4}
     />
   )
 }

@@ -1,4 +1,4 @@
-import Sortable from 'react-native-sortables'
+import Sortable, { SortableGridProps } from 'react-native-sortables'
 import { performContextMenuHaptics } from '@/common/utils/haptics'
 import { SortableGridRenderItem } from 'react-native-sortables/dist/typescript/types/props/grid'
 
@@ -6,11 +6,12 @@ export function SortableList<T extends { id: number }>({
   data,
   renderItem,
   updateIndexes,
+  ...props
 }: {
   data: T[] | undefined
   renderItem: SortableGridRenderItem<T>
   updateIndexes: (updates: { id: number; index: number }[]) => void
-}) {
+} & SortableGridProps<T>) {
   return (
     <Sortable.Grid
       data={data ?? []}
@@ -35,6 +36,7 @@ export function SortableList<T extends { id: number }>({
 
         updateIndexes(updates)
       }}
+      {...props}
     />
   )
 }

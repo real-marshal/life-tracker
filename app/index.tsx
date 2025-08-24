@@ -121,7 +121,7 @@ export default function HomeScreen() {
             </View>
             <GoalSection title='Long-term'>
               <SortableList
-                data={ltGoals}
+                data={ltGoals ?? []}
                 renderItem={useCallback<SortableGridRenderItem<LtGoalPreviewRender>>(
                   ({ item }) => (
                     <LtGoalPreviewItem {...item} />
@@ -133,7 +133,7 @@ export default function HomeScreen() {
             </GoalSection>
             <GoalSection title='Current'>
               <SortableList
-                data={goals}
+                data={goals ?? []}
                 renderItem={useCallback<SortableGridRenderItem<GoalPreviewRender>>(
                   ({ item }) => (
                     <GoalPreviewItem {...item} color={getGoalColor(item.status)} draggable />
