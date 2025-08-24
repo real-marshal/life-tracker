@@ -10,14 +10,14 @@ export async function seed(db: SQLiteDatabase) {
     values ('Real_Marshal');
 
     -- metastats
-    insert into metastat(name, value, level)
-    values ('Health', 0.5, 0);
+    insert into metastat(name, value, level, render_data)
+    values ('Health', 0.5, 0, '{}');
 
-    insert into metastat(name, value, level)
-    values ('Knowledge', 0.5, 0);
+    insert into metastat(name, value, level, render_data)
+    values ('Knowledge', 0.5, 0, '{}');
 
-    insert into metastat(name, value)
-    values ('Mental', 0.5);
+    insert into metastat(name, value, render_data)
+    values ('Mental', 0.5, '{}');
 
     -- lt goals
     insert into goal(name, type, status, why, created_at, render_data)
@@ -146,6 +146,8 @@ export async function seed(db: SQLiteDatabase) {
     values (1, 9);
     insert into goal_relation (goal_id, related_goal_id)
     values (1, 10);
+    insert into goal_relation (goal_id, related_goal_id)
+    values (1, 11);
 
     -- prerequisites/consequences
     insert into goal_link (goal_id, next_goal_id)

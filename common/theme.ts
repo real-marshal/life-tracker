@@ -42,3 +42,7 @@ export const goalUpdateColorMap: Record<GoalUpdate['sentiment'], string> = {
   negative: colors.negative,
   neutral: colors.fg,
 }
+
+export function getGoalColor(status?: Goal['status'], isLongTerm?: boolean): string {
+  return isLongTerm ? colors.ltGoal : goalStatusColorMap[status ?? 'active']
+}

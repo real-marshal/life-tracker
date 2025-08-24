@@ -84,11 +84,12 @@ module.exports = (db) => {
 
     create table if not exists metastat
     (
-      id         integer primary key autoincrement,
-      name       text not null check (length(name) < 255),
-      value      real not null default 0.0,
-      level      integer,
-      decay_data text check (json_valid(decay_data))
+      id          integer primary key autoincrement,
+      name        text not null check (length(name) < 255),
+      value       real not null default 0.0,
+      level       integer,
+      decay_data  text check (json_valid(decay_data)),
+      render_data text check (json_valid(render_data))
     );
 
     create table if not exists user

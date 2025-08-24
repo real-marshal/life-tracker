@@ -13,12 +13,12 @@ import { TodaySection } from '@/components/TodaySection'
 import { Trackers } from '@/components/Tracker/Trackers'
 import { SectionTitle } from '@/components/SectionTitle'
 import { GoalsSection, LtGoalPreviewItem } from '@/components/Goal/Goals'
-import { MetastatItem } from '@/components/MetastatItem'
 import { useQuery } from '@tanstack/react-query'
 import { FloatingButton, FloatingMenuItem } from '@/components/FloatingMenu'
 import { useFloatingMenu } from '@/hooks/useFloatingMenu'
 import { Popover } from '@/components/Popover'
 import { Pressable } from 'react-native-gesture-handler'
+import { Metastats } from '@/components/Metastat/Metastats'
 
 export default function HomeScreen() {
   const db = useSQLiteContext()
@@ -89,10 +89,8 @@ export default function HomeScreen() {
             </View>
             <View className='flex flex-col gap-2 px-2'>
               <SectionTitle>Meta stats</SectionTitle>
-              <View className='flex flex-col gap-1'>
-                {metastats?.map((metastat) => (
-                  <MetastatItem {...metastat} key={metastat.id} />
-                ))}
+              <View className='flex flex-col'>
+                {metastats && <Metastats metastats={metastats} />}
               </View>
             </View>
             <View className='flex flex-col gap-2 px-2'>
