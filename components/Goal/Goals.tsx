@@ -1,28 +1,18 @@
-import { Goal, GoalPreview, GoalPreviewRender, LtGoalPreviewRender } from '@/models/goal'
-import { Pressable, Text, View } from 'react-native'
+import { GoalPreview, LtGoalPreviewRender } from '@/models/goal'
+import { Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { colors, getGoalColor } from '@/common/theme'
+import { colors } from '@/common/theme'
 import { SectionTitle } from '@/components/SectionTitle'
 import Feather from '@expo/vector-icons/Feather'
 import { cn } from '@/common/utils/css'
+import { ReactNode } from 'react'
+import { PressableWrapper } from '@/components/Pressable'
 
-export function GoalsSection({
-  title,
-  goals,
-  status,
-}: {
-  title: string
-  goals?: (GoalPreviewRender | GoalPreview)[]
-  status?: Goal['status']
-}) {
+export function GoalSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <View className='flex flex-col gap-1'>
       <SectionTitle className='px-2'>{title}</SectionTitle>
-      <View className='flex flex-col flex-wrap'>
-        {goals?.map((goal) => (
-          <GoalPreviewItem {...goal} color={getGoalColor(goal.status ?? status)} key={goal.id} />
-        ))}
-      </View>
+      <View className='flex flex-col flex-wrap'>{children}</View>
     </View>
   )
 }
@@ -34,16 +24,18 @@ export function GoalPreviewItem({
   small,
   disableLink,
   className,
+  draggable,
 }: Omit<GoalPreview, 'status'> & {
   color: string
   small?: boolean
   disableLink?: boolean
   className?: string
+  draggable?: boolean
 }) {
   const router = useRouter()
 
   return (
-    <Pressable
+    <PressableWrapper
       onPress={() => !disableLink && router.navigate({ pathname: '/goal/[id]', params: { id } })}
       className={cn(
         'flex flex-row gap-3 items-center py-1 px-2 rounded-lg w-full',
@@ -52,6 +44,7 @@ export function GoalPreviewItem({
         },
         className
       )}
+      draggable={draggable}
     >
       <View
         className='w-[6] h-[6] rounded-sm'
@@ -60,7 +53,7 @@ export function GoalPreviewItem({
         }}
       />
       <Text className={`text-fg ${small ? 'text-md' : 'text-xl'}`}>{name}</Text>
-    </Pressable>
+    </PressableWrapper>
   )
 }
 
@@ -73,9 +66,10 @@ export function LtGoalPreviewItem({
   const router = useRouter()
 
   return (
-    <Pressable
+    <PressableWrapper
       onPress={() => router.navigate({ pathname: '/goal/[id]', params: { id, type: 'longterm' } })}
       className='flex flex-row gap-3 justify-between py-1 px-2 active:bg-bgTertiary rounded-lg'
+      draggable
     >
       <View className='flex flex-row gap-3 items-center'>
         <View className='w-[6] h-[6] bg-ltGoal rounded-sm' />
@@ -91,6 +85,6 @@ export function LtGoalPreviewItem({
           <Text className='text-fg text-xl font-bold'>{completedGoalsNum}</Text>
         </View>
       </View>
-    </Pressable>
+    </PressableWrapper>
   )
 }

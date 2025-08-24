@@ -2,27 +2,38 @@ import { View, Text, ScrollView } from 'react-native'
 import { useSQLiteContext } from 'expo-sqlite'
 import { getUser } from '@/models/user'
 import { useRouter } from 'expo-router'
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import Feather from '@expo/vector-icons/Feather'
-import { colors } from '@/common/theme'
+import { colors, getGoalColor } from '@/common/theme'
 import { getMetaStats } from '@/models/metastat'
 import { getTrackers } from '@/models/tracker'
-import { getArchiveGoals, getDelayedGoals, getGoals, getLtGoals } from '@/models/goal'
+import {
+  getArchiveGoals,
+  getDelayedGoals,
+  getGoals,
+  getLtGoals,
+  GoalPreviewRender,
+  LtGoalPreviewRender,
+  updateGoalIndices,
+} from '@/models/goal'
 import { useErrorToasts } from '@/hooks/useErrorToasts'
 import { TodaySection } from '@/components/TodaySection'
 import { Trackers } from '@/components/Tracker/Trackers'
 import { SectionTitle } from '@/components/SectionTitle'
-import { GoalsSection, LtGoalPreviewItem } from '@/components/Goal/Goals'
-import { useQuery } from '@tanstack/react-query'
+import { GoalPreviewItem, GoalSection, LtGoalPreviewItem } from '@/components/Goal/Goals'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FloatingButton, FloatingMenuItem } from '@/components/FloatingMenu'
 import { useFloatingMenu } from '@/hooks/useFloatingMenu'
 import { Popover } from '@/components/Popover'
 import { Pressable } from 'react-native-gesture-handler'
 import { Metastats } from '@/components/Metastat/Metastats'
+import { SortableList } from '@/components/SortableList'
+import { SortableGridRenderItem } from 'react-native-sortables'
 
 export default function HomeScreen() {
   const db = useSQLiteContext()
   const router = useRouter()
+  const queryClient = useQueryClient()
 
   const {
     data: user,
@@ -43,7 +54,7 @@ export default function HomeScreen() {
     queryFn: () => getLtGoals(db),
   })
   const { data: goals, error: goalsError } = useQuery({
-    queryKey: ['goals', 'normal'],
+    queryKey: ['goals', 'active'],
     queryFn: () => getGoals(db),
   })
   const { data: delayedGoals, error: delayedGoalsError } = useQuery({
@@ -53,6 +64,15 @@ export default function HomeScreen() {
   const { data: archiveGoals, error: archiveGoalsError } = useQuery({
     queryKey: ['goals', 'archive'],
     queryFn: () => getArchiveGoals(db),
+  })
+
+  const { mutate: updateLtGoalIndexMutator, error: updatingLtError } = useMutation({
+    mutationFn: (param: { id: number; index: number }[]) => updateGoalIndices(db, param),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['goals', 'longterm'] }),
+  })
+  const { mutate: updateGoalIndexMutator, error: updatingError } = useMutation({
+    mutationFn: (param: { id: number; index: number }[]) => updateGoalIndices(db, param),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['goals', 'active'] }),
   })
 
   useEffect(() => {
@@ -68,7 +88,9 @@ export default function HomeScreen() {
     { title: 'Error getting LT goals', errorData: ltGoalsError },
     { title: 'Error getting goals', errorData: goalsError },
     { title: 'Error getting delayed goals', errorData: delayedGoalsError },
-    { title: 'Error getting archive goals', errorData: archiveGoalsError }
+    { title: 'Error getting archive goals', errorData: archiveGoalsError },
+    { title: 'Error updating LT goal indexes', errorData: updatingLtError },
+    { title: 'Error updating goal indexes', errorData: updatingError }
   )
 
   const { isPopoverShown, hidePopover, showPopover, animatedStyle } = useFloatingMenu()
@@ -97,17 +119,40 @@ export default function HomeScreen() {
               <SectionTitle>Trackers</SectionTitle>
               {trackers && <Trackers trackers={trackers} />}
             </View>
-            <View className='flex flex-col gap-1'>
-              <SectionTitle className='px-2'>Long-term</SectionTitle>
-              <View className='flex flex-col flex-wrap'>
-                {ltGoals?.map((ltGoal) => (
-                  <LtGoalPreviewItem {...ltGoal} key={ltGoal.id} />
-                ))}
-              </View>
-            </View>
-            <GoalsSection goals={goals} title='current' status='active' />
-            <GoalsSection goals={delayedGoals} title='delayed' status='delayed' />
-            <GoalsSection goals={archiveGoals} title='archive' />
+            <GoalSection title='Long-term'>
+              <SortableList
+                data={ltGoals}
+                renderItem={useCallback<SortableGridRenderItem<LtGoalPreviewRender>>(
+                  ({ item }) => (
+                    <LtGoalPreviewItem {...item} />
+                  ),
+                  []
+                )}
+                updateIndexes={updateLtGoalIndexMutator}
+              />
+            </GoalSection>
+            <GoalSection title='Current'>
+              <SortableList
+                data={goals}
+                renderItem={useCallback<SortableGridRenderItem<GoalPreviewRender>>(
+                  ({ item }) => (
+                    <GoalPreviewItem {...item} color={getGoalColor(item.status)} draggable />
+                  ),
+                  []
+                )}
+                updateIndexes={updateGoalIndexMutator}
+              />
+            </GoalSection>
+            <GoalSection title='Delayed'>
+              {delayedGoals?.map((goal) => (
+                <GoalPreviewItem {...goal} color={getGoalColor('delayed')} key={goal.id} />
+              ))}
+            </GoalSection>
+            <GoalSection title='Archive'>
+              {archiveGoals?.map((goal) => (
+                <GoalPreviewItem {...goal} color={getGoalColor(goal.status)} key={goal.id} />
+              ))}
+            </GoalSection>
           </View>
         </ScrollView>
       </Pressable>

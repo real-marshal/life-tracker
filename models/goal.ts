@@ -3,6 +3,7 @@ import { Row, RowCamelCase } from '@/common/utils/types'
 import { toCamelCase } from '@/common/utils/object'
 import { Duration, interval, intervalToDuration } from 'date-fns'
 import { getTrackers, Tracker } from '@/models/tracker'
+import { sortWithIndex } from '@/common/utils/array'
 
 export interface GoalRenderData {
   index: number
@@ -71,9 +72,11 @@ export async function getLtGoals(db: SQLiteDatabase): Promise<LtGoalPreviewRende
       and status = 'active'
   `)
 
-  return rows
-    .map(toCamelCase<RowCamelCase<LtGoalPreviewRender>>)
-    .map((r) => ({ ...r, renderData: JSON.parse(r.renderData) }))
+  return sortWithIndex(
+    rows
+      .map(toCamelCase<RowCamelCase<LtGoalPreviewRender>>)
+      .map((r) => ({ ...r, renderData: JSON.parse(r.renderData) }))
+  )
 }
 
 export async function getGoals(db: SQLiteDatabase): Promise<GoalPreviewRender[]> {
@@ -86,9 +89,11 @@ export async function getGoals(db: SQLiteDatabase): Promise<GoalPreviewRender[]>
       and status = 'active'
   `)
 
-  return rows
-    .map(toCamelCase<RowCamelCase<GoalPreviewRender>>)
-    .map((r) => ({ ...r, renderData: JSON.parse(r.renderData) }))
+  return sortWithIndex(
+    rows
+      .map(toCamelCase<RowCamelCase<GoalPreviewRender>>)
+      .map((r) => ({ ...r, renderData: JSON.parse(r.renderData) }))
+  )
 }
 
 export async function getDelayedGoals(db: SQLiteDatabase): Promise<GoalPreviewRender[]> {
@@ -284,4 +289,23 @@ export async function getGoalsLinkedToTracker(
   return rows
     .map(toCamelCase<RowCamelCase<GoalPreviewRender>>)
     .map((r) => ({ ...r, renderData: JSON.parse(r.renderData) }))
+}
+
+export async function updateGoalIndices(
+  db: SQLiteDatabase,
+  updates: { id: number; index: number }[]
+) {
+  const statement = await db.prepareAsync(
+    `update goal
+     set render_data = json_set(render_data, '$.index', $index)
+     where id = $id`
+  )
+
+  try {
+    await Promise.all(
+      updates.map(({ id, index }) => statement.executeAsync({ $index: index, $id: id }))
+    )
+  } finally {
+    await statement.finalizeAsync()
+  }
 }
