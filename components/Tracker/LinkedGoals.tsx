@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useErrorToasts } from '@/hooks/useErrorToasts'
 import { Pressable, Text, View } from 'react-native'
 import Feather from '@expo/vector-icons/Feather'
-import { colors } from '@/common/theme'
+import { colors, getGoalColor } from '@/common/theme'
 import { ScrollView } from 'react-native-gesture-handler'
 import { getGoalsLinkedToTracker } from '@/models/goal'
 import { GoalPreviewItem } from '@/components/Goal/Goals'
@@ -66,7 +66,12 @@ export function LinkedGoals({
             <View className='flex flex-col gap-2' onStartShouldSetResponder={() => true}>
               {goals?.map((goal) => (
                 <View key={goal.id} className='flex flex-row gap-4 items-center'>
-                  <GoalPreviewItem {...goal} status='active' small className='w-[80%] grow' />
+                  <GoalPreviewItem
+                    {...goal}
+                    color={getGoalColor('active')}
+                    small
+                    className='w-[80%] grow'
+                  />
                   <LinkedGoalsDelete
                     trackerId={trackerId}
                     goalId={goal.id}
