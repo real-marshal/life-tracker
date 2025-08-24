@@ -5,7 +5,7 @@ import { SQLiteProvider } from 'expo-sqlite'
 import Toast, { ToastConfig } from 'react-native-toast-message'
 import 'react-native-reanimated'
 import '../global.css'
-import { initSqlite } from '@/common/utils/db'
+import { dbName, initSqlite } from '@/common/utils/db'
 import { useMigrations } from '@/hooks/useMigrations'
 import { Appearance, Text, View } from 'react-native'
 import { stringifyError } from '@/common/utils/error'
@@ -41,7 +41,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={DarkTheme}>
-      <SQLiteProvider databaseName='main.db' onInit={initSqlite}>
+      <SQLiteProvider databaseName={dbName} onInit={initSqlite}>
         <QueryClientProvider client={queryClient}>
           <KeyboardProvider>
             <StatusBar style='auto' />

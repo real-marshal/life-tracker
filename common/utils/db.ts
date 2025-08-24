@@ -1,4 +1,7 @@
 import { deleteDatabaseAsync, SQLiteDatabase } from 'expo-sqlite'
+import { markUserAsOnboarded } from '@/models/user'
+
+export const dbName = 'main.db'
 
 export async function initSqlite(db: SQLiteDatabase) {
   return db.execAsync('PRAGMA foreign_keys = ON')
@@ -187,4 +190,9 @@ export async function seed(db: SQLiteDatabase) {
 export async function dropDb(db: SQLiteDatabase) {
   await db.closeAsync()
   await deleteDatabaseAsync('main.db')
+}
+
+export async function initNewDb(db: SQLiteDatabase, shouldSeed: boolean = true) {
+  shouldSeed && (await seed(db))
+  await markUserAsOnboarded(db)
 }
