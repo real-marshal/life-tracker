@@ -1,7 +1,7 @@
 import { SQLiteDatabase } from 'expo-sqlite'
 import { Row, RowCamelCase } from '@/common/utils/types'
 import { toCamelCase } from '@/common/utils/object'
-import { Duration, interval, intervalToDuration } from 'date-fns'
+import { Duration, formatISO, interval, intervalToDuration } from 'date-fns'
 import { getTrackers, Tracker } from '@/models/tracker'
 import { sortWithIndex } from '@/common/utils/array'
 
@@ -308,4 +308,16 @@ export async function updateGoalIndices(
   } finally {
     await statement.finalizeAsync()
   }
+}
+
+export type AddGoalParam = { text: string; why: string | null }
+
+export async function addGoal(db: SQLiteDatabase, { text, why }: AddGoalParam) {
+  await db.runAsync(
+    `
+    insert into goal(name, type, created_at, render_data, status, why)
+    values ($text, 'normal', $created_at, '{}', 'active', $why)
+  `,
+    { $text: text, $why: why, $created_at: formatISO(new Date()) }
+  )
 }

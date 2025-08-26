@@ -29,6 +29,9 @@ import { Pressable } from 'react-native-gesture-handler'
 import { Metastats } from '@/components/Metastat/Metastats'
 import { SortableList } from '@/components/SortableList'
 import { SortableGridRenderItem } from 'react-native-sortables'
+import { Backdrop } from '@/components/Backdrop'
+import { NewGoalModal } from '@/components/Goal/NewGoalModal'
+import { useModal } from '@/components/Modal'
 
 export default function HomeScreen() {
   const db = useSQLiteContext()
@@ -94,68 +97,80 @@ export default function HomeScreen() {
   )
 
   const { isPopoverShown, hidePopover, showPopover, animatedStyle } = useFloatingMenu()
+  const {
+    showModal: showNewGoalModal,
+    hideModal: hideNewGoalModal,
+    ...newGoalModalProps
+  } = useModal()
 
   return (
     <>
-      <Pressable onPress={hidePopover}>
-        <ScrollView>
-          <View className='m-safe pt-5 pb-3 px-1 flex flex-col gap-6'>
-            <View className='flex flex-col gap-1 px-2'>
-              <View className='flex flex-row gap-3 justify-between items-center'>
-                <TodaySection />
-                <Pressable onPress={() => router.navigate('/settings')}>
-                  <Feather name='settings' size={20} color={colors.fg} />
-                </Pressable>
-              </View>
-              <Text className='text-accent text-4xl'>Hi, {user?.name}</Text>
+      <ScrollView>
+        <View className='m-safe pt-5 pb-3 px-1 flex flex-col gap-6'>
+          <View className='flex flex-col gap-1 px-2'>
+            <View className='flex flex-row gap-3 justify-between items-center'>
+              <TodaySection />
+              <Pressable onPress={() => router.navigate('/settings')}>
+                <Feather name='settings' size={20} color={colors.fg} />
+              </Pressable>
             </View>
-            <View className='flex flex-col gap-2 px-2'>
-              <SectionTitle>Meta stats</SectionTitle>
-              <View className='flex flex-col'>
-                {metastats && <Metastats metastats={metastats} />}
-              </View>
-            </View>
-            <View className='flex flex-col gap-2 px-2'>
-              <SectionTitle>Trackers</SectionTitle>
-              {trackers && <Trackers trackers={trackers} />}
-            </View>
-            <GoalSection title='Long-term'>
-              <SortableList
-                data={ltGoals ?? []}
-                renderItem={useCallback<SortableGridRenderItem<LtGoalPreviewRender>>(
-                  ({ item }) => (
-                    <LtGoalPreviewItem {...item} />
-                  ),
-                  []
-                )}
-                updateIndexes={updateLtGoalIndexMutator}
-              />
-            </GoalSection>
-            <GoalSection title='Current'>
-              <SortableList
-                data={goals ?? []}
-                renderItem={useCallback<SortableGridRenderItem<GoalPreviewRender>>(
-                  ({ item }) => (
-                    <GoalPreviewItem {...item} color={getGoalColor(item.status)} draggable />
-                  ),
-                  []
-                )}
-                updateIndexes={updateGoalIndexMutator}
-              />
-            </GoalSection>
-            <GoalSection title='Delayed'>
-              {delayedGoals?.map((goal) => (
-                <GoalPreviewItem {...goal} color={getGoalColor('delayed')} key={goal.id} />
-              ))}
-            </GoalSection>
-            <GoalSection title='Archive'>
-              {archiveGoals?.map((goal) => (
-                <GoalPreviewItem {...goal} color={getGoalColor(goal.status)} key={goal.id} />
-              ))}
-            </GoalSection>
+            <Text className='text-accent text-4xl'>Hi, {user?.name}</Text>
           </View>
-        </ScrollView>
-      </Pressable>
+          <View className='flex flex-col gap-2 px-2'>
+            <SectionTitle>Meta stats</SectionTitle>
+            <View className='flex flex-col'>
+              {metastats && <Metastats metastats={metastats} />}
+            </View>
+          </View>
+          <View className='flex flex-col gap-2 px-2'>
+            <SectionTitle>Trackers</SectionTitle>
+            {trackers && <Trackers trackers={trackers} />}
+          </View>
+          <GoalSection title='Long-term'>
+            <SortableList
+              data={ltGoals ?? []}
+              renderItem={useCallback<SortableGridRenderItem<LtGoalPreviewRender>>(
+                ({ item }) => (
+                  <LtGoalPreviewItem {...item} />
+                ),
+                []
+              )}
+              updateIndexes={updateLtGoalIndexMutator}
+            />
+          </GoalSection>
+          <GoalSection title='Current'>
+            <SortableList
+              data={goals ?? []}
+              renderItem={useCallback<SortableGridRenderItem<GoalPreviewRender>>(
+                ({ item }) => (
+                  <GoalPreviewItem {...item} color={getGoalColor(item.status)} draggable />
+                ),
+                []
+              )}
+              updateIndexes={updateGoalIndexMutator}
+            />
+          </GoalSection>
+          <GoalSection title='Delayed'>
+            {delayedGoals?.map((goal) => (
+              <GoalPreviewItem {...goal} color={getGoalColor('delayed')} key={goal.id} />
+            ))}
+          </GoalSection>
+          <GoalSection title='Archive'>
+            {archiveGoals?.map((goal) => (
+              <GoalPreviewItem {...goal} color={getGoalColor(goal.status)} key={goal.id} />
+            ))}
+          </GoalSection>
+        </View>
+      </ScrollView>
+
+      {isPopoverShown && (
+        <Backdrop
+          onPress={() => {
+            hidePopover()
+          }}
+        />
+      )}
+
       <FloatingButton
         onPress={() => (isPopoverShown ? hidePopover() : showPopover())}
         color={colors.accent}
@@ -180,7 +195,10 @@ export default function HomeScreen() {
         <FloatingMenuItem
           title='Add a new goal'
           description='Got any ideas?'
-          onPress={() => null}
+          onPress={() => {
+            showNewGoalModal()
+            hidePopover()
+          }}
         />
         <FloatingMenuItem
           title='Add updates'
@@ -188,6 +206,7 @@ export default function HomeScreen() {
           onPress={() => null}
         />
       </Popover>
+      <NewGoalModal hideModal={hideNewGoalModal} modalProps={newGoalModalProps} />
     </>
   )
 }

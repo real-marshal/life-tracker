@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getMetaStats } from '@/models/metastat'
 import { useSQLiteContext } from 'expo-sqlite'
 import { useErrorToasts } from '@/hooks/useErrorToasts'
+import { AppButton } from '@/components/AppButton'
 
 const actionDetailsMap: Record<
   SheetModalData['action'],
@@ -106,18 +107,12 @@ export function GoalSheet({
               textAlignVertical='top'
             />
           </View>
-          <Pressable>
-            {({ pressed }) => (
-              <Text
-                className='p-3 text-center rounded-md font-medium text-lg'
-                style={{
-                  backgroundColor: pressed ? actionDetails.colorActive : actionDetails.color,
-                }}
-              >
-                {actionDetails.buttonText}
-              </Text>
-            )}
-          </Pressable>
+          <AppButton
+            text={actionDetails.buttonText}
+            onPress={() => null}
+            color={actionDetails.color}
+            activeColor={actionDetails.colorActive}
+          />
         </View>
       </Pressable>
     </BottomSheetView>

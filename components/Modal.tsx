@@ -1,4 +1,4 @@
-import { Modal as RNModal, Pressable, View, ViewStyle } from 'react-native'
+import { Modal as RNModal, View, ViewStyle } from 'react-native'
 import Animated, {
   AnimatedStyle,
   runOnJS,
@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { ReactNode, useCallback, useEffect, useState } from 'react'
 import { cn } from '@/common/utils/css'
+import { Backdrop } from '@/components/Backdrop'
 
 export function Modal({
   children,
@@ -30,26 +31,19 @@ export function Modal({
   containerClassName?: string
   onPress?: () => void
 }) {
-  const modalContent = (
-    <ModalContent
-      opacitySharedValue={opacitySharedValue}
-      scaleSharedValue={scaleSharedValue}
-      animatedStyle={animatedStyle}
-      containerClassName={containerClassName}
-    >
-      {children}
-    </ModalContent>
-  )
-
   return (
     <RNModal transparent visible={isModalShown} onRequestClose={onCancel} animationType='none'>
-      {onPress ? (
-        <Pressable onPress={onPress} className='flex-1'>
-          {modalContent}
-        </Pressable>
-      ) : (
-        modalContent
-      )}
+      <>
+        {onPress && <Backdrop onPress={onPress} overlay />}
+        <ModalContent
+          opacitySharedValue={opacitySharedValue}
+          scaleSharedValue={scaleSharedValue}
+          animatedStyle={animatedStyle}
+          containerClassName={containerClassName}
+        >
+          {children}
+        </ModalContent>
+      </>
     </RNModal>
   )
 }
@@ -76,10 +70,10 @@ function ModalContent({
   }, [opacitySharedValue, scaleSharedValue])
 
   return (
-    <View className='flex flex-col items-center justify-center bg-[rgba(0,0,0,0.5)] flex-1'>
+    <View className='flex flex-col items-center justify-center flex-1'>
       <Animated.View
         className={cn(
-          'flex flex-col items-center justify-center bg-bgSecondary px-8 pb-8 pt-7 rounded-lg border-hairline border-[#444] gap-6 m-10',
+          'flex flex-col items-center justify-center bg-bgSecondary px-8 pb-8 pt-7 rounded-lg border-hairline border-[#444] gap-6 m-10 z-[9999]',
           containerClassName
         )}
         style={animatedStyle}

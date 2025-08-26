@@ -80,7 +80,9 @@ export function formatDurationTwoLongValues(duration: Duration) {
           ? ['days']
           : (duration.hours ?? 0 > 0)
             ? ['hours', 'minutes']
-            : ['minutes', 'seconds']
+            : (duration.minutes ?? 0 > 0)
+              ? ['minutes']
+              : ['seconds']
 
   return formatDuration(duration, { format })
 }
