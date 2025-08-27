@@ -152,7 +152,7 @@ function TrackerValueInput({
   const [placeholder, setPlaceholder] = useState<string | undefined>(undefined)
 
   useEffect(() => {
-    setPlaceholder(value ? undefined : isAdding ? 'Add new value...' : 'Modify value...')
+    setPlaceholder(value ? undefined : isAdding ? 'Add a new value...' : 'Modify value...')
   }, [isAdding, value])
 
   const { showModal, hideModal, ...modalProps } = useModal(() =>
@@ -180,7 +180,7 @@ function TrackerValueInput({
         }}
       />
       <ConfirmModal
-        text={isAdding ? 'Add new value?' : 'Update the value?'}
+        text={isAdding ? 'Add a new value?' : 'Update the value?'}
         hideModal={hideModal}
         modalProps={modalProps}
         onConfirm={() => {

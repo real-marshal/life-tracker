@@ -113,7 +113,13 @@ export default function HomeScreen() {
             <View className='flex flex-row gap-3 justify-between items-center'>
               <TodaySection />
               <Pressable onPress={() => router.navigate('/settings')}>
-                <Feather name='settings' size={20} color={colors.fg} />
+                {({ pressed }) => (
+                  <Feather
+                    name='settings'
+                    size={20}
+                    color={pressed ? colors.fgSecondary : colors.fg}
+                  />
+                )}
               </Pressable>
             </View>
             <Text className='text-accent text-4xl'>Hi, {user?.name}</Text>
@@ -193,7 +199,7 @@ export default function HomeScreen() {
           <FloatingMenuItem.Text color={colors.accent}>tracker</FloatingMenuItem.Text>
         </FloatingMenuItem>
         <FloatingMenuItem
-          description='Charting the future?'
+          description='Charting the course?'
           onPress={() => {
             setNewGoalType('longterm')
             showNewGoalModal()

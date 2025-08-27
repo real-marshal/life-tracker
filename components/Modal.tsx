@@ -21,6 +21,7 @@ export function Modal({
   animatedStyle,
   containerClassName,
   onPress,
+  onShow,
 }: {
   isModalShown: boolean
   children: ReactNode
@@ -30,9 +31,16 @@ export function Modal({
   animatedStyle: AnimatedStyle<ViewStyle>
   containerClassName?: string
   onPress?: () => void
+  onShow?: () => void
 }) {
   return (
-    <RNModal transparent visible={isModalShown} onRequestClose={onCancel} animationType='none'>
+    <RNModal
+      transparent
+      visible={isModalShown}
+      onRequestClose={onCancel}
+      animationType='none'
+      onShow={onShow}
+    >
       <>
         {onPress && <Backdrop onPress={onPress} overlay />}
         <ModalContent
@@ -40,6 +48,7 @@ export function Modal({
           scaleSharedValue={scaleSharedValue}
           animatedStyle={animatedStyle}
           containerClassName={containerClassName}
+          overlay={!onPress}
         >
           {children}
         </ModalContent>
@@ -54,12 +63,14 @@ function ModalContent({
   scaleSharedValue,
   animatedStyle,
   containerClassName,
+  overlay,
 }: {
   children: ReactNode
   opacitySharedValue: SharedValue<number>
   scaleSharedValue: SharedValue<number>
   animatedStyle: AnimatedStyle<ViewStyle>
   containerClassName?: string
+  overlay: boolean
 }) {
   useEffect(() => {
     opacitySharedValue.value = withTiming(1, { duration: 50 })
@@ -70,7 +81,11 @@ function ModalContent({
   }, [opacitySharedValue, scaleSharedValue])
 
   return (
-    <View className='flex flex-col items-center justify-center flex-1'>
+    <View
+      className={cn('flex flex-col items-center justify-center flex-1', {
+        'bg-[rgba(0,0,0,0.5)]': overlay,
+      })}
+    >
       <Animated.View
         className={cn(
           'flex flex-col items-center justify-center bg-bgSecondary px-8 pb-8 pt-7 rounded-lg border-hairline border-[#444] gap-6 m-10 z-[9999]',

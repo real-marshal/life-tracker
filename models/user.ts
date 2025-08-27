@@ -18,6 +18,15 @@ export async function getUser(db: SQLiteDatabase): Promise<User | null> {
   return row ? toCamelCase<User>(row) : null
 }
 
-export async function markUserAsOnboarded(db: SQLiteDatabase): Promise<void> {
+export async function markUserAsOnboarded(db: SQLiteDatabase) {
   await db.execAsync('update user set is_onboarded = 1')
+}
+
+export async function updateUserName(db: SQLiteDatabase, name: string) {
+  await db.runAsync(
+    `
+    update user
+    set name = $name`,
+    { $name: name }
+  )
 }

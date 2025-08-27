@@ -69,7 +69,7 @@ function RootView() {
       <Stack.Screen name='onboard' options={{ headerShown: false }} />
       <Stack.Screen
         name='settings'
-        options={{ animation: 'slide_from_right', animationDuration: 200 }}
+        options={{ animation: 'slide_from_right', animationDuration: 200, headerShown: false }}
       />
       <Stack.Screen
         name='goal/[id]'
