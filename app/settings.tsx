@@ -19,6 +19,7 @@ import { SettingsItem, SettingsSection } from '@/components/Settings/Settings'
 import { useEffect, useRef, useState } from 'react'
 import { AppButton } from '@/components/AppButton'
 
+// noinspection JSUnusedGlobalSymbols
 export default function SettingsScreen() {
   const db = useSQLiteContext()
   const router = useRouter()

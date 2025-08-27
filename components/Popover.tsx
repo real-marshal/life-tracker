@@ -1,6 +1,5 @@
-import Animated from 'react-native-reanimated'
+import Animated, { AnimatedStyle } from 'react-native-reanimated'
 import { ReactNode } from 'react'
-import { AnimatedStyle } from 'react-native-reanimated/src/commonTypes'
 import { ViewStyle } from 'react-native'
 
 export function Popover({

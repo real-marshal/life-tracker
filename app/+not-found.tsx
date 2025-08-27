@@ -1,6 +1,7 @@
 import { Link, Stack } from 'expo-router'
 import { StyleSheet, View, Text } from 'react-native'
 
+// noinspection JSUnusedGlobalSymbols
 export default function NotFoundScreen() {
   return (
     <>

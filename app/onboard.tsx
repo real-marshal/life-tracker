@@ -10,6 +10,7 @@ import * as FileSystem from 'expo-file-system'
 import { initNewDb } from '@/common/utils/db'
 import { showErrorToast } from '@/common/utils/toast'
 
+// noinspection JSUnusedGlobalSymbols
 export default function OnboardScreen() {
   const db = useSQLiteContext()
   const router = useRouter()
