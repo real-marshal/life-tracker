@@ -307,22 +307,25 @@ export default function GoalScreen() {
             animatedStyle={floatingMenuStyle}
           >
             <FloatingMenuItem
-              title='Add a negative update'
               description='Obstacles are inevitable'
               onPress={() => onAddGoalUpdate('negative')}
-              color={colors.negative}
-            />
+            >
+              <FloatingMenuItem.Text>Add a </FloatingMenuItem.Text>
+              <FloatingMenuItem.Text color={colors.negative}>negative update</FloatingMenuItem.Text>
+            </FloatingMenuItem>
             <FloatingMenuItem
-              title='Add a neutral update'
               description='Just a quick note'
               onPress={() => onAddGoalUpdate('neutral')}
-            />
+            >
+              <FloatingMenuItem.Text>Add a neutral update</FloatingMenuItem.Text>
+            </FloatingMenuItem>
             <FloatingMenuItem
-              title='Add a positive update'
               description='One stop closer to success'
               onPress={() => onAddGoalUpdate('positive')}
-              color={colors.positive}
-            />
+            >
+              <FloatingMenuItem.Text>Add a </FloatingMenuItem.Text>
+              <FloatingMenuItem.Text color={colors.positive}>positive update</FloatingMenuItem.Text>
+            </FloatingMenuItem>
           </Popover>
           <Popover
             isOpen={isContextMenuShown}

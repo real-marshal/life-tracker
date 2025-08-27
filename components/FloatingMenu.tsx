@@ -2,19 +2,18 @@ import { Pressable, Text, View } from 'react-native'
 import Feather from '@expo/vector-icons/Feather'
 import { colors } from '@/common/theme'
 import { cn } from '@/common/utils/css'
+import { ReactNode } from 'react'
 
 export function FloatingMenuItem({
-  title,
   description,
   onPress,
-  color = colors.fg,
   last,
+  children,
 }: {
-  title: string
   description: string
   onPress: () => void
-  color?: string
   last?: boolean
+  children: ReactNode
 }) {
   return (
     <Pressable onPress={onPress}>
@@ -26,9 +25,7 @@ export function FloatingMenuItem({
             'border-b-hairline': !last,
           })}
         >
-          <Text className='text-xl font-bold' style={{ color: color }}>
-            {title}
-          </Text>
+          <Text>{children}</Text>
           <Text className='text-sm text-fgSecondary font-medium'>{description}</Text>
           {/*<Feather name={iconName} size={iconSize} color={color} />*/}
         </View>
@@ -36,6 +33,22 @@ export function FloatingMenuItem({
     </Pressable>
   )
 }
+
+function FloatingMenuItemText({
+  children,
+  color = colors.fg,
+}: {
+  children: ReactNode
+  color?: string
+}) {
+  return (
+    <Text className='text-xl font-bold' style={{ color: color }}>
+      {children}
+    </Text>
+  )
+}
+
+FloatingMenuItem.Text = FloatingMenuItemText
 
 export function FloatingButton({
   onPress,

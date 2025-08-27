@@ -2,7 +2,7 @@ import { View, Text, ScrollView } from 'react-native'
 import { useSQLiteContext } from 'expo-sqlite'
 import { getUser } from '@/models/user'
 import { useRouter } from 'expo-router'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Feather from '@expo/vector-icons/Feather'
 import { colors, getGoalColor } from '@/common/theme'
 import { getMetaStats } from '@/models/metastat'
@@ -103,6 +103,8 @@ export default function HomeScreen() {
     ...newGoalModalProps
   } = useModal()
 
+  const [newGoalType, setNewGoalType] = useState<'normal' | 'longterm'>('normal')
+
   return (
     <>
       <ScrollView>
@@ -182,31 +184,46 @@ export default function HomeScreen() {
         className='right-safe-offset-7 bottom-[90px] z-[9999999]'
         animatedStyle={animatedStyle}
       >
+        <FloatingMenuItem description='Marking something abstract?' onPress={() => null}>
+          <FloatingMenuItem.Text>Add a </FloatingMenuItem.Text>
+          <FloatingMenuItem.Text color={colors.accent}>meta stat</FloatingMenuItem.Text>
+        </FloatingMenuItem>
+        <FloatingMenuItem description='Want to keep track of something?' onPress={() => null}>
+          <FloatingMenuItem.Text>Add a </FloatingMenuItem.Text>
+          <FloatingMenuItem.Text color={colors.accent}>tracker</FloatingMenuItem.Text>
+        </FloatingMenuItem>
         <FloatingMenuItem
-          title='Add a new meta stat'
-          description='Marking something abstract?'
-          onPress={() => null}
-        />
-        <FloatingMenuItem
-          title='Add a new tracker'
-          description='Want to keep track of something?'
-          onPress={() => null}
-        />
-        <FloatingMenuItem
-          title='Add a new goal'
-          description='Got any ideas?'
+          description='Charting the future?'
           onPress={() => {
+            setNewGoalType('longterm')
             showNewGoalModal()
             hidePopover()
           }}
-        />
+        >
+          <FloatingMenuItem.Text>Add a </FloatingMenuItem.Text>
+          <FloatingMenuItem.Text color={colors.accent}>long-term goal</FloatingMenuItem.Text>
+        </FloatingMenuItem>
         <FloatingMenuItem
-          title='Add updates'
-          description='Made some progress?'
-          onPress={() => null}
-        />
+          description='Got any ideas?'
+          onPress={() => {
+            setNewGoalType('normal')
+            showNewGoalModal()
+            hidePopover()
+          }}
+        >
+          <FloatingMenuItem.Text>Add a </FloatingMenuItem.Text>
+          <FloatingMenuItem.Text color={colors.accent}>goal</FloatingMenuItem.Text>
+        </FloatingMenuItem>
+        <FloatingMenuItem description='Made some progress?' onPress={() => null}>
+          <FloatingMenuItem.Text>Add </FloatingMenuItem.Text>
+          <FloatingMenuItem.Text color={colors.accent}>updates</FloatingMenuItem.Text>
+        </FloatingMenuItem>
       </Popover>
-      <NewGoalModal hideModal={hideNewGoalModal} modalProps={newGoalModalProps} />
+      <NewGoalModal
+        hideModal={hideNewGoalModal}
+        modalProps={newGoalModalProps}
+        isLongTerm={newGoalType === 'longterm'}
+      />
     </>
   )
 }

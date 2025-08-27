@@ -310,14 +310,19 @@ export async function updateGoalIndices(
   }
 }
 
-export type AddGoalParam = { text: string; why: string | null }
+export type AddGoalParam = { text: string; why: string | null; isLongTerm: boolean }
 
-export async function addGoal(db: SQLiteDatabase, { text, why }: AddGoalParam) {
+export async function addGoal(db: SQLiteDatabase, { text, why, isLongTerm }: AddGoalParam) {
   await db.runAsync(
     `
     insert into goal(name, type, created_at, render_data, status, why)
-    values ($text, 'normal', $created_at, '{}', 'active', $why)
+    values ($text, $type, $created_at, '{}', 'active', $why)
   `,
-    { $text: text, $why: why, $created_at: formatISO(new Date()) }
+    {
+      $text: text,
+      $why: why,
+      $created_at: formatISO(new Date()),
+      $type: isLongTerm ? 'longterm' : 'normal',
+    }
   )
 }
