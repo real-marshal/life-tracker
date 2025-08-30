@@ -30,8 +30,9 @@ import { Backdrop } from '@/components/Backdrop'
 import { NEW_ID } from '@/components/Goal/constants'
 import { GoalDetails } from '@/components/Goal/GoalDetails'
 import { BottomSheetModal } from '@gorhom/bottom-sheet'
-import { GoalSheet } from '@/components/Goal/GoalSheet'
+import { GoalStatusChangeSheet } from '@/components/Goal/GoalStatusChangeSheet'
 import { SheetModal } from '@/components/SheetModal'
+import * as Clipboard from 'expo-clipboard'
 
 interface GoalUpdateModificationState {
   id: number
@@ -334,6 +335,29 @@ export default function GoalScreen() {
             style={{ top: goalUpdateContextMenuPosition }}
           >
             <ContextMenuItem
+              label='Copy'
+              iconName='copy'
+              onPress={() => {
+                hideContextMenu()
+                onContextMenuCancelRef.current()
+
+                if (!goalUpdateModificationState)
+                  throw new Error('shouldnt have happened - state has to contain id')
+
+                const goalUpdateContent = goalUpdates?.find(
+                  (goalUpdate) => goalUpdate.id === goalUpdateModificationState.id
+                )?.content
+
+                if (!goalUpdateContent)
+                  throw new Error('shouldnt have happened - goal update content is missing')
+
+                Clipboard.setStringAsync(goalUpdateContent)
+
+                setGoalUpdateModificationState(undefined)
+              }}
+              rnPressable
+            />
+            <ContextMenuItem
               label='Edit'
               iconName='edit-3'
               onPress={() => {
@@ -456,7 +480,12 @@ export default function GoalScreen() {
           </Popover>
           <SheetModal<SheetModalData> ref={bottomSheetModalRef}>
             {({ data }) => (
-              <GoalSheet id={id} action={data?.action} goal={goal} isLongTerm={isLongTerm} />
+              <GoalStatusChangeSheet
+                id={id}
+                action={data?.action}
+                goal={goal}
+                isLongTerm={isLongTerm}
+              />
             )}
           </SheetModal>
         </>

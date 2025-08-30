@@ -5681,6 +5681,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"expo-checkbox@npm:~4.1.4":
+  version: 4.1.4
+  resolution: "expo-checkbox@npm:4.1.4"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-web: "*"
+  peerDependenciesMeta:
+    react-native-web:
+      optional: true
+  checksum: 28e473b1572eab4ead38622fb10e2d0badd2c41dfb5780885fb1b74c8807c490e6336607f8f3264346b190c518dc195e9b881a587b92628e4471b84e28351c6f
+  languageName: node
+  linkType: hard
+
+"expo-clipboard@npm:~7.1.5":
+  version: 7.1.5
+  resolution: "expo-clipboard@npm:7.1.5"
+  peerDependencies:
+    expo: "*"
+    react: "*"
+    react-native: "*"
+  checksum: de691f1b93b4edec6150db7fca3cd5cec89d2f4ceff1c936b4c3b9f078a8cae0743c5e0dc02e846f1bf2443baa4fd8b687dc68eb8cfff2198bd238f5d6d6a560
+  languageName: node
+  linkType: hard
+
 "expo-constants@npm:~17.1.7":
   version: 17.1.7
   resolution: "expo-constants@npm:17.1.7"
@@ -8185,6 +8210,8 @@ __metadata:
     eslint-config-prettier: ^10.1.8
     expo: ~53.0.20
     expo-blur: ~14.1.5
+    expo-checkbox: ~4.1.4
+    expo-clipboard: ~7.1.5
     expo-constants: ~17.1.7
     expo-dev-client: ^5.2.4
     expo-document-picker: ~13.1.6

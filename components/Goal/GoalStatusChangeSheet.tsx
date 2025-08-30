@@ -34,7 +34,7 @@ const actionDetailsMap: Record<
   },
 }
 
-export function GoalSheet({
+export function GoalStatusChangeSheet({
   id,
   action,
   goal,
