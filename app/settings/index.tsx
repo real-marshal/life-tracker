@@ -56,7 +56,7 @@ export default function SettingsScreen() {
           <SettingsItem
             text='Edit meta stats'
             description='Modify or remove existing meta stats'
-            onPress={() => null}
+            onPress={() => router.navigate('/settings/edit-metastats')}
             first
             last
           />

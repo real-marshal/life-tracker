@@ -13,14 +13,14 @@ export async function seed(db: SQLiteDatabase) {
     values ('Real_Marshal');
 
     -- metastats
-    insert into metastat(name, value, level, render_data)
-    values ('Health', 0.5, 0, '{}');
+    insert into metastat(name, value, level, auto_decay, decay_data, render_data)
+    values ('Health', 0.5, 0, 'slow', '{}', '{}');
 
-    insert into metastat(name, value, level, render_data)
-    values ('Knowledge', 0.5, 0, '{}');
+    insert into metastat(name, value, level, auto_decay, decay_data, render_data)
+    values ('Knowledge', 0.5, 0, 'slow', '{}', '{}');
 
-    insert into metastat(name, value, render_data)
-    values ('Mental', 0.5, '{}');
+    insert into metastat(name, value, auto_decay, decay_data, render_data)
+    values ('Mental', 0.5, 'fast', '{}', '{}');
 
     -- lt goals
     insert into goal(name, type, status, why, created_at, render_data)

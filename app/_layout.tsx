@@ -68,7 +68,11 @@ function RootView() {
       <Stack.Screen name='index' options={{ headerShown: false }} />
       <Stack.Screen name='onboard' options={{ headerShown: false }} />
       <Stack.Screen
-        name='settings'
+        name='settings/index'
+        options={{ animation: 'slide_from_right', animationDuration: 200, headerShown: false }}
+      />
+      <Stack.Screen
+        name='settings/edit-metastats'
         options={{ animation: 'slide_from_right', animationDuration: 200, headerShown: false }}
       />
       <Stack.Screen

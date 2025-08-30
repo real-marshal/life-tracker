@@ -88,8 +88,9 @@ module.exports = (db) => {
       name        text not null check (length(name) < 255),
       value       real not null default 0.0,
       level       integer,
-      decay_data  text check (json_valid(decay_data)),
-      render_data text check (json_valid(render_data))
+      auto_decay  text not null check (auto_decay in ('slow', 'moderate', 'fast')),
+      decay_data  text not null check (json_valid(decay_data)),
+      render_data text not null check (json_valid(render_data))
     );
 
     create table if not exists user
