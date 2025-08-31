@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { stringifyError } from '@/common/utils/error'
-import { showErrorToast } from '@/common/utils/toast'
+import { showErrorToast } from '@/common/toast'
 
 export function useErrorToasts(...errors: { title: string; errorData: any }[]) {
   useEffect(

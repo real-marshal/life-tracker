@@ -7,7 +7,7 @@ import { addGoal, AddGoalParam } from '@/models/goal'
 import { useErrorToasts } from '@/hooks/useErrorToasts'
 import { useSQLiteContext } from 'expo-sqlite'
 import { useState } from 'react'
-import { showErrorToast } from '@/common/utils/toast'
+import { showErrorToast } from '@/common/toast'
 
 export function NewGoalModal({
   modalProps,

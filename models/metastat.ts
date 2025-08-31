@@ -2,6 +2,7 @@ import { SQLiteDatabase } from 'expo-sqlite'
 import { toCamelCase } from '@/common/utils/object'
 import { Row, RowCamelCase } from '@/common/utils/types'
 import { sortWithIndex } from '@/common/utils/array'
+import { formatISO } from 'date-fns'
 
 export interface MetaStat {
   id: number
@@ -14,8 +15,8 @@ export interface MetaStat {
 }
 
 export interface MetaStatDecayData {
-  isDecayedToday?: boolean
-  lastValueIncreaseDate?: Date
+  lastValueIncreaseDate: Date
+  lastDecayDate: Date
 }
 
 export interface MetaStatRenderData {
@@ -30,14 +31,14 @@ export async function getMetaStats(db: SQLiteDatabase): Promise<MetaStat[]> {
   `)
 
   const metastats = rows.map(toCamelCase<RowCamelCase<MetaStat>>).map((r) => {
-    const { isDecayedToday, lastValueIncreaseDate } = JSON.parse(r.decayData) as MetaStatDecayData
+    const { lastDecayDate, lastValueIncreaseDate } = JSON.parse(r.decayData) as MetaStatDecayData
 
     return {
       ...r,
       renderData: JSON.parse(r.renderData),
       decayData: {
-        isDecayedToday,
-        lastValueIncreaseDate: lastValueIncreaseDate ? new Date(lastValueIncreaseDate) : undefined,
+        lastDecayDate: new Date(lastDecayDate),
+        lastValueIncreaseDate: new Date(lastValueIncreaseDate),
       },
     }
   })
@@ -103,5 +104,24 @@ export async function updateMetaStat(
       $level: level,
       $autoDecay: autoDecay,
     }
+  )
+}
+
+export async function decayMetaStat(db: SQLiteDatabase, id: number, decayValue: number) {
+  await db.runAsync(
+    `
+      update metastat
+      set value      = case
+                         when level is not null and value - $decay_value < 0 and level > 0
+                           then value - $decay_value + 1
+                         else max(0, value - $decay_value) end,
+          level      = case
+                         when level is not null and value - $decay_value < 0 and level > 0
+                           then level - 1
+                         else level end,
+          decay_data = json_set(decay_data, '$.lastDecayDate', $last_decay_date)
+      where id = $id
+    `,
+    { $decay_value: decayValue, $id: id, $last_decay_date: formatISO(new Date()) }
   )
 }

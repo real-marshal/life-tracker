@@ -7,8 +7,8 @@ import { useErrorToasts } from '@/hooks/useErrorToasts'
 import { useQueryClient } from '@tanstack/react-query'
 import * as DocumentPicker from 'expo-document-picker'
 import * as FileSystem from 'expo-file-system'
-import { initNewDb } from '@/common/utils/db'
-import { showErrorToast } from '@/common/utils/toast'
+import { initNewDb } from '@/common/db'
+import { showErrorToast } from '@/common/toast'
 
 // noinspection JSUnusedGlobalSymbols
 export default function OnboardScreen() {

@@ -32,6 +32,7 @@ import { SortableGridRenderItem } from 'react-native-sortables'
 import { Backdrop } from '@/components/Backdrop'
 import { NewGoalModal } from '@/components/Goal/NewGoalModal'
 import { useModal } from '@/components/Modal'
+import { useMetastatsAutodecay } from '@/components/Metastat/common'
 
 export default function HomeScreen() {
   const db = useSQLiteContext()
@@ -95,6 +96,8 @@ export default function HomeScreen() {
     { title: 'Error updating LT goal indexes', errorData: updatingLtError },
     { title: 'Error updating goal indexes', errorData: updatingError }
   )
+
+  useMetastatsAutodecay(metastats ?? [])
 
   const { isPopoverShown, hidePopover, showPopover, animatedStyle } = useFloatingMenu()
   const {
