@@ -2,7 +2,13 @@ import { Pressable, Text, View } from 'react-native'
 import Feather from '@expo/vector-icons/Feather'
 import { colors } from '@/common/theme'
 import { cn } from '@/common/utils/css'
-import { ReactNode } from 'react'
+import { ReactNode, useEffect } from 'react'
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated'
 
 export function FloatingMenuItem({
   description,
@@ -61,6 +67,16 @@ export function FloatingButton({
   activeColor: string
   active?: boolean
 }) {
+  const rot = useSharedValue(0)
+
+  useEffect(() => {
+    rot.value = withTiming(active ? 1 : 0, { duration: 150 })
+  }, [active, rot])
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${interpolate(rot.value, [0, 1], [0, 45])}deg` }],
+  }))
+
   return (
     <Pressable onPress={onPress}>
       {({ pressed }) => (
@@ -68,7 +84,9 @@ export function FloatingButton({
           className='p-[14px] rounded-full absolute right-safe-offset-6 bottom-safe-offset-6'
           style={{ backgroundColor: pressed || active ? activeColor : color }}
         >
-          <Feather name='plus' size={26} color={colors.bg} />
+          <Animated.View style={animatedStyle}>
+            <Feather name='plus' size={26} color={colors.bg} />
+          </Animated.View>
         </View>
       )}
     </Pressable>
