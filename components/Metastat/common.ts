@@ -2,7 +2,7 @@ import { decayMetaStat, MetaStat, MetaStatDecayData } from '@/models/metastat'
 import { useSQLiteContext } from 'expo-sqlite'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import { differenceInCalendarDays, isToday } from 'date-fns'
+import { addDays, differenceInCalendarDays, isToday } from 'date-fns'
 import { useErrorToasts } from '@/hooks/useErrorToasts'
 
 export type MetaStatGain = 'small' | 'big'
@@ -61,7 +61,10 @@ export function getDecayValue(
     const daysToDecay =
       lastDecayDate > lastValueIncreaseDate
         ? differenceInCalendarDays(new Date(), lastDecayDate)
-        : 1
+        : differenceInCalendarDays(
+            new Date(),
+            addDays(lastValueIncreaseDate, autoDecayDetails[autoDecay].daysUntilDecay + 1)
+          ) + 1
 
     return autoDecayDetails[autoDecay].decayValue * daysToDecay
   }

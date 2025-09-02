@@ -51,6 +51,18 @@ describe('getDecayValue', () => {
     expect(result).toBe(1 / 32)
   })
 
+  it('should return 1/32 * 3 when a decay happened with no updates yet after days of inactivity', () => {
+    const today = new Date('2025-07-29T21:46:00.000Z')
+    jest.setSystemTime(today)
+
+    const result = getDecayValue('moderate', {
+      lastValueIncreaseDate: new Date('2025-07-19T21:46:00.000Z'),
+      lastDecayDate: new Date('2025-07-19T21:46:00.000Z'),
+    })
+
+    expect(result).toBe((1 / 32) * 3)
+  })
+
   it('should return 1/32 when a decay happened with some updates before', () => {
     const today = new Date('2025-07-29T21:46:00.000Z')
     jest.setSystemTime(today)
@@ -61,6 +73,18 @@ describe('getDecayValue', () => {
     })
 
     expect(result).toBe(1 / 32)
+  })
+
+  it('should return 1/32 * 3 when a decay happened with some updates before after days of inactivity', () => {
+    const today = new Date('2025-07-31T21:46:00.000Z')
+    jest.setSystemTime(today)
+
+    const result = getDecayValue('moderate', {
+      lastValueIncreaseDate: new Date('2025-07-21T21:46:00.000Z'),
+      lastDecayDate: new Date('2025-07-19T21:46:00.000Z'),
+    })
+
+    expect(result).toBe((1 / 32) * 3)
   })
 
   it('should return undefined for no decay after a previous decay', () => {
@@ -88,7 +112,7 @@ describe('getDecayValue', () => {
   })
 
   it('should return 1/32 for another decay', () => {
-    const today = new Date('2025-08-08T21:46:00.000Z')
+    const today = new Date('2025-08-07T21:46:00.000Z')
     jest.setSystemTime(today)
 
     const result = getDecayValue('moderate', {
@@ -111,7 +135,7 @@ describe('getDecayValue', () => {
     expect(result).toBe(1 / 32)
   })
 
-  it('should return (1/32) * 3 for decay after multiple days skipped', () => {
+  it('should return 1/32 * 3 for decay after multiple days skipped and was already decayed in the past', () => {
     const today = new Date('2025-08-11T21:46:00.000Z')
     jest.setSystemTime(today)
 

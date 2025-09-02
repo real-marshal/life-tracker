@@ -1,5 +1,6 @@
 import { deleteDatabaseAsync, SQLiteDatabase } from 'expo-sqlite'
 import { markUserAsOnboarded } from '@/models/user'
+import { formatISO, subDays } from 'date-fns'
 
 export const dbName = 'main.db'
 
@@ -14,24 +15,31 @@ export async function seed(db: SQLiteDatabase) {
 
     -- metastats
     insert into metastat(name, value, level, auto_decay, decay_data, render_data)
-    values ('Health', 0.5, 0, 'slow', '{"lastValueIncreaseDate": "2025-07-19T21:00:00.000Z", "lastDecayDate": "2025-07-19T21:00:00.000Z"}', '{}');
+    values ('Health', 0.5, 0, 'slow',
+            '{"lastValueIncreaseDate": "${formatISO(new Date())}", "lastDecayDate": "${formatISO(new Date())}"}',
+            '{}');
 
     insert into metastat(name, value, level, auto_decay, decay_data, render_data)
-    values ('Knowledge', 0.5, 0, 'slow', '{"lastValueIncreaseDate": "2025-07-19T21:10:00.000Z", "lastDecayDate": "2025-07-19T21:10:00.000Z"}', '{}');
+    values ('Knowledge', 0.5, 0, 'slow',
+            '{"lastValueIncreaseDate": "${formatISO(new Date())}", "lastDecayDate": "${formatISO(new Date())}"}',
+            '{}');
 
     insert into metastat(name, value, auto_decay, decay_data, render_data)
-    values ('Mental', 0.5, 'fast', '{"lastValueIncreaseDate": "2025-07-19T21:20:00.000Z", "lastDecayDate": "2025-07-19T21:20:00.000Z"}', '{}');
+    values ('Mental', 0.5, 'fast',
+            '{"lastValueIncreaseDate": "${formatISO(new Date())}", "lastDecayDate": "${formatISO(new Date())}"}',
+            '{}');
 
     -- lt goals
     insert into goal(name, type, status, why, created_at, render_data)
     values ('Move out', 'longterm', 'active', 'Everyone should have their own space...',
-            '2025-07-19T21:46:00.000Z', '{}');
+            '${formatISO(subDays(new Date(), 10))}', '{}');
 
     insert into goal(name, type, status, created_at, render_data)
-    values ('Buy a car', 'longterm', 'active', '2025-07-19T21:56:00.000Z', '{}');
+    values ('Buy a car', 'longterm', 'active', '${formatISO(subDays(new Date(), 10))}', '{}');
 
     insert into goal(name, type, status, why, created_at, render_data)
-    values ('Find a partner', 'longterm', 'active', 'I mean...', '2025-07-20T20:15:00.000Z', '{}');
+    values ('Find a partner', 'longterm', 'active', 'I mean...',
+            '${formatISO(subDays(new Date(), 10))}', '{}');
 
     -- goals
     insert into goal(name, type, status, why, created_at, render_data)
@@ -78,31 +86,31 @@ export async function seed(db: SQLiteDatabase) {
     values (1, '$');
 
     insert into stat_value (tracker_id, value, created_at)
-    values (1, 3000, '2023-10-22T15:53:00.000Z');
+    values (1, 3000, '${formatISO(subDays(new Date(), 30))}');
     insert into stat_value (tracker_id, value, created_at)
-    values (1, 2200, '2024-11-22T15:53:00.000Z');
+    values (1, 2200, '${formatISO(subDays(new Date(), 101))}');
     insert into stat_value (tracker_id, value, created_at)
-    values (1, 1700, '2025-01-22T15:53:00.000Z');
+    values (1, 1700, '${formatISO(subDays(new Date(), 53))}');
     insert into stat_value (tracker_id, value, created_at)
-    values (1, 4500, '2025-03-15T15:53:00.000Z');
+    values (1, 4500, '${formatISO(subDays(new Date(), 7))}');
     insert into stat_value (tracker_id, value, created_at)
-    values (1, 2800, '2025-03-22T15:53:00.000Z');
+    values (1, 2800, '${formatISO(subDays(new Date(), 30))}');
     insert into stat_value (tracker_id, value, created_at)
-    values (1, 1600, '2025-04-22T15:53:00.000Z');
+    values (1, 1600, '${formatISO(subDays(new Date(), 30))}');
     insert into stat_value (tracker_id, value, created_at)
-    values (1, 1200, '2025-05-22T15:53:00.000Z');
+    values (1, 1200, '${formatISO(subDays(new Date(), 2))}');
     insert into stat_value (tracker_id, value, created_at)
-    values (1, 2300, '2025-05-20T15:53:00.000Z');
+    values (1, 2300, '${formatISO(subDays(new Date(), 22))}');
     insert into stat_value (tracker_id, value, created_at)
-    values (1, 4000, '2025-06-12T15:53:00.000Z');
+    values (1, 4000, '${formatISO(subDays(new Date(), 10))}');
     insert into stat_value (tracker_id, value, created_at)
-    values (1, 3100, '2025-06-22T15:53:00.000Z');
+    values (1, 3100, '${formatISO(subDays(new Date(), 12))}');
     insert into stat_value (tracker_id, value, created_at)
-    values (1, 5000, '2025-07-04T15:53:00.000Z');
+    values (1, 5000, '${formatISO(subDays(new Date(), 10))}');
     insert into stat_value (tracker_id, value, created_at)
-    values (1, 5500, '2025-07-14T15:53:00.000Z');
+    values (1, 5500, '${formatISO(subDays(new Date(), 8))}');
     insert into stat_value (tracker_id, value, created_at)
-    values (1, 5000, '2025-07-22T15:53:00.000Z');
+    values (1, 5000, '${formatISO(new Date())}');
 
     insert into tracker (name, render_data)
     values ('X followers', '{"index":1,"size":1}');
@@ -111,9 +119,9 @@ export async function seed(db: SQLiteDatabase) {
     values (2);
 
     insert into stat_value (tracker_id, value, created_at)
-    values (2, 0, '2025-07-21T15:53:00.000Z');
+    values (2, 0, '${formatISO(subDays(new Date(), 13))}');
     insert into stat_value (tracker_id, value, created_at)
-    values (2, 3, '2025-08-01T10:16:00.000Z');
+    values (2, 3, '${formatISO(subDays(new Date(), 5))}');
 
     insert into tracker (name, render_data)
     values ('Time till next conscription', '{"index":2,"size":2}');
@@ -129,7 +137,7 @@ export async function seed(db: SQLiteDatabase) {
     values (4, 'kg');
 
     insert into stat_value (tracker_id, value, created_at)
-    values (4, 10, '2025-07-20T16:16:00.000Z');
+    values (4, 10, '${formatISO(subDays(new Date(), 12))}');
 
     -- related trackers
     insert into goal_tracker (goal_id, tracker_id)
