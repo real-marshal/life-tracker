@@ -125,3 +125,22 @@ export async function decayMetaStat(db: SQLiteDatabase, id: number, decayValue: 
     { $decay_value: decayValue, $id: id, $last_decay_date: formatISO(new Date()) }
   )
 }
+
+export async function increaseMetaStat(db: SQLiteDatabase, id: number, value: number) {
+  await db.runAsync(
+    `
+      update metastat
+      set value      = case
+                         when level is not null and value + $value > 1
+                           then value + $value - 1
+                         else min(1, value + $value) end,
+          level      = case
+                         when level is not null and value + $value > 1
+                           then level + 1
+                         else level end,
+          decay_data = json_set(decay_data, '$.lastValueIncreaseDate', $last_value_increase_date)
+      where id = $id
+    `,
+    { $value: value, $id: id, $last_value_increase_date: formatISO(new Date()) }
+  )
+}

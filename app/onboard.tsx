@@ -30,8 +30,8 @@ export default function OnboardScreen() {
   useErrorToasts({ title: 'Error initializing a new DB', errorData: dbInitError })
 
   return (
-    <View className='gap-4'>
-      <Text style={{ color: 'white', fontSize: 40 }}>Onboard</Text>
+    <View className='flex flex-col m-safe pt-3 pb-3 px-3 gap-6'>
+      <Text style={{ color: 'white', fontSize: 40 }}>Onboarding</Text>
       <Button onPress={() => initNewDbMutator(db)} title='Init new db' />
       <Button
         onPress={async () => {

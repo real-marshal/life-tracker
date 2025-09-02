@@ -44,7 +44,7 @@ interface GoalUpdateModificationState {
 }
 
 export interface SheetModalData {
-  action: 'abandon' | 'complete' | 'delay'
+  action: 'abandon' | 'complete' | 'delay' | 'reopen'
 }
 
 export default function GoalScreen() {
@@ -57,7 +57,7 @@ export default function GoalScreen() {
   const isLongTerm = type === 'longterm'
 
   const { data: goal, error: goalError } = useQuery<LtGoal | Goal>({
-    queryKey: ['goal', id],
+    queryKey: ['goals', id],
     queryFn: () => (isLongTerm ? getLtGoal(db, id) : getGoal(db, id)),
   })
   const { data: goalUpdatesStored, error: goalUpdatesError } = useQuery({
@@ -328,125 +328,128 @@ export default function GoalScreen() {
               <FloatingMenuItem.Text color={colors.positive}>positive update</FloatingMenuItem.Text>
             </FloatingMenuItem>
           </Popover>
-          <Popover
-            isOpen={isContextMenuShown}
-            className='left-0 z-[9999999]'
-            animatedStyle={contextMenuStyle}
-            style={{ top: goalUpdateContextMenuPosition }}
-          >
-            <ContextMenuItem
-              label='Copy'
-              iconName='copy'
-              onPress={() => {
-                hideContextMenu()
-                onContextMenuCancelRef.current()
+        </>
+      )}
+      <Popover
+        isOpen={isContextMenuShown}
+        className='left-0 z-[9999999]'
+        animatedStyle={contextMenuStyle}
+        style={{ top: goalUpdateContextMenuPosition }}
+      >
+        <ContextMenuItem
+          label='Copy'
+          iconName='copy'
+          onPress={() => {
+            hideContextMenu()
+            onContextMenuCancelRef.current()
 
-                if (!goalUpdateModificationState)
-                  throw new Error('shouldnt have happened - state has to contain id')
+            if (!goalUpdateModificationState)
+              throw new Error('shouldnt have happened - state has to contain id')
 
-                const goalUpdateContent = goalUpdates?.find(
-                  (goalUpdate) => goalUpdate.id === goalUpdateModificationState.id
-                )?.content
+            const goalUpdateContent = goalUpdates?.find(
+              (goalUpdate) => goalUpdate.id === goalUpdateModificationState.id
+            )?.content
 
-                if (!goalUpdateContent)
-                  throw new Error('shouldnt have happened - goal update content is missing')
+            if (!goalUpdateContent) return
 
-                Clipboard.setStringAsync(goalUpdateContent)
+            Clipboard.setStringAsync(goalUpdateContent)
 
-                setGoalUpdateModificationState(undefined)
-              }}
-              rnPressable
-            />
-            <ContextMenuItem
-              label='Edit'
-              iconName='edit-3'
-              onPress={() => {
-                hideContextMenu()
-                onContextMenuCancelRef.current()
-                setGoalUpdateModificationState((state) => {
-                  if (!state) throw new Error('shouldnt have happened - state has to contain id')
+            setGoalUpdateModificationState(undefined)
+          }}
+          rnPressable
+        />
+        <ContextMenuItem
+          label='Edit'
+          iconName='edit-3'
+          onPress={() => {
+            hideContextMenu()
+            onContextMenuCancelRef.current()
+            setGoalUpdateModificationState((state) => {
+              if (!state) throw new Error('shouldnt have happened - state has to contain id')
 
-                  return {
-                    ...state,
-                    editable: true,
-                  }
-                })
-              }}
-              rnPressable
-            />
-            <ContextMenuItem
-              label='Delete goal update'
-              iconName='trash'
-              color={colors.negative}
-              onPress={() => {
-                hideContextMenu()
-                onContextMenuCancelRef.current()
-                setGoalUpdateModificationState((state) => {
-                  if (!state) throw new Error('shouldnt have happened - state has to contain id')
-
-                  return {
-                    ...state,
-                    modification: { type: 'delete' },
-                  }
-                })
-                showDeleteModal()
-              }}
-              last
-              rnPressable
-            />
-          </Popover>
-          <ConfirmModal
-            text='Save this goal update?'
-            hideModal={hideSaveNewModal}
-            modalProps={saveNewModalProps}
-            onConfirm={() => {
-              if (goalUpdateModificationState?.modification?.type !== 'create') {
-                throw new Error('type is supposed to be set to create')
+              return {
+                ...state,
+                editable: true,
               }
+            })
+          }}
+          rnPressable
+        />
+        <ContextMenuItem
+          label='Delete goal update'
+          iconName='trash'
+          color={colors.negative}
+          onPress={() => {
+            hideContextMenu()
+            onContextMenuCancelRef.current()
+            setGoalUpdateModificationState((state) => {
+              if (!state) throw new Error('shouldnt have happened - state has to contain id')
 
-              addGoalUpdateMutator({
-                ...goalUpdates![0],
-                content: goalUpdateModificationState.modification.content,
-              })
-              setGoalUpdateModificationState(undefined)
-            }}
-          />
-          <ConfirmModal
-            text='Delete this goal update?'
-            hideModal={hideDeleteModal}
-            modalProps={deleteModalProps}
-            onConfirm={() => {
-              if (goalUpdateModificationState?.modification?.type !== 'delete') {
-                throw new Error('type is supposed to be set to delete')
+              return {
+                ...state,
+                modification: { type: 'delete' },
               }
+            })
+            showDeleteModal()
+          }}
+          last
+          rnPressable
+        />
+      </Popover>
+      <ConfirmModal
+        text='Save this goal update?'
+        hideModal={hideSaveNewModal}
+        modalProps={saveNewModalProps}
+        onConfirm={() => {
+          if (goalUpdateModificationState?.modification?.type !== 'create') {
+            throw new Error('type is supposed to be set to create')
+          }
 
-              deleteGoalUpdateMutator(goalUpdateModificationState.id)
-              setGoalUpdateModificationState(undefined)
-            }}
-            deletion
-          />
-          <ConfirmModal
-            text='Update this goal update?'
-            hideModal={hideUpdateModal}
-            modalProps={updateModalProps}
-            onConfirm={() => {
-              if (goalUpdateModificationState?.modification?.type !== 'update') {
-                throw new Error('type is supposed to be set to update')
-              }
+          addGoalUpdateMutator({
+            ...goalUpdates![0],
+            content: goalUpdateModificationState.modification.content,
+          })
+          setGoalUpdateModificationState(undefined)
+        }}
+      />
+      <ConfirmModal
+        text='Delete this goal update?'
+        hideModal={hideDeleteModal}
+        modalProps={deleteModalProps}
+        onConfirm={() => {
+          if (goalUpdateModificationState?.modification?.type !== 'delete') {
+            throw new Error('type is supposed to be set to delete')
+          }
 
-              updateGoalUpdateMutator({
-                id: goalUpdateModificationState.id,
-                content: goalUpdateModificationState!.modification.newContent,
-              })
-              setGoalUpdateModificationState(undefined)
-            }}
-          />
-          <Popover
-            isOpen={isMenuShown}
-            className='right-safe-offset-7 top-[90px] z-[9999999]'
-            animatedStyle={menuStyle}
-          >
-            <ContextMenuSection label='Change status' first />
+          deleteGoalUpdateMutator(goalUpdateModificationState.id)
+          setGoalUpdateModificationState(undefined)
+        }}
+        deletion
+      />
+      <ConfirmModal
+        text='Update this goal update?'
+        hideModal={hideUpdateModal}
+        modalProps={updateModalProps}
+        onConfirm={() => {
+          if (goalUpdateModificationState?.modification?.type !== 'update') {
+            throw new Error('type is supposed to be set to update')
+          }
+
+          updateGoalUpdateMutator({
+            id: goalUpdateModificationState.id,
+            content: goalUpdateModificationState!.modification.newContent,
+          })
+          setGoalUpdateModificationState(undefined)
+        }}
+      />
+      <Popover
+        isOpen={isMenuShown}
+        className='right-safe-offset-7 top-[90px] z-[9999999]'
+        animatedStyle={menuStyle}
+      >
+        <ContextMenuSection label='Change status' first />
+        {goal?.status === 'active' && (
+          <>
             <ContextMenuItem
               label='Abandon'
               iconName='x'
@@ -474,22 +477,36 @@ export default function GoalScreen() {
                 bottomSheetModalRef.current?.present({ action: 'delay' })
               }}
             />
-            <ContextMenuSection label='Add a continuation' />
-            <ContextMenuItem label='Prerequisite' iconName='arrow-down-left' onPress={() => null} />
-            <ContextMenuItem label='Consequence' iconName='arrow-up-right' onPress={() => null} />
-          </Popover>
-          <SheetModal<SheetModalData> ref={bottomSheetModalRef}>
-            {({ data }) => (
-              <GoalStatusChangeSheet
-                id={id}
-                action={data?.action}
-                goal={goal}
-                isLongTerm={isLongTerm}
-              />
-            )}
-          </SheetModal>
-        </>
-      )}
+          </>
+        )}
+        {(goal?.status === 'abandoned' || goal?.status === 'delayed') && (
+          <ContextMenuItem
+            label='Reopen'
+            iconName='refresh-cw'
+            color={colors.positive}
+            onPress={() => {
+              hideMenu()
+              bottomSheetModalRef.current?.present({ action: 'reopen' })
+            }}
+          />
+        )}
+        <ContextMenuSection label='Add a continuation' />
+        {goal?.status === 'active' && (
+          <ContextMenuItem label='Prerequisite' iconName='arrow-down-left' onPress={() => null} />
+        )}
+        <ContextMenuItem label='Consequence' iconName='arrow-up-right' onPress={() => null} />
+      </Popover>
+      <SheetModal<SheetModalData> ref={bottomSheetModalRef}>
+        {({ data }) => (
+          <GoalStatusChangeSheet
+            id={id}
+            action={data?.action}
+            goal={goal}
+            isLongTerm={isLongTerm}
+            onComplete={() => bottomSheetModalRef.current?.dismiss()}
+          />
+        )}
+      </SheetModal>
     </>
   )
 }

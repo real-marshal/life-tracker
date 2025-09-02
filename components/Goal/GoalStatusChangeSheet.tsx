@@ -1,58 +1,121 @@
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet'
 import { Keyboard, Pressable, Text, View } from 'react-native'
-import { Goal, LtGoal } from '@/models/goal'
+import { changeGoalStatus, ChangeGoalStatusParam, Goal, LtGoal } from '@/models/goal'
 import { SheetModalData } from '@/app/goal/[id]'
 import { RelatedGoals } from '@/components/Goal/RelatedGoals'
 import { colors, getGoalColor } from '@/common/theme'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getMetaStats } from '@/models/metastat'
 import { useSQLiteContext } from 'expo-sqlite'
 import { useErrorToasts } from '@/hooks/useErrorToasts'
 import { AppButton } from '@/components/AppButton'
+import { useEffect, useState } from 'react'
+import { metastatGains } from '@/components/Metastat/common'
+import { GoalUpdate, GoalUpdateStatusChange } from '@/models/goalUpdate'
 
 const actionDetailsMap: Record<
   SheetModalData['action'],
-  { title: string; color: string; colorActive: string; buttonText: string }
+  {
+    title: string
+    color: string
+    colorActive: string
+    buttonText: string
+    messageLabel: string
+    newStatus: GoalUpdateStatusChange['statusChange']
+    sentiment: GoalUpdate['sentiment']
+  }
 > = {
   abandon: {
     title: 'Abandon the goal',
     color: colors.negative,
     colorActive: colors.negativeActive,
     buttonText: 'Abandon',
+    messageLabel: 'Closing message',
+    newStatus: 'abandoned',
+    sentiment: 'negative',
   },
   complete: {
     title: 'Complete the goal',
     color: colors.positive,
     colorActive: colors.positiveActive,
     buttonText: 'Complete',
+    messageLabel: 'Closing message',
+    newStatus: 'completed',
+    sentiment: 'positive',
   },
   delay: {
     title: 'Delay the goal',
     color: colors.delayedGoal,
     colorActive: colors.delayedGoalActive,
     buttonText: 'Delay',
+    messageLabel: 'Why',
+    newStatus: 'delayed',
+    sentiment: 'neutral',
+  },
+  reopen: {
+    title: 'Reopen the goal',
+    color: colors.positive,
+    colorActive: colors.positiveActive,
+    buttonText: 'Reopen',
+    messageLabel: 'Why',
+    newStatus: 'reopened',
+    sentiment: 'positive',
   },
 }
+
+const metastatGainValues = [
+  { label: 'No', value: 0 },
+  { label: 'A bit', value: metastatGains.small },
+  { label: 'Considerably', value: metastatGains.big },
+]
 
 export function GoalStatusChangeSheet({
   id,
   action,
   goal,
   isLongTerm,
+  onComplete,
 }: {
   id: number
   action?: SheetModalData['action']
   goal?: Goal | LtGoal
   isLongTerm: boolean
+  onComplete: () => void
 }) {
   const db = useSQLiteContext()
+  const queryClient = useQueryClient()
 
   const { data: metastats, error: metaStatsError } = useQuery({
     queryKey: ['metastats'],
     queryFn: () => getMetaStats(db),
   })
+  const { mutate: changeGoalStatusMutator, error: changingGoalStatusError } = useMutation({
+    mutationFn: (param: ChangeGoalStatusParam) => changeGoalStatus(db, param),
+    onSuccess: () => {
+      onComplete()
 
-  useErrorToasts({ title: 'Error getting meta stats', errorData: metaStatsError })
+      queryClient.invalidateQueries({ queryKey: ['metastats'] })
+      queryClient.invalidateQueries({ queryKey: ['goals'] })
+      queryClient.invalidateQueries({ queryKey: ['goalUpdates'] })
+    },
+  })
+
+  useErrorToasts(
+    { title: 'Error getting meta stats', errorData: metaStatsError },
+    { title: 'Error changing goal status', errorData: changingGoalStatusError }
+  )
+
+  const [closingMessage, setClosingMessage] = useState('')
+
+  const [metastatGains, setMetastatGains] = useState<Record<number, number>>(
+    metastats?.reduce((result, { id }) => ({ ...result, [id]: 0 }), {}) ?? {}
+  )
+
+  useEffect(() => {
+    setMetastatGains(
+      metastats?.reduce((result, { id }) => ({ ...result, [id]: 0 }), {}) ?? {} ?? []
+    )
+  }, [metastats])
 
   if (!action) return null
 
@@ -84,32 +147,57 @@ export function GoalStatusChangeSheet({
               disableLink
             />
           )}
-          <View className='flex flex-col gap-2'>
-            <Text className='text-fgSecondary text-sm'>Increase meta stats:</Text>
-            {metastats?.map(({ name, id }) => (
-              <View key={id} className='flex flex-row items-center justify-between gap-2 px-2'>
-                <Text className='text-fg'>{name}</Text>
-                <View className='flex flex-row gap-9'>
-                  {['No', 'A bit', 'Considerably'].map((change, ind) => (
-                    <Text key={ind} className='text-fgSecondary font-bold'>
-                      {change}
-                    </Text>
-                  ))}
+          {(action === 'abandon' || action === 'complete') && (
+            <View className='flex flex-col gap-2'>
+              <Text className='text-fgSecondary text-sm'>Increase meta stats:</Text>
+              {metastats?.map(({ name, id }) => (
+                <View key={id} className='flex flex-row items-center justify-between gap-2 px-2'>
+                  <Text className='text-fg'>{name}</Text>
+                  <View className='flex flex-row gap-9'>
+                    {metastatGainValues.map(({ label, value }, ind) => (
+                      <Pressable
+                        key={ind}
+                        onPress={() =>
+                          setMetastatGains((metastatGains) => ({ ...metastatGains, [id]: value }))
+                        }
+                      >
+                        <Text
+                          className='font-bold'
+                          style={{
+                            color: metastatGains[id] === value ? colors.accent : colors.fgSecondary,
+                          }}
+                        >
+                          {label}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
                 </View>
-              </View>
-            ))}
-          </View>
+              ))}
+            </View>
+          )}
           <View className='flex flex-col gap-2'>
-            <Text className='text-fgSecondary text-sm'>Closing message:</Text>
+            <Text className='text-fgSecondary text-sm'>{actionDetails.messageLabel}:</Text>
             <BottomSheetTextInput
-              className='bg-bgTertiary rounded-md min-h-24 p-3'
+              className='text-fg bg-bgTertiary rounded-md min-h-24 p-3'
               multiline
               textAlignVertical='top'
+              value={closingMessage}
+              onChangeText={setClosingMessage}
             />
           </View>
           <AppButton
             text={actionDetails.buttonText}
-            onPress={() => null}
+            onPress={() =>
+              changeGoalStatusMutator({
+                id,
+                status: actionDetailsMap[action].newStatus,
+                metastatChanges: Object.entries(metastatGains)
+                  .map(([id, value]) => ({ id: Number.parseInt(id), value }))
+                  .filter(({ value }) => !!value),
+                sentiment: actionDetailsMap[action].sentiment,
+              })
+            }
             color={actionDetails.color}
             activeColor={actionDetails.colorActive}
           />

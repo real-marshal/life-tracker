@@ -1,7 +1,7 @@
 import { Text, TextInput, View, ViewStyle } from 'react-native'
 
 import { colors, goalUpdateColorMap } from '@/common/theme'
-import { GoalUpdate } from '@/models/goalUpdate'
+import { GoalUpdate, GoalUpdateStatusChange } from '@/models/goalUpdate'
 import {
   Gesture,
   GestureDetector,
@@ -28,7 +28,10 @@ function GoalUpdateRecordUnmemoed({
   editable,
   onContextMenu,
   onSubmit,
-}: GoalUpdate & {
+  type,
+  statusChange,
+}: Omit<GoalUpdate, 'statusChange'> & {
+  statusChange?: GoalUpdateStatusChange['statusChange']
   onContextMenu: ({
     event,
     resetAnimation,
@@ -37,7 +40,7 @@ function GoalUpdateRecordUnmemoed({
     resetAnimation: () => void
   }) => void
   editable?: boolean
-  onSubmit: (newContent?: string) => void
+  onSubmit: (newContent?: string | null) => void
 }) {
   const isNew = id === NEW_ID
 
@@ -84,7 +87,7 @@ function GoalUpdateRecordUnmemoed({
         >
           <TextInput
             onChangeText={setValue}
-            value={value}
+            value={value ?? ''}
             multiline
             autoFocus
             className='text-fg p-0'
@@ -103,10 +106,16 @@ function GoalUpdateRecordUnmemoed({
       ) : (
         <GestureDetector gesture={gesture}>
           <Animated.View
-            className='bg-bgSecondary p-3 border-l-2 rounded-md leading-5'
+            className='bg-bgSecondary p-3 border-l-2 rounded-md leading-5 gap-2'
             style={contentAnimatedStyle}
           >
-            <Text className='text-fg'>{value}</Text>
+            {type === 'status_change' && (
+              <Text className='text-fgSecondary italic text-sm'>
+                The goal was {statusChange}
+                {value ? ':' : '.'}
+              </Text>
+            )}
+            {value && <Text className='text-fg'>{value}</Text>}
           </Animated.View>
         </GestureDetector>
       )}
@@ -187,6 +196,7 @@ export function GoalUpdateRecordWrapper({
   setGoalUpdates,
   showSaveNewModal,
   showUpdateModal,
+  statusChange,
 }: GoalUpdate & {
   editable?: boolean
   setGoalUpdateModificationState: (state: any) => void
@@ -198,6 +208,7 @@ export function GoalUpdateRecordWrapper({
   setGoalUpdates: (state: any) => void
   type: GoalUpdate['type']
   isPinned: boolean
+  statusChange?: GoalUpdateStatusChange['statusChange']
 }) {
   const onContextMenu = useCallback(
     ({
@@ -226,7 +237,7 @@ export function GoalUpdateRecordWrapper({
   )
 
   const onSubmit = useCallback(
-    (newContent?: string) => {
+    (newContent?: string | null) => {
       const isAdding = id === NEW_ID
 
       if (isAdding) {
@@ -274,8 +285,10 @@ export function GoalUpdateRecordWrapper({
       content={content}
       createdAt={createdAt}
       sentiment={sentiment}
+      // go fuck yourself
       type={type}
       isPinned={isPinned}
+      statusChange={statusChange}
       onContextMenu={onContextMenu}
       onSubmit={onSubmit}
     />

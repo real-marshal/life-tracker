@@ -4,6 +4,9 @@ import { toCamelCase } from '@/common/utils/object'
 import { Duration, formatISO, interval, intervalToDuration } from 'date-fns'
 import { getTrackers, Tracker } from '@/models/tracker'
 import { sortWithIndex } from '@/common/utils/array'
+import { makeDateTz } from '@/common/utils/date'
+import { increaseMetaStat } from '@/models/metastat'
+import { addGoalUpdate, GoalUpdateStatusChange } from '@/models/goalUpdate'
 
 export interface GoalRenderData {
   index: number
@@ -325,4 +328,77 @@ export async function addGoal(db: SQLiteDatabase, { text, why, isLongTerm }: Add
       $type: isLongTerm ? 'longterm' : 'normal',
     }
   )
+}
+
+export async function closeGoal(db: SQLiteDatabase, id: number, status: 'abandoned' | 'completed') {
+  await db.runAsync(
+    `
+      update goal
+      set status = $status,
+          close_date = $close_date
+      where id = $id
+    `,
+    { $id: id, $status: status, $close_date: formatISO(new Date()) }
+  )
+}
+
+export async function reopenGoal(db: SQLiteDatabase, id: number) {
+  await db.runAsync(
+    `
+      update goal
+      set status = 'active',
+          close_date = null
+      where id = $id
+    `,
+    { $id: id }
+  )
+}
+
+export async function delayGoal(db: SQLiteDatabase, id: number) {
+  await db.runAsync(
+    `
+      update goal
+      set status = 'delayed'
+      where id = $id
+    `,
+    { $id: id }
+  )
+}
+
+export type ChangeGoalStatusParam = {
+  id: number
+  status: GoalUpdateStatusChange['statusChange']
+  metastatChanges: { id: number; value: number }[]
+  message?: string
+  sentiment: GoalUpdateStatusChange['sentiment']
+}
+
+export async function changeGoalStatus(
+  db: SQLiteDatabase,
+  { id, status, metastatChanges, message, sentiment }: ChangeGoalStatusParam
+) {
+  await db.withExclusiveTransactionAsync(async (tx) => {
+    const metastatChangesPromise = metastatChanges.map(({ id, value }) =>
+      increaseMetaStat(tx, id, value)
+    )
+
+    const statusChangePromise =
+      status === 'delayed'
+        ? delayGoal(tx, id)
+        : status === 'reopened'
+          ? reopenGoal(tx, id)
+          : closeGoal(tx, id, status)
+
+    const goalUpdatePromise = addGoalUpdate(tx, id, {
+      id: -1,
+      type: 'status_change',
+      statusChange: status,
+      sentiment: sentiment,
+      content: message || null,
+      isPinned: false,
+      createdAt: makeDateTz(new Date().toISOString()),
+    })
+
+    await Promise.all([...metastatChangesPromise, statusChangePromise, goalUpdatePromise])
+  })
 }

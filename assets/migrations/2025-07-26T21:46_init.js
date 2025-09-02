@@ -72,14 +72,14 @@ module.exports = (db) => {
 
     create table if not exists goal_update
     (
-      id           integer primary key autoincrement,
-      goal_id      integer not null references goal (id) on delete cascade,
-      type         text    not null check (type in ('normal', 'closing')),
-      sentiment    text    not null check (sentiment in ('positive', 'neutral', 'negative')),
-      related_goal integer references goal (id),
-      content      text    not null check (length(content) < 10000),
-      is_pinned    integer not null check (is_pinned in (0, 1)) default 0,
-      created_at   text    not null
+      id            integer primary key autoincrement,
+      goal_id       integer not null references goal (id) on delete cascade,
+      type          text    not null check (type in ('normal', 'status_change')),
+      status_change text check (status_change in ('completed', 'abandoned', 'delayed', 'reopened')),
+      sentiment     text    not null check (sentiment in ('positive', 'neutral', 'negative')),
+      content       text check (length(content) < 10000),
+      is_pinned     integer not null check (is_pinned in (0, 1)) default 0,
+      created_at    text    not null
     );
 
     create table if not exists metastat
