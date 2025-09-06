@@ -4,9 +4,9 @@ import { GoalUpdate } from '@/models/goalUpdate'
 export const colors = {
   accent: '#A4EB1F',
   accentActive: '#4a641c',
-  ltGoal: '#C333C1',
+  ltGoal: '#af43ae',
   ltGoalActive: '#5d185c',
-  currentGoal: '#33CBF5',
+  currentGoal: '#34b5d9',
   currentGoalActive: '#17586b',
   delayedGoal: '#C9C191',
   delayedGoalActive: '#7c7346',
