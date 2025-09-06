@@ -193,7 +193,13 @@ export default function HomeScreen() {
         className='right-safe-offset-7 bottom-[90px] z-[9999999]'
         animatedStyle={animatedStyle}
       >
-        <FloatingMenuItem description='Marking something abstract?' onPress={() => null}>
+        <FloatingMenuItem
+          description='Marking something abstract?'
+          onPress={() => {
+            router.navigate('/add-metastat')
+            hidePopover()
+          }}
+        >
           <FloatingMenuItem.Text>Add a </FloatingMenuItem.Text>
           <FloatingMenuItem.Text color={colors.accent}>meta stat</FloatingMenuItem.Text>
         </FloatingMenuItem>

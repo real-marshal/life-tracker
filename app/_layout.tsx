@@ -77,6 +77,10 @@ function RootView() {
         options={{ animation: 'slide_from_right', animationDuration: 200, headerShown: false }}
       />
       <Stack.Screen
+        name='add-metastat'
+        options={{ animation: 'slide_from_right', animationDuration: 200, headerShown: false }}
+      />
+      <Stack.Screen
         name='goal/[id]'
         options={{ animation: 'slide_from_right', animationDuration: 200, headerShown: false }}
       />

@@ -2,7 +2,7 @@ import { MetaStat, UpdateMetaStatParam } from '@/models/metastat'
 import { useEffect, useRef, useState } from 'react'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { BottomSheetModal } from '@gorhom/bottom-sheet'
-import { Text, TextInput, View } from 'react-native'
+import { Text, TextInput, View, ViewStyle } from 'react-native'
 import { HelpTooltip } from '@/components/HelpTooltip'
 import { Checkbox } from 'expo-checkbox'
 import { colors } from '@/common/theme'
@@ -10,6 +10,7 @@ import { Pressable } from 'react-native-gesture-handler'
 import { capitalize } from 'lodash'
 import { AppButton } from '@/components/AppButton'
 import { SheetModalSelect } from '@/components/SheetModalSelect'
+import { cn } from '@/common/utils/css'
 
 export function MetastatDetails({
   metastat,
@@ -22,12 +23,6 @@ export function MetastatDetails({
   expanded: boolean
   updateMetastat: (param: UpdateMetaStatParam) => void
 }) {
-  const [name, setName] = useState(metastat.name)
-
-  useEffect(() => {
-    setName(metastat.name)
-  }, [metastat.name])
-
   const opacity = useSharedValue(expanded ? 1 : 0)
 
   useEffect(() => {
@@ -38,6 +33,37 @@ export function MetastatDetails({
     opacity: opacity.value,
     width,
   }))
+
+  if (!expanded) return null
+
+  return (
+    <MetastatForm
+      metastat={metastat}
+      onSave={updateMetastat}
+      animatedStyle={animatedStyle}
+      revertible
+    />
+  )
+}
+
+export function MetastatForm({
+  animatedStyle,
+  metastat,
+  onSave,
+  revertible,
+  className,
+}: {
+  animatedStyle?: ViewStyle
+  metastat: Pick<MetaStat, 'id' | 'name' | 'level' | 'autoDecay'>
+  onSave: (param: Pick<MetaStat, 'id' | 'name' | 'level' | 'autoDecay'>) => void
+  revertible?: boolean
+  className?: string
+}) {
+  const [name, setName] = useState(metastat.name)
+
+  useEffect(() => {
+    setName(metastat.name)
+  }, [metastat.name])
 
   const [isCapped, setIsCapped] = useState(metastat.level === null)
 
@@ -67,12 +93,10 @@ export function MetastatDetails({
     }
   }, [autoDecay, isCapped, metastat.autoDecay, metastat.level, metastat.name, name])
 
-  if (!expanded) return null
-
   return (
     <>
       <Animated.View
-        className='flex flex-col gap-4 px-4 pb-4 pt-2 bg-bgSecondary rounded-b-md'
+        className={cn(`flex flex-col gap-4 px-4 pb-4 pt-2 bg-bgSecondary rounded-b-md`, className)}
         style={animatedStyle}
       >
         <View className='flex flex-col gap-2'>
@@ -108,30 +132,32 @@ export function MetastatDetails({
             />
           </View>
           <Pressable onPress={() => autoDecaySheetRef.current?.present()}>
-            <Text className='text-fg px-2 py-3 bg-bgTertiary rounded-md'>
+            <Text className='text-fg px-3 py-3 bg-bgTertiary rounded-md'>
               {capitalize(autoDecay)}
             </Text>
           </Pressable>
         </View>
         {isChanged && (
           <View className='flex flex-row gap-4 justify-end pt-4'>
-            <AppButton
-              text='Revert'
-              onPress={() => {
-                setName(metastat.name)
-                setIsCapped(metastat.level === null)
-                setAutoDecay(metastat.autoDecay)
-              }}
-              color={colors.fg}
-              activeColor={colors.fgSecondary}
-              className='py-2 px-6'
-            />
+            {revertible && (
+              <AppButton
+                text='Revert'
+                onPress={() => {
+                  setName(metastat.name)
+                  setIsCapped(metastat.level === null)
+                  setAutoDecay(metastat.autoDecay)
+                }}
+                color={colors.fg}
+                activeColor={colors.fgSecondary}
+                className='py-2 px-6'
+              />
+            )}
             <AppButton
               text='Save'
               onPress={() =>
-                updateMetastat({
+                onSave({
                   id: metastat.id,
-                  name,
+                  name: name.trim(),
                   level: isCapped ? null : (metastat.level ?? 0),
                   autoDecay,
                 })

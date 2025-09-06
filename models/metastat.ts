@@ -78,12 +78,7 @@ export async function deleteMetaStat(db: SQLiteDatabase, id: number) {
   )
 }
 
-export type UpdateMetaStatParam = {
-  id: number
-  name: string
-  level: number | null
-  autoDecay: MetaStat['autoDecay']
-}
+export type UpdateMetaStatParam = Pick<MetaStat, 'id' | 'name' | 'level' | 'autoDecay'>
 
 export async function updateMetaStat(
   db: SQLiteDatabase,
@@ -142,5 +137,32 @@ export async function increaseMetaStat(db: SQLiteDatabase, id: number, value: nu
       where id = $id
     `,
     { $value: value, $id: id, $last_value_increase_date: formatISO(new Date()) }
+  )
+}
+
+export type AddMetaStatParam = Pick<MetaStat, 'name' | 'level' | 'autoDecay'>
+
+export async function addMetaStat(
+  db: SQLiteDatabase,
+  { name, level, autoDecay }: AddMetaStatParam
+) {
+  await db.runAsync(
+    `
+      insert into metastat(name, level, auto_decay, decay_data, render_data)
+      values ($name,
+              $level,
+              $autoDecay,
+              $decayData,
+              '{}')
+    `,
+    {
+      $name: name,
+      $level: level,
+      $autoDecay: autoDecay,
+      $decayData: JSON.stringify({
+        lastValueIncreaseDate: formatISO(new Date()),
+        lastDecayDate: formatISO(new Date()),
+      } satisfies Row<MetaStatDecayData>),
+    }
   )
 }

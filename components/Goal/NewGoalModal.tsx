@@ -84,7 +84,7 @@ export function NewGoalModal({
               return
             }
 
-            addGoalMutator({ text, why: !why ? null : why, isLongTerm })
+            addGoalMutator({ text: text.trim(), why: !why ? null : why.trim(), isLongTerm })
 
             setText('')
             setWhy('')
