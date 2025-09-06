@@ -1,6 +1,5 @@
-import { Text, TextInput, View, ViewStyle } from 'react-native'
-
-import { colors, goalUpdateColorMap } from '@/common/theme'
+import { Dimensions, Text, TextInput, View, ViewStyle } from 'react-native'
+import { colors, getGoalColor, goalUpdateColorMap } from '@/common/theme'
 import { GoalUpdate, GoalUpdateStatusChange } from '@/models/goalUpdate'
 import {
   Gesture,
@@ -19,6 +18,7 @@ import Animated, {
 import { uses24hourClock } from '@/common/utils/date'
 import { performContextMenuHaptics } from '@/common/utils/haptics'
 import { NEW_ID } from '@/components/Goal/constants'
+import { Link } from 'expo-router'
 
 function GoalUpdateRecordUnmemoed({
   id,
@@ -30,8 +30,14 @@ function GoalUpdateRecordUnmemoed({
   onSubmit,
   type,
   statusChange,
-}: Omit<GoalUpdate, 'statusChange'> & {
+  relatedGoalId,
+  relatedGoalName,
+  relatedGoalStatus,
+}: Omit<GoalUpdate, 'statusChange' | 'relatedGoalId' | 'relatedGoalName'> & {
   statusChange?: GoalUpdateStatusChange['statusChange']
+  relatedGoalId?: GoalUpdateStatusChange['relatedGoalId']
+  relatedGoalName?: GoalUpdateStatusChange['relatedGoalName']
+  relatedGoalStatus?: GoalUpdateStatusChange['relatedGoalStatus']
   onContextMenu: ({
     event,
     resetAnimation,
@@ -111,7 +117,20 @@ function GoalUpdateRecordUnmemoed({
           >
             {type === 'status_change' && (
               <Text className='text-fgSecondary italic text-sm'>
-                The goal was {statusChange}
+                {relatedGoalName ? 'Related goal ' : 'The goal'}
+                {relatedGoalId && relatedGoalName && (
+                  <Link
+                    href={{ pathname: '/goal/[id]', params: { id: relatedGoalId } }}
+                    className='text-fg not-italic font-medium'
+                    style={{
+                      color: getGoalColor(statusChange === 'reopened' ? 'active' : statusChange),
+                    }}
+                  >
+                    {' '}
+                    {relatedGoalName}{' '}
+                  </Link>
+                )}{' '}
+                was {statusChange}
                 {value ? ':' : '.'}
               </Text>
             )}
@@ -197,6 +216,10 @@ export function GoalUpdateRecordWrapper({
   showSaveNewModal,
   showUpdateModal,
   statusChange,
+  relatedGoalId,
+  relatedGoalName,
+  relatedGoalStatus,
+  contextMenuHeight,
 }: GoalUpdate & {
   editable?: boolean
   setGoalUpdateModificationState: (state: any) => void
@@ -209,6 +232,10 @@ export function GoalUpdateRecordWrapper({
   type: GoalUpdate['type']
   isPinned: boolean
   statusChange?: GoalUpdateStatusChange['statusChange']
+  relatedGoalId?: GoalUpdateStatusChange['relatedGoalId']
+  relatedGoalName?: GoalUpdateStatusChange['relatedGoalName']
+  relatedGoalStatus?: GoalUpdateStatusChange['relatedGoalStatus']
+  contextMenuHeight: number
 }) {
   const onContextMenu = useCallback(
     ({
@@ -219,7 +246,11 @@ export function GoalUpdateRecordWrapper({
       resetAnimation: () => void
     }) => {
       setGoalUpdateModificationState({ id })
-      setGoalUpdateContextMenuPosition(event.absoluteY)
+      setGoalUpdateContextMenuPosition(
+        event.absoluteY + contextMenuHeight > Dimensions.get('screen').height
+          ? event.absoluteY - contextMenuHeight - 10
+          : event.absoluteY
+      )
 
       onContextMenuCancelRef.current !== resetAnimation && onContextMenuCancelRef.current()
       onContextMenuCancelRef.current = resetAnimation
@@ -228,6 +259,7 @@ export function GoalUpdateRecordWrapper({
       performContextMenuHaptics()
     },
     [
+      contextMenuHeight,
       id,
       onContextMenuCancelRef,
       setGoalUpdateContextMenuPosition,
@@ -285,10 +317,12 @@ export function GoalUpdateRecordWrapper({
       content={content}
       createdAt={createdAt}
       sentiment={sentiment}
-      // go fuck yourself
       type={type}
       isPinned={isPinned}
       statusChange={statusChange}
+      relatedGoalId={relatedGoalId}
+      relatedGoalName={relatedGoalName}
+      relatedGoalStatus={relatedGoalStatus}
       onContextMenu={onContextMenu}
       onSubmit={onSubmit}
     />

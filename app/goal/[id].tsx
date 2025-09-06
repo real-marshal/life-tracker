@@ -10,6 +10,7 @@ import {
   addGoalUpdate,
   deleteGoalUpdate,
   getGoalUpdates,
+  getLtGoalUpdates,
   GoalUpdate,
   updateGoalUpdate,
   UpdateGoalUpdateParam,
@@ -60,9 +61,21 @@ export default function GoalScreen() {
     queryKey: ['goals', id],
     queryFn: () => (isLongTerm ? getLtGoal(db, id) : getGoal(db, id)),
   })
-  const { data: goalUpdatesStored, error: goalUpdatesError } = useQuery({
+  const {
+    data: goalUpdatesStored,
+    error: goalUpdatesError,
+    refetch: refetchGoalUpdates,
+  } = useQuery({
     queryKey: ['goalUpdates', id],
-    queryFn: () => getGoalUpdates(db, id),
+    queryFn: () =>
+      isLongTerm && goal
+        ? getLtGoalUpdates(db, id, [
+            ...(goal as LtGoal).relatedGoals.map(({ id }) => id),
+            ...(goal as LtGoal).delayedRelatedGoals.map(({ id }) => id),
+            ...(goal as LtGoal).completedRelatedGoals.map(({ id }) => id),
+            ...(goal as LtGoal).abandonedRelatedGoals.map(({ id }) => id),
+          ])
+        : getGoalUpdates(db, id),
     // when the goal updates are cached, react thread gets stuck trying to render all those components,
     // creating a long animation delay. but if they are not cached, the first render is much simpler,
     // removing it, while the list is rendered during the animation itself
@@ -90,6 +103,10 @@ export default function GoalScreen() {
     { title: 'Error updating a goal update', errorData: goalUpdateUpdatingError },
     { title: 'Error deleting a goal update', errorData: goalUpdateDeletingError }
   )
+
+  useEffect(() => {
+    isLongTerm && goal && refetchGoalUpdates()
+  }, [goal, isLongTerm, refetchGoalUpdates])
 
   const [goalUpdates, setGoalUpdates] = useState(goalUpdatesStored)
 
@@ -263,6 +280,7 @@ export default function GoalScreen() {
                             setGoalUpdates={setGoalUpdates}
                             showSaveNewModal={showSaveNewModal}
                             showUpdateModal={showUpdateModal}
+                            contextMenuHeight={100}
                           />
                         ))}
                       </View>
