@@ -1,7 +1,7 @@
 import { SQLiteDatabase } from 'expo-sqlite'
 import { Row, RowCamelCase } from '@/common/utils/types'
 import { toCamelCase } from '@/common/utils/object'
-import { Duration, formatISO, interval, intervalToDuration } from 'date-fns'
+import { formatISO } from 'date-fns'
 
 export interface TrackerRenderData {
   index: number
@@ -17,7 +17,7 @@ export interface BaseTracker {
 
 export interface DateTracker extends BaseTracker {
   type: 'date'
-  duration: Duration
+  date: Date
 }
 
 export interface StatTracker extends BaseTracker {
@@ -36,8 +36,6 @@ export interface DetailedStatTracker {
   suffix?: string
   values: { date: string; value: number; id: number }[]
 }
-
-type RowTracker = (Omit<DateTracker, 'duration'> & { date: string }) | StatTracker
 
 export async function getTrackers(db: SQLiteDatabase, goalId?: number): Promise<Tracker[]> {
   const query = `
@@ -63,16 +61,16 @@ export async function getTrackers(db: SQLiteDatabase, goalId?: number): Promise<
   `
 
   const rows = await (goalId
-    ? db.getAllAsync<Row<RowTracker>>(
+    ? db.getAllAsync<Row<Tracker>>(
         `
         ${query}
         where goal_id = $goalId
         `,
         { $goalId: goalId }
       )
-    : db.getAllAsync<Row<RowTracker>>(query))
+    : db.getAllAsync<Row<Tracker>>(query))
 
-  return rows.map(toCamelCase<RowCamelCase<RowTracker>>).map((rowTracker) => {
+  return rows.map(toCamelCase<RowCamelCase<Tracker>>).map((rowTracker) => {
     if (rowTracker.type === 'stat') {
       return {
         ...rowTracker,
@@ -84,7 +82,7 @@ export async function getTrackers(db: SQLiteDatabase, goalId?: number): Promise<
 
     return {
       ...dateTrackerRest,
-      duration: intervalToDuration(interval(new Date(), new Date(date))),
+      date: new Date(date),
       renderData: JSON.parse(dateTrackerRest.renderData),
     }
   })

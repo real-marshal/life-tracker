@@ -1,11 +1,14 @@
 import { Pressable, Text, View } from 'react-native'
-import { Tracker } from '@/models/tracker'
+import { DateTracker, StatTracker, Tracker } from '@/models/tracker'
 import { formatDurationShort } from '@/common/utils/date'
 import { BottomSheetModal } from '@gorhom/bottom-sheet'
-import { useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { colors } from '@/common/theme'
-import { TrackerSheet } from '@/components/Tracker/TrackerSheet'
+import { StatTrackerSheet } from '@/components/Tracker/StatTrackerSheet'
 import { SheetModal } from '@/components/SheetModal'
+import { DateTrackerSheet } from '@/components/Tracker/DateTrackerSheet'
+import { Duration, formatDuration, intervalToDuration, interval } from 'date-fns'
+import { cn } from '@/common/utils/css'
 
 export function Trackers({ trackers }: { trackers: Tracker[] }) {
   return (
@@ -30,11 +33,6 @@ function TrackerItem({
     bottomSheetModalRef.current?.present()
   }, [])
 
-  const shownValue =
-    typeSpecificData.type === 'date'
-      ? formatDurationShort(typeSpecificData.duration)
-      : `${typeSpecificData.prefix ?? ''}${typeSpecificData.value ?? ''}${typeSpecificData.suffix ?? ''}`
-
   return (
     <>
       <Pressable
@@ -48,11 +46,67 @@ function TrackerItem({
         cssInterop={false}
       >
         <Text className='text-fgSecondary'>{name}:</Text>
-        <Text className='text-fg font-bold'>{shownValue}</Text>
+        <TrackerItemValue {...typeSpecificData} />
       </Pressable>
       <SheetModal ref={bottomSheetModalRef}>
-        <TrackerSheet id={id} />
+        {typeSpecificData.type === 'stat' ? (
+          <StatTrackerSheet id={id} />
+        ) : (
+          <DateTrackerSheet id={id} name={name} renderData={renderData} {...typeSpecificData} />
+        )}
       </SheetModal>
     </>
   )
+}
+
+export function TrackerItemValue({
+  longDuration,
+  className,
+  ...typeSpecificData
+}: { longDuration?: boolean; className?: string } & (
+  | Omit<StatTracker, 'id' | 'name' | 'renderData'>
+  | Omit<DateTracker, 'id' | 'name' | 'renderData'>
+)) {
+  const formatDateTrackerDuration = longDuration
+    ? (duration: Duration) =>
+        formatDuration(duration, {
+          format: ['years', 'months', 'days', 'hours', 'minutes', 'seconds'],
+        })
+    : formatDurationShort
+
+  const [formattedDuration, setFormattedDuration] = useState(
+    typeSpecificData.type === 'date'
+      ? formatDateTrackerDuration(
+          intervalToDuration(interval(new Date(), new Date(typeSpecificData.date)))
+        )
+      : ''
+  )
+  const intervalRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (typeSpecificData.type !== 'date') return
+
+    intervalRef.current = setInterval(
+      () =>
+        setFormattedDuration(
+          formatDateTrackerDuration(
+            intervalToDuration(interval(new Date(), new Date(typeSpecificData.date)))
+          )
+        ),
+      1000
+    )
+
+    return () => {
+      intervalRef.current && clearInterval(intervalRef.current)
+    }
+    // it doesn't see the dependency because of type assertion
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [(typeSpecificData as DateTracker).date, typeSpecificData.type])
+
+  const shownValue =
+    typeSpecificData.type === 'date'
+      ? formattedDuration
+      : `${typeSpecificData.prefix ?? ''}${typeSpecificData.value ?? ''}${typeSpecificData.suffix ?? ''}`
+
+  return <Text className={cn(`text-fg font-bold`, className)}>{shownValue}</Text>
 }
