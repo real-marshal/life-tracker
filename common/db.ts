@@ -8,6 +8,18 @@ export async function initSqlite(db: SQLiteDatabase) {
   return db.execAsync('PRAGMA foreign_keys = ON')
 }
 
+const makeAccumulatingDate = () => {
+  let date = new Date()
+
+  return (daysToSub = 0) => {
+    date = subDays(date, daysToSub)
+
+    return formatISO(date)
+  }
+}
+
+const statAccDate = makeAccumulatingDate()
+
 export async function seed(db: SQLiteDatabase) {
   return db.execAsync(`
     insert into user(name)
@@ -85,32 +97,40 @@ export async function seed(db: SQLiteDatabase) {
     insert into stat_tracker (tracker_id, prefix)
     values (1, '$');
 
-    insert into stat_value (tracker_id, value, created_at)
-    values (1, 3000, '${formatISO(subDays(new Date(), 30))}');
-    insert into stat_value (tracker_id, value, created_at)
-    values (1, 2200, '${formatISO(subDays(new Date(), 101))}');
-    insert into stat_value (tracker_id, value, created_at)
-    values (1, 1700, '${formatISO(subDays(new Date(), 53))}');
-    insert into stat_value (tracker_id, value, created_at)
-    values (1, 4500, '${formatISO(subDays(new Date(), 7))}');
-    insert into stat_value (tracker_id, value, created_at)
-    values (1, 2800, '${formatISO(subDays(new Date(), 30))}');
-    insert into stat_value (tracker_id, value, created_at)
-    values (1, 1600, '${formatISO(subDays(new Date(), 30))}');
-    insert into stat_value (tracker_id, value, created_at)
-    values (1, 1200, '${formatISO(subDays(new Date(), 2))}');
-    insert into stat_value (tracker_id, value, created_at)
-    values (1, 2300, '${formatISO(subDays(new Date(), 22))}');
-    insert into stat_value (tracker_id, value, created_at)
-    values (1, 4000, '${formatISO(subDays(new Date(), 10))}');
-    insert into stat_value (tracker_id, value, created_at)
-    values (1, 3100, '${formatISO(subDays(new Date(), 12))}');
-    insert into stat_value (tracker_id, value, created_at)
-    values (1, 5000, '${formatISO(subDays(new Date(), 10))}');
-    insert into stat_value (tracker_id, value, created_at)
-    values (1, 5500, '${formatISO(subDays(new Date(), 8))}');
-    insert into stat_value (tracker_id, value, created_at)
-    values (1, 5000, '${formatISO(new Date())}');
+    ${`
+      insert into stat_value (tracker_id, value, created_at)
+      values (1, 5000, '${statAccDate()}');
+      insert into stat_value (tracker_id, value, created_at)
+      values (1, 5500, '${statAccDate(8)}');
+      insert into stat_value (tracker_id, value, created_at)
+      values (1, 5000, '${statAccDate(10)}');
+      insert into stat_value (tracker_id, value, created_at)
+      values (1, 3100, '${statAccDate(12)}');
+      insert into stat_value (tracker_id, value, created_at)
+      values (1, 4000, '${statAccDate(10)}');
+      insert into stat_value (tracker_id, value, created_at)
+      values (1, 2300, '${statAccDate(22)}');
+      insert into stat_value (tracker_id, value, created_at)
+      values (1, 1200, '${statAccDate(2)}');
+      insert into stat_value (tracker_id, value, created_at)
+      values (1, 1600, '${statAccDate(30)}');
+      insert into stat_value (tracker_id, value, created_at)
+      values (1, 2800, '${statAccDate(30)}');
+      insert into stat_value (tracker_id, value, created_at)
+      values (1, 4500, '${statAccDate(7)}');
+      insert into stat_value (tracker_id, value, created_at)
+      values (1, 1700, '${statAccDate(53)}');
+      insert into stat_value (tracker_id, value, created_at)
+      values (1, 2200, '${statAccDate(101)}');
+      insert into stat_value (tracker_id, value, created_at)
+      values (1, 3000, '${statAccDate(30)}');
+    `
+      .trim()
+      .split(';')
+      .slice(0, -1)
+      .toReversed()
+      .join(';')
+      .concat(';')}
 
     insert into tracker (name, render_data)
     values ('X followers', '{"index":1,"size":1}');
