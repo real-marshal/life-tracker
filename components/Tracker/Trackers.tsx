@@ -9,6 +9,7 @@ import { SheetModal } from '@/components/SheetModal'
 import { DateTrackerSheet } from '@/components/Tracker/DateTrackerSheet'
 import { Duration, formatDuration, intervalToDuration, interval } from 'date-fns'
 import { cn } from '@/common/utils/css'
+import { useFocusEffect } from 'expo-router'
 
 export function Trackers({ trackers }: { trackers: Tracker[] }) {
   return (
@@ -28,10 +29,25 @@ function TrackerItem({
   ...typeSpecificData
 }: Tracker & { isLast: boolean }) {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null)
+  const isSheetModalTemporarilyHiddenRef = useRef(false)
 
   const onTrackerPress = useCallback(() => {
     bottomSheetModalRef.current?.present()
   }, [])
+
+  const temporarilyHideModalRef = useCallback(() => {
+    bottomSheetModalRef.current?.close()
+    isSheetModalTemporarilyHiddenRef.current = true
+  }, [])
+
+  useFocusEffect(
+    useCallback(() => {
+      if (isSheetModalTemporarilyHiddenRef.current) {
+        bottomSheetModalRef.current?.present()
+        isSheetModalTemporarilyHiddenRef.current = false
+      }
+    }, [])
+  )
 
   return (
     <>
@@ -50,9 +66,15 @@ function TrackerItem({
       </Pressable>
       <SheetModal ref={bottomSheetModalRef}>
         {typeSpecificData.type === 'stat' ? (
-          <StatTrackerSheet id={id} />
+          <StatTrackerSheet id={id} hideSheet={temporarilyHideModalRef} />
         ) : (
-          <DateTrackerSheet id={id} name={name} renderData={renderData} {...typeSpecificData} />
+          <DateTrackerSheet
+            id={id}
+            name={name}
+            renderData={renderData}
+            hideSheet={temporarilyHideModalRef}
+            {...typeSpecificData}
+          />
         )}
       </SheetModal>
     </>

@@ -1,4 +1,3 @@
-import { Modal, RestModalProps } from '@/components/Modal'
 import { useSQLiteContext } from 'expo-sqlite'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useErrorToasts } from '@/hooks/useErrorToasts'
@@ -14,15 +13,7 @@ import { Popover } from '@/components/Popover'
 import { ContextMenuItem } from '@/components/ContextMenu'
 import { useContextMenu } from '@/hooks/useContextMenu'
 
-export function LinkedGoals({
-  trackerId,
-  modalProps,
-  hideModal,
-}: {
-  trackerId: number
-  modalProps: RestModalProps
-  hideModal: () => void
-}) {
+export function LinkedGoals({ trackerId }: { trackerId: number }) {
   const db = useSQLiteContext()
   const queryClient = useQueryClient()
 
@@ -45,50 +36,34 @@ export function LinkedGoals({
   const onModalPress = useRef<() => void>(() => null)
 
   return (
-    <Modal
-      {...modalProps}
-      containerClassName='justify-start px-4'
-      onPress={() => {
-        onModalPress.current()
-      }}
-    >
-      <View className='flex flex-col gap-6'>
-        <View className='flex flex-row gap-6 items-center justify-between px-5'>
-          <Text className='text-fg text-2xl font-bold'>Linked goals</Text>
-          <Pressable onPress={hideModal}>
-            {({ pressed }) => (
-              <Feather name='x' size={24} color={pressed ? colors.fgSecondary : colors.fg} />
-            )}
-          </Pressable>
-        </View>
-        {goals?.length ? (
-          <ScrollView className='max-h-[100%] grow-0 px-5 pb-12'>
-            <View className='flex flex-col gap-2' onStartShouldSetResponder={() => true}>
-              {goals?.map((goal) => (
-                <View key={goal.id} className='flex flex-row gap-4 items-center'>
-                  <GoalPreviewItem
-                    {...goal}
-                    color={getGoalColor('active')}
-                    small
-                    className='w-[80%] grow'
-                  />
-                  <LinkedGoalsDelete
-                    trackerId={trackerId}
-                    goalId={goal.id}
-                    deleteGoalLink={deleteGoalLinkMutator}
-                    onModalPressRef={onModalPress}
-                  />
-                </View>
-              ))}
-            </View>
-          </ScrollView>
-        ) : (
-          <Text className='text-fg text px-5'>
-            No goal refers to this tracker yet. Go to a goal and link a tracker first.
-          </Text>
-        )}
-      </View>
-    </Modal>
+    <View className='flex flex-col gap-6 max-h-[500]'>
+      {goals?.length ? (
+        <ScrollView className='px-5 grow-0' contentContainerClassName='flex flex-col gap-2 py-5'>
+          <View className='flex flex-col gap-2' onStartShouldSetResponder={() => true}>
+            {goals?.map((goal) => (
+              <View key={goal.id} className='flex flex-row gap-4 items-center'>
+                <GoalPreviewItem
+                  {...goal}
+                  color={getGoalColor('active')}
+                  small
+                  className='w-[80%] grow'
+                />
+                <LinkedGoalsDelete
+                  trackerId={trackerId}
+                  goalId={goal.id}
+                  deleteGoalLink={deleteGoalLinkMutator}
+                  onModalPressRef={onModalPress}
+                />
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      ) : (
+        <Text className='text-fgSecondary text p-5'>
+          No goal refers to this tracker yet. Go to a goal and link a tracker first.
+        </Text>
+      )}
+    </View>
   )
 }
 

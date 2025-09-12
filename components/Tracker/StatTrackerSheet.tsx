@@ -3,7 +3,7 @@ import {
   addStatValue,
   AddStatValueParam,
   deleteTracker,
-  getStatTracker,
+  getDetailedStatTracker,
   updateStatValue,
   UpdateStatValueParam,
 } from '@/models/tracker'
@@ -18,18 +18,18 @@ import { Popover } from '@/components/Popover'
 import { ContextMenuItem, ContextMenuSection } from '@/components/ContextMenu'
 import { useModal } from '@/components/Modal'
 import { TrackerValueControls } from '@/components/Tracker/TrackerValueControls'
-import { HistoricalData } from './HistoricalData'
-import { LinkedGoals } from '@/components/Tracker/LinkedGoals'
 import { useContextMenu } from '@/hooks/useContextMenu'
 import { ConfirmModal } from '@/components/ConfirmModal'
+import { useRouter } from 'expo-router'
 
-export function StatTrackerSheet({ id }: { id: number }) {
+export function StatTrackerSheet({ id, hideSheet }: { id: number; hideSheet?: () => void }) {
   const db = useSQLiteContext()
   const queryClient = useQueryClient()
+  const router = useRouter()
 
   const { data: statTracker, error: statTrackerError } = useQuery({
-    queryKey: ['trackers', id],
-    queryFn: () => getStatTracker(db, id),
+    queryKey: ['trackers', 'detailed', id],
+    queryFn: () => getDetailedStatTracker(db, id),
   })
 
   const { mutate: addStatValueMutator, error: addingError } = useMutation({
@@ -54,16 +54,6 @@ export function StatTrackerSheet({ id }: { id: number }) {
 
   const { isPopoverShown, hidePopover, showPopover, animatedStyle } = useContextMenu()
 
-  const {
-    showModal: showLinkedGoalsModal,
-    hideModal: hideLinkedGoalsModal,
-    ...linkedGoalsModalProps
-  } = useModal()
-  const {
-    showModal: showHistoricalDataModal,
-    hideModal: hideHistoricalDataModal,
-    ...historicalDataModalProps
-  } = useModal()
   const {
     showModal: showDeleteTrackerModal,
     hideModal: hideDeleteTrackerModal,
@@ -101,19 +91,23 @@ export function StatTrackerSheet({ id }: { id: number }) {
       <Popover isOpen={isPopoverShown} className='top-10 right-6' animatedStyle={animatedStyle}>
         <ContextMenuSection label='Tracker' first />
         <ContextMenuItem
-          label='Remove linked goals'
-          iconName='link-2'
-          onPress={() => {
-            showLinkedGoalsModal()
-            hidePopover()
-          }}
-        />
-        <ContextMenuItem
-          label='Edit historical data'
+          label='Edit tracker'
           iconName='edit-3'
           onPress={() => {
-            showHistoricalDataModal()
-            hidePopover()
+            router.navigate({
+              pathname: '/tracker/[id]/edit',
+              params: {
+                id,
+                name: statTracker?.name,
+                type: 'stat',
+                prefix: statTracker?.prefix,
+                suffix: statTracker?.suffix,
+              },
+            })
+            setTimeout(() => {
+              hidePopover()
+              hideSheet?.()
+            }, 200)
           }}
         />
         <ContextMenuItem
@@ -124,21 +118,6 @@ export function StatTrackerSheet({ id }: { id: number }) {
           onPress={showDeleteTrackerModal}
         />
       </Popover>
-      {statTracker && (
-        <LinkedGoals
-          trackerId={statTracker.id}
-          modalProps={linkedGoalsModalProps}
-          hideModal={hideLinkedGoalsModal}
-        />
-      )}
-      {statTracker && (
-        <HistoricalData
-          statTracker={statTracker}
-          modalProps={historicalDataModalProps}
-          hideModal={hideHistoricalDataModal}
-          updateStatValue={updateStatValueMutator}
-        />
-      )}
       <ConfirmModal
         text='Are you sure you want to delete this tracker and all its values?'
         hideModal={hideDeleteTrackerModal}

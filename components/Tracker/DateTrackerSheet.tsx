@@ -9,14 +9,21 @@ import { colors } from '@/common/theme'
 import { Popover } from '@/components/Popover'
 import { ContextMenuItem, ContextMenuSection } from '@/components/ContextMenu'
 import { useModal } from '@/components/Modal'
-import { LinkedGoals } from '@/components/Tracker/LinkedGoals'
 import { useContextMenu } from '@/hooks/useContextMenu'
 import { ConfirmModal } from '@/components/ConfirmModal'
 import { TrackerItemValue } from '@/components/Tracker/Trackers'
+import { useRouter } from 'expo-router'
+import { formatISO } from 'date-fns'
 
-export function DateTrackerSheet({ id, name, date }: DateTracker) {
+export function DateTrackerSheet({
+  id,
+  name,
+  date,
+  hideSheet,
+}: DateTracker & { hideSheet?: () => void }) {
   const db = useSQLiteContext()
   const queryClient = useQueryClient()
+  const router = useRouter()
 
   const { mutate: deleteTrackerMutator, error: deletionError } = useMutation({
     mutationFn: (id: number) => deleteTracker(db, id),
@@ -27,11 +34,6 @@ export function DateTrackerSheet({ id, name, date }: DateTracker) {
 
   const { isPopoverShown, hidePopover, showPopover, animatedStyle } = useContextMenu()
 
-  const {
-    showModal: showLinkedGoalsModal,
-    hideModal: hideLinkedGoalsModal,
-    ...linkedGoalsModalProps
-  } = useModal()
   const {
     showModal: showDeleteTrackerModal,
     hideModal: hideDeleteTrackerModal,
@@ -67,11 +69,17 @@ export function DateTrackerSheet({ id, name, date }: DateTracker) {
       <Popover isOpen={isPopoverShown} className='top-10 right-6' animatedStyle={animatedStyle}>
         <ContextMenuSection label='Tracker' first />
         <ContextMenuItem
-          label='Remove linked goals'
-          iconName='link-2'
+          label='Edit tracker'
+          iconName='edit-3'
           onPress={() => {
-            showLinkedGoalsModal()
-            hidePopover()
+            router.navigate({
+              pathname: '/tracker/[id]/edit',
+              params: { id, name, type: 'date', date: formatISO(date) },
+            })
+            setTimeout(() => {
+              hidePopover()
+              hideSheet?.()
+            }, 200)
           }}
         />
         <ContextMenuItem
@@ -82,11 +90,6 @@ export function DateTrackerSheet({ id, name, date }: DateTracker) {
           onPress={showDeleteTrackerModal}
         />
       </Popover>
-      <LinkedGoals
-        trackerId={id}
-        modalProps={linkedGoalsModalProps}
-        hideModal={hideLinkedGoalsModal}
-      />
       <ConfirmModal
         text='Are you sure you want to delete this tracker?'
         hideModal={hideDeleteTrackerModal}

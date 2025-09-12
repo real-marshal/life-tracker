@@ -92,7 +92,10 @@ type RowStatTracker = Omit<DetailedStatTracker, 'values'> & {
   trackerValues: DetailedStatTracker['values']
 }
 
-export async function getStatTracker(db: SQLiteDatabase, id: number): Promise<DetailedStatTracker> {
+export async function getDetailedStatTracker(
+  db: SQLiteDatabase,
+  id: number
+): Promise<DetailedStatTracker> {
   const row = await db.getFirstAsync<Row<RowStatTracker>>(
     `
       select name,
@@ -121,6 +124,41 @@ export async function getStatTracker(db: SQLiteDatabase, id: number): Promise<De
     ...values,
     values: JSON.parse(trackerValues),
   }
+}
+
+export async function getTracker(db: SQLiteDatabase, id: number) {
+  const row = await db.getFirstAsync<Row<Omit<Tracker, 'renderData'>>>(
+    `
+      select tracker.id,
+             name,
+             case
+               when date_tracker.tracker_id is not null then 'date'
+               when stat_tracker.tracker_id is not null then 'stat'
+               end as type,
+             date_tracker.date,
+             stat_tracker.prefix,
+             stat_tracker.suffix
+      from tracker
+             left join date_tracker on tracker.id = date_tracker.tracker_id
+             left join stat_tracker on tracker.id = stat_tracker.tracker_id
+      where tracker.id = $id
+  `,
+    { $id: id }
+  )
+
+  if (!row) {
+    throw new Error(`No goal found with id ${id} - wtf?`)
+  }
+
+  const tracker = toCamelCase<Omit<Tracker, 'renderData'>>(row)
+
+  return tracker.type === 'stat'
+    ? tracker
+    : {
+        ...tracker,
+        // kys dumbass
+        date: new Date((tracker as DateTracker).date),
+      }
 }
 
 export type AddStatValueParam = {
@@ -193,4 +231,61 @@ export async function deleteGoalLink(
     `,
     { $trackerId: trackerId, $goalId: goalId }
   )
+}
+
+export async function updateTracker(
+  db: SQLiteDatabase,
+  { id, name }: Pick<BaseTracker, 'id' | 'name'>
+) {
+  await db.runAsync(
+    `
+      update tracker
+      set name = $name
+      where id = $id
+    `,
+    { $id: id, $name: name }
+  )
+}
+
+export type UpdateStatTrackerParam = Pick<StatTracker, 'id' | 'name' | 'prefix' | 'suffix'>
+
+export async function updateStatTracker(
+  db: SQLiteDatabase,
+  { id, name, prefix, suffix }: UpdateStatTrackerParam
+) {
+  await db.withExclusiveTransactionAsync(async (tx) => {
+    await Promise.all([
+      updateTracker(tx, { id, name }),
+      tx.runAsync(
+        `
+        update stat_tracker
+        set prefix = $prefix,
+            suffix = $suffix
+        where tracker_id = $id
+      `,
+        { $id: id, $prefix: prefix || null, $suffix: suffix || null }
+      ),
+    ])
+  })
+}
+
+export type UpdateDateTrackerParam = Pick<DateTracker, 'id' | 'name' | 'date'>
+
+export async function updateDateTracker(
+  db: SQLiteDatabase,
+  { id, name, date }: UpdateDateTrackerParam
+) {
+  await db.withExclusiveTransactionAsync(async (tx) => {
+    await Promise.all([
+      updateTracker(tx, { id, name }),
+      tx.runAsync(
+        `
+        update date_tracker
+        set date = $date
+        where tracker_id = $id
+      `,
+        { $id: id, $date: formatISO(date) }
+      ),
+    ])
+  })
 }
