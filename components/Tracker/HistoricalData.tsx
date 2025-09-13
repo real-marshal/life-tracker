@@ -41,8 +41,6 @@ export function HistoricalData({ trackerId }: { trackerId: number }) {
     { title: 'Error deleting a stat tracker', errorData: deletingError }
   )
 
-  const onModalPress = useRef<() => void>(() => null)
-
   return (
     <View className='flex flex-col gap-6 max-h-[500]'>
       <FlatList
@@ -62,7 +60,6 @@ export function HistoricalData({ trackerId }: { trackerId: number }) {
                 trackerValue={trackerValue}
                 updateStatValue={updateStatValueMutator}
                 deleteStatValue={deleteStatValueMutator}
-                onModalPressRef={onModalPress}
               />
             </View>
           </View>
@@ -76,12 +73,10 @@ function HistoricalDataValueEdit({
   trackerValue,
   updateStatValue,
   deleteStatValue,
-  onModalPressRef,
 }: {
   trackerValue: DetailedStatTracker['values'][0]
   updateStatValue: (param: UpdateStatValueParam) => void
   deleteStatValue: (id: number) => void
-  onModalPressRef: RefObject<() => void>
 }) {
   const textInputRef = useRef<TextInput>(null)
 
@@ -111,14 +106,7 @@ function HistoricalDataValueEdit({
           )}
         </Pressable>
       </View>
-      <Pressable
-        onPress={() => {
-          onModalPressRef.current()
-          onModalPressRef.current = hidePopover
-          setTimeout(() => showPopover(), 0)
-        }}
-        hitSlop={4}
-      >
+      <Pressable onPress={showPopover} hitSlop={4}>
         {({ pressed }) => (
           <Feather
             name='trash'

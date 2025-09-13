@@ -8,7 +8,6 @@ import { ScrollView } from 'react-native-gesture-handler'
 import { getGoalsLinkedToTracker } from '@/models/goal'
 import { GoalPreviewItem } from '@/components/Goal/Goals'
 import { deleteGoalLink, DeleteGoalLinkParam } from '@/models/tracker'
-import { RefObject, useRef } from 'react'
 import { Popover } from '@/components/Popover'
 import { ContextMenuItem } from '@/components/ContextMenu'
 import { useContextMenu } from '@/hooks/useContextMenu'
@@ -33,8 +32,6 @@ export function LinkedGoals({ trackerId }: { trackerId: number }) {
     { title: 'Error deleting a goal link', errorData: deletingError }
   )
 
-  const onModalPress = useRef<() => void>(() => null)
-
   return (
     <View className='flex flex-col gap-6 max-h-[500]'>
       {goals?.length ? (
@@ -52,7 +49,6 @@ export function LinkedGoals({ trackerId }: { trackerId: number }) {
                   trackerId={trackerId}
                   goalId={goal.id}
                   deleteGoalLink={deleteGoalLinkMutator}
-                  onModalPressRef={onModalPress}
                 />
               </View>
             ))}
@@ -70,27 +66,17 @@ export function LinkedGoals({ trackerId }: { trackerId: number }) {
 function LinkedGoalsDelete({
   trackerId,
   goalId,
-  onModalPressRef,
   deleteGoalLink,
 }: {
   trackerId: number
   goalId: number
   deleteGoalLink: (param: DeleteGoalLinkParam) => void
-  onModalPressRef: RefObject<() => void>
 }) {
   const { isPopoverShown, hidePopover, showPopover, animatedStyle } = useContextMenu()
 
   return (
     <>
-      <Pressable
-        onPress={() => {
-          onModalPressRef.current()
-          onModalPressRef.current = hidePopover
-          setTimeout(() => showPopover(), 0)
-        }}
-        hitSlop={4}
-        className='flex-1'
-      >
+      <Pressable onPress={showPopover} hitSlop={4} className='flex-1'>
         {({ pressed }) => (
           <Feather
             name='trash'

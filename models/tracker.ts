@@ -349,3 +349,25 @@ export async function addDateTracker(db: SQLiteDatabase, { name, date }: AddDate
     )
   })
 }
+
+export async function linkTracker(db: SQLiteDatabase, trackerId: number, goalId: number) {
+  await db.runAsync(
+    `
+    insert into goal_tracker(goal_id, tracker_id)
+    values ($goal_id, $tracker_id)
+  `,
+    { $goal_id: goalId, $tracker_id: trackerId }
+  )
+}
+
+export async function unlinkTracker(db: SQLiteDatabase, trackerId: number, goalId: number) {
+  await db.runAsync(
+    `
+      delete
+      from goal_tracker
+      where tracker_id = $tracker_id
+        and goal_id = $goal_id
+    `,
+    { $goal_id: goalId, $tracker_id: trackerId }
+  )
+}

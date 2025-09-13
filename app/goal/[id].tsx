@@ -35,6 +35,7 @@ import { GoalStatusChangeSheet } from '@/components/Goal/GoalStatusChangeSheet'
 import { SheetModal } from '@/components/SheetModal'
 import * as Clipboard from 'expo-clipboard'
 import { NewGoalModal } from '@/components/Goal/NewGoalModal'
+import { LinkTrackersModal } from '@/components/Goal/LinkTrackersModal'
 
 interface GoalUpdateModificationState {
   id: number
@@ -191,6 +192,12 @@ export default function GoalScreen() {
     showModal: showNewGoalModal,
     hideModal: hideNewGoalModal,
     ...newGoalModalProps
+  } = useModal()
+
+  const {
+    showModal: showLinkTrackersModal,
+    hideModal: hideLinkTrackersModal,
+    ...linkTrackersModalProps
   } = useModal()
 
   const [continuationToAdd, setContinuationToAdd] = useState<'prerequisite' | 'consequence'>()
@@ -480,7 +487,7 @@ export default function GoalScreen() {
           iconName='link'
           onPress={() => {
             hideMenu()
-            bottomSheetModalRef.current?.present({ action: 'abandon' })
+            showLinkTrackersModal()
           }}
         />
         <ContextMenuSection label='Change status' />
@@ -566,6 +573,13 @@ export default function GoalScreen() {
         isLongTerm={false}
         prerequisite={continuationToAdd === 'consequence' ? id : undefined}
         consequence={continuationToAdd === 'prerequisite' ? id : undefined}
+      />
+
+      <LinkTrackersModal
+        hideModal={hideLinkTrackersModal}
+        modalProps={linkTrackersModalProps}
+        relatedTrackerIds={goal?.relatedTrackers.map(({ id }) => id) ?? []}
+        goalId={id}
       />
     </>
   )

@@ -21,13 +21,14 @@ export function Trackers({ trackers }: { trackers: Tracker[] }) {
   )
 }
 
-function TrackerItem({
+export function TrackerItem({
   isLast,
   id,
   name,
   renderData,
+  onPress,
   ...typeSpecificData
-}: Tracker & { isLast: boolean }) {
+}: Tracker & { isLast: boolean; onPress?: () => void }) {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null)
   const isSheetModalTemporarilyHiddenRef = useRef(false)
 
@@ -58,25 +59,27 @@ function TrackerItem({
           ...(isLast && name.length < 20 && { width: '50%', flexGrow: 0 }),
           ...(pressed && { backgroundColor: colors.bgSecondary }),
         })}
-        onPress={onTrackerPress}
+        onPress={onPress ? onPress : onTrackerPress}
         cssInterop={false}
       >
         <Text className='text-fgSecondary'>{name}:</Text>
         <TrackerItemValue {...typeSpecificData} />
       </Pressable>
-      <SheetModal ref={bottomSheetModalRef}>
-        {typeSpecificData.type === 'stat' ? (
-          <StatTrackerSheet id={id} hideSheet={temporarilyHideModalRef} />
-        ) : (
-          <DateTrackerSheet
-            id={id}
-            name={name}
-            renderData={renderData}
-            hideSheet={temporarilyHideModalRef}
-            {...typeSpecificData}
-          />
-        )}
-      </SheetModal>
+      {!onPress && (
+        <SheetModal ref={bottomSheetModalRef}>
+          {typeSpecificData.type === 'stat' ? (
+            <StatTrackerSheet id={id} hideSheet={temporarilyHideModalRef} />
+          ) : (
+            <DateTrackerSheet
+              id={id}
+              name={name}
+              renderData={renderData}
+              hideSheet={temporarilyHideModalRef}
+              {...typeSpecificData}
+            />
+          )}
+        </SheetModal>
+      )}
     </>
   )
 }
