@@ -171,7 +171,7 @@ export function MetastatForm({
       </Animated.View>
       <SheetModalSelect
         ref={autoDecaySheetRef}
-        title='Auto decay:'
+        title='Auto decay'
         options={[{ value: 'slow' }, { value: 'moderate' }, { value: 'fast' }]}
         onSelect={setAutoDecay}
         value={autoDecay}

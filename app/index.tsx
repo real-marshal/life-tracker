@@ -2,7 +2,7 @@ import { View, Text, ScrollView } from 'react-native'
 import { useSQLiteContext } from 'expo-sqlite'
 import { getUser } from '@/models/user'
 import { useRouter } from 'expo-router'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Feather from '@expo/vector-icons/Feather'
 import { colors, getGoalColor } from '@/common/theme'
 import { getMetaStats } from '@/models/metastat'
@@ -33,6 +33,8 @@ import { Backdrop } from '@/components/Backdrop'
 import { NewGoalModal } from '@/components/Goal/NewGoalModal'
 import { useModal } from '@/components/Modal'
 import { useMetastatsAutodecay } from '@/components/Metastat/common'
+import { SheetModalSelect } from '@/components/SheetModalSelect'
+import { BottomSheetModal } from '@gorhom/bottom-sheet'
 
 export default function HomeScreen() {
   const db = useSQLiteContext()
@@ -107,6 +109,8 @@ export default function HomeScreen() {
   } = useModal()
 
   const [newGoalType, setNewGoalType] = useState<'normal' | 'longterm'>('normal')
+
+  const trackerTypeSheetRef = useRef<BottomSheetModal>(null)
 
   return (
     <>
@@ -203,7 +207,13 @@ export default function HomeScreen() {
           <FloatingMenuItem.Text>Add a </FloatingMenuItem.Text>
           <FloatingMenuItem.Text color={colors.accent}>meta stat</FloatingMenuItem.Text>
         </FloatingMenuItem>
-        <FloatingMenuItem description='Want to keep track of something?' onPress={() => null}>
+        <FloatingMenuItem
+          description='Want to keep track of something?'
+          onPress={() => {
+            trackerTypeSheetRef.current?.present()
+            hidePopover()
+          }}
+        >
           <FloatingMenuItem.Text>Add a </FloatingMenuItem.Text>
           <FloatingMenuItem.Text color={colors.accent}>tracker</FloatingMenuItem.Text>
         </FloatingMenuItem>
@@ -234,10 +244,21 @@ export default function HomeScreen() {
           <FloatingMenuItem.Text color={colors.accent}>updates</FloatingMenuItem.Text>
         </FloatingMenuItem>
       </Popover>
+
       <NewGoalModal
         hideModal={hideNewGoalModal}
         modalProps={newGoalModalProps}
         isLongTerm={newGoalType === 'longterm'}
+      />
+
+      <SheetModalSelect
+        ref={trackerTypeSheetRef}
+        title='Tracker type'
+        options={[
+          { value: 'stat', label: 'Stat tracker', description: 'Track some value over time' },
+          { value: 'date', label: 'Date tracker', description: 'Track time until some date' },
+        ]}
+        onSelect={(value) => router.navigate({ pathname: '/tracker/add', params: { type: value } })}
       />
     </>
   )

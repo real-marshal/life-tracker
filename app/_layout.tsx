@@ -88,6 +88,10 @@ function RootView() {
         name='tracker/[id]/edit'
         options={{ animation: 'slide_from_right', animationDuration: 200, headerShown: false }}
       />
+      <Stack.Screen
+        name='tracker/add'
+        options={{ animation: 'slide_from_right', animationDuration: 200, headerShown: false }}
+      />
       <Stack.Screen name='+not-found' />
     </Stack>
   )

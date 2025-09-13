@@ -289,3 +289,63 @@ export async function updateDateTracker(
     ])
   })
 }
+
+export type AddStatTrackerParam = Pick<StatTracker, 'name' | 'prefix' | 'suffix'>
+
+export async function addStatTracker(
+  db: SQLiteDatabase,
+  { name, prefix, suffix }: AddStatTrackerParam
+) {
+  await db.withExclusiveTransactionAsync(async (tx) => {
+    const result = await tx.getFirstAsync<{ id: number }>(
+      `
+        insert into tracker(name, render_data)
+        values ($name,
+                '{}')
+        returning id
+      `,
+      {
+        $name: name,
+      }
+    )
+    await tx.runAsync(
+      `
+        insert into stat_tracker(tracker_id, prefix, suffix)
+        values ($tracker_id, $prefix, $suffix)
+      `,
+      {
+        $tracker_id: result!.id,
+        $prefix: prefix || null,
+        $suffix: suffix || null,
+      }
+    )
+  })
+}
+
+export type AddDateTrackerParam = Pick<DateTracker, 'name' | 'date'>
+
+export async function addDateTracker(db: SQLiteDatabase, { name, date }: AddDateTrackerParam) {
+  await db.withExclusiveTransactionAsync(async (tx) => {
+    const result = await tx.getFirstAsync<{ id: number }>(
+      `
+        insert into tracker(name, render_data)
+        values ($name,
+                '{}')
+        returning id
+      `,
+      {
+        $name: name,
+      }
+    )
+    await tx.runAsync(
+      `
+        insert into date_tracker(tracker_id, date)
+        values ($tracker_id, $date)
+      `,
+      {
+        $tracker_id: result!.id,
+        $date: formatISO(date),
+      }
+    )
+  })
+}
