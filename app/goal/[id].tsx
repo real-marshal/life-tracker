@@ -34,6 +34,7 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet'
 import { GoalStatusChangeSheet } from '@/components/Goal/GoalStatusChangeSheet'
 import { SheetModal } from '@/components/SheetModal'
 import * as Clipboard from 'expo-clipboard'
+import { NewGoalModal } from '@/components/Goal/NewGoalModal'
 
 interface GoalUpdateModificationState {
   id: number
@@ -185,6 +186,14 @@ export default function GoalScreen() {
     setGoalUpdateModificationState(undefined)
     onModalCancelRef.current()
   })
+
+  const {
+    showModal: showNewGoalModal,
+    hideModal: hideNewGoalModal,
+    ...newGoalModalProps
+  } = useModal()
+
+  const [continuationToAdd, setContinuationToAdd] = useState<'prerequisite' | 'consequence'>()
 
   const onAddGoalUpdate = (sentiment: GoalUpdate['sentiment']) => {
     hideFloatingMenu()
@@ -465,7 +474,16 @@ export default function GoalScreen() {
         className='right-safe-offset-7 top-[90px] z-[9999999]'
         animatedStyle={menuStyle}
       >
-        <ContextMenuSection label='Change status' first />
+        <ContextMenuSection label='Tracker' first />
+        <ContextMenuItem
+          label='Link trackers'
+          iconName='link'
+          onPress={() => {
+            hideMenu()
+            bottomSheetModalRef.current?.present({ action: 'abandon' })
+          }}
+        />
+        <ContextMenuSection label='Change status' />
         {goal?.status === 'active' && (
           <>
             <ContextMenuItem
@@ -503,17 +521,33 @@ export default function GoalScreen() {
             iconName='refresh-cw'
             color={colors.positive}
             onPress={() => {
-              hideMenu()
               bottomSheetModalRef.current?.present({ action: 'reopen' })
             }}
           />
         )}
         <ContextMenuSection label='Add a continuation' />
         {goal?.status === 'active' && (
-          <ContextMenuItem label='Prerequisite' iconName='arrow-down-left' onPress={() => null} />
+          <ContextMenuItem
+            label='Prerequisite'
+            iconName='arrow-down-left'
+            onPress={() => {
+              hideMenu()
+              setContinuationToAdd('prerequisite')
+              showNewGoalModal()
+            }}
+          />
         )}
-        <ContextMenuItem label='Consequence' iconName='arrow-up-right' onPress={() => null} />
+        <ContextMenuItem
+          label='Consequence'
+          iconName='arrow-up-right'
+          onPress={() => {
+            hideMenu()
+            setContinuationToAdd('consequence')
+            showNewGoalModal()
+          }}
+        />
       </Popover>
+
       <SheetModal<SheetModalData> ref={bottomSheetModalRef}>
         {({ data }) => (
           <GoalStatusChangeSheet
@@ -525,6 +559,14 @@ export default function GoalScreen() {
           />
         )}
       </SheetModal>
+
+      <NewGoalModal
+        hideModal={hideNewGoalModal}
+        modalProps={newGoalModalProps}
+        isLongTerm={false}
+        prerequisite={continuationToAdd === 'consequence' ? id : undefined}
+        consequence={continuationToAdd === 'prerequisite' ? id : undefined}
+      />
     </>
   )
 }

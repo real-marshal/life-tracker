@@ -313,21 +313,46 @@ export async function updateGoalIndices(
   }
 }
 
-export type AddGoalParam = { text: string; why: string | null; isLongTerm: boolean }
+export type AddGoalParam = {
+  text: string
+  why: string | null
+  isLongTerm: boolean
+  consequence?: number
+  prerequisite?: number
+}
 
-export async function addGoal(db: SQLiteDatabase, { text, why, isLongTerm }: AddGoalParam) {
-  await db.runAsync(
-    `
-    insert into goal(name, type, created_at, render_data, status, why)
-    values ($text, $type, $created_at, '{}', 'active', $why)
-  `,
-    {
-      $text: text,
-      $why: why,
-      $created_at: formatISO(new Date()),
-      $type: isLongTerm ? 'longterm' : 'normal',
-    }
-  )
+export async function addGoal(
+  db: SQLiteDatabase,
+  { text, why, isLongTerm, consequence, prerequisite }: AddGoalParam
+) {
+  await db.withExclusiveTransactionAsync(async (tx) => {
+    const result = await db.getFirstAsync<{ id: number }>(
+      `
+        insert into goal(name, type, created_at, render_data, status, why)
+        values ($text, $type, $created_at, '{}', 'active', $why)
+        returning id
+      `,
+      {
+        $text: text,
+        $why: why,
+        $created_at: formatISO(new Date()),
+        $type: isLongTerm ? 'longterm' : 'normal',
+      }
+    )
+
+    if (!consequence && !prerequisite) return
+
+    await tx.runAsync(
+      `
+        insert into goal_link(goal_id, next_goal_id)
+        values ($goal_id, $next_goal_id)
+      `,
+      {
+        $goal_id: prerequisite ? prerequisite : result!.id,
+        $next_goal_id: consequence ? consequence : result!.id,
+      }
+    )
+  })
 }
 
 export async function closeGoal(db: SQLiteDatabase, id: number, status: 'abandoned' | 'completed') {

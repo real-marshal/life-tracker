@@ -13,10 +13,14 @@ export function NewGoalModal({
   modalProps,
   hideModal,
   isLongTerm,
+  consequence,
+  prerequisite,
 }: {
   modalProps: RestModalProps
   hideModal: () => void
   isLongTerm: boolean
+  consequence?: number
+  prerequisite?: number
 }) {
   const db = useSQLiteContext()
   const queryClient = useQueryClient()
@@ -53,7 +57,15 @@ export function NewGoalModal({
       <View className='flex flex-col gap-5' style={{ width: Dimensions.get('window').width * 0.8 }}>
         <View className='flex flex-col gap-2'>
           <Text className='text-xl font-light' style={{ color: accentColor }}>
-            New {isLongTerm ? 'longterm ' : ''}goal
+            New{' '}
+            {isLongTerm
+              ? 'longterm '
+              : consequence
+                ? 'prerequisite '
+                : prerequisite
+                  ? 'consequence '
+                  : ''}
+            goal
           </Text>
           <TextInput
             className='text-fg text-xl p-1 py-2 border-b-2 rounded-md'
@@ -84,7 +96,13 @@ export function NewGoalModal({
               return
             }
 
-            addGoalMutator({ text: text.trim(), why: !why ? null : why.trim(), isLongTerm })
+            addGoalMutator({
+              text: text.trim(),
+              why: !why ? null : why.trim(),
+              isLongTerm,
+              prerequisite,
+              consequence,
+            })
 
             setText('')
             setWhy('')
