@@ -4,7 +4,7 @@ import { formatDurationTwoLongValues } from '@/common/utils/date'
 import { Trackers } from '@/components/Tracker/Trackers'
 import { Goal, LtGoal } from '@/models/goal'
 import { RelatedGoals } from './RelatedGoals'
-import { getGoalColor } from '@/common/theme'
+import { colors, getGoalColor } from '@/common/theme'
 
 export function GoalDetails({
   goal,
@@ -50,6 +50,13 @@ export function GoalDetails({
           <Text className='text-fgSecondary text-sm'>Related trackers:</Text>
           <Trackers trackers={goal.relatedTrackers} />
         </View>
+      )}
+      {!isLongTerm && !!(goal as Goal)?.relatedLtGoals?.length && (
+        <RelatedGoals
+          goalPreviews={(goal as Goal).relatedLtGoals}
+          label='Related long-term goals'
+          color={colors.ltGoal}
+        />
       )}
       {!isLongTerm && !!(goal as Goal)?.prerequisites?.length && (
         <RelatedGoals goalPreviews={(goal as Goal).prerequisites} label='Prerequisites' />

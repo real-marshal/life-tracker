@@ -36,6 +36,7 @@ import { SheetModal } from '@/components/SheetModal'
 import * as Clipboard from 'expo-clipboard'
 import { NewGoalModal } from '@/components/Goal/NewGoalModal'
 import { LinkTrackersModal } from '@/components/Goal/LinkTrackersModal'
+import { LinkLtGoalsModal } from '@/components/Goal/LinkLtGoalsModal'
 
 interface GoalUpdateModificationState {
   id: number
@@ -198,6 +199,12 @@ export default function GoalScreen() {
     showModal: showLinkTrackersModal,
     hideModal: hideLinkTrackersModal,
     ...linkTrackersModalProps
+  } = useModal()
+
+  const {
+    showModal: showLinkLtGoalsModal,
+    hideModal: hideLinkLtGoalsModal,
+    ...linkLtGoalsModalProps
   } = useModal()
 
   const [continuationToAdd, setContinuationToAdd] = useState<'prerequisite' | 'consequence'>()
@@ -484,9 +491,19 @@ export default function GoalScreen() {
         className='right-safe-offset-7 top-[90px] z-[9999999]'
         animatedStyle={menuStyle}
       >
-        <ContextMenuSection label='Tracker' first />
+        <ContextMenuSection label='Link' first />
+        {!isLongTerm && (
+          <ContextMenuItem
+            label='Long-term goals'
+            iconName='link-2'
+            onPress={() => {
+              hideMenu()
+              showLinkLtGoalsModal()
+            }}
+          />
+        )}
         <ContextMenuItem
-          label='Link trackers'
+          label='Trackers'
           iconName='link'
           onPress={() => {
             hideMenu()
@@ -535,28 +552,32 @@ export default function GoalScreen() {
             }}
           />
         )}
-        <ContextMenuSection label='Add a continuation' />
-        {goal?.status === 'active' && (
-          <ContextMenuItem
-            label='Prerequisite'
-            iconName='arrow-down-left'
-            onPress={() => {
-              hideMenu()
-              setContinuationToAdd('prerequisite')
-              showNewGoalModal()
-            }}
-          />
+        {!isLongTerm && (
+          <>
+            <ContextMenuSection label='Add a continuation' />
+            {goal?.status === 'active' && (
+              <ContextMenuItem
+                label='Prerequisite'
+                iconName='arrow-down-left'
+                onPress={() => {
+                  hideMenu()
+                  setContinuationToAdd('prerequisite')
+                  showNewGoalModal()
+                }}
+              />
+            )}
+            <ContextMenuItem
+              label='Consequence'
+              iconName='arrow-up-right'
+              onPress={() => {
+                hideMenu()
+                setContinuationToAdd('consequence')
+                showNewGoalModal()
+              }}
+              last
+            />
+          </>
         )}
-        <ContextMenuItem
-          label='Consequence'
-          iconName='arrow-up-right'
-          onPress={() => {
-            hideMenu()
-            setContinuationToAdd('consequence')
-            showNewGoalModal()
-          }}
-          last
-        />
       </Popover>
 
       <SheetModal<SheetModalData> ref={bottomSheetModalRef}>
@@ -585,6 +606,15 @@ export default function GoalScreen() {
         relatedTrackerIds={goal?.relatedTrackers.map(({ id }) => id) ?? []}
         goalId={id}
       />
+
+      {!isLongTerm && goal && (
+        <LinkLtGoalsModal
+          hideModal={hideLinkLtGoalsModal}
+          modalProps={linkLtGoalsModalProps}
+          relatedLtGoalIds={(goal as Goal).relatedLtGoals.map(({ id }) => id)}
+          goalId={id}
+        />
+      )}
     </>
   )
 }

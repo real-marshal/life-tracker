@@ -27,6 +27,7 @@ export interface GoalPreview {
   id: number
   name: string
   status?: 'completed' | 'abandoned'
+  type?: 'normal' | 'longterm'
 }
 
 export type GoalPreviewRender = GoalPreview & {
@@ -103,7 +104,8 @@ export async function getDelayedGoals(db: SQLiteDatabase): Promise<GoalPreviewRe
   const rows = await db.getAllAsync<Row<GoalPreviewRender>>(`
     select id,
            name,
-           render_data
+           render_data,
+           type
     from goal
     where type = 'normal'
       and status = 'delayed'
@@ -119,7 +121,8 @@ export async function getArchiveGoals(db: SQLiteDatabase): Promise<GoalPreview[]
     select id,
            name,
            status,
-           close_date
+           close_date,
+           type
     from goal
     where status = 'completed'
        or status = 'abandoned'
@@ -146,17 +149,21 @@ export async function getLtGoal(db: SQLiteDatabase, id: number): Promise<LtGoal>
                  goal.close_date,
                  goal.status,
                  json_group_array(json_object('id', related_goal.id, 'name',
-                                              related_goal.name, 'status', related_goal.status))
+                                              related_goal.name, 'status', related_goal.status,
+                                              'type', related_goal.type))
                                   filter (where related_goal.id is not null)           as related_goals,
                  json_group_array(json_object('id', delayed_related_goal.id, 'name',
                                               delayed_related_goal.name, 'status',
-                                              delayed_related_goal.status))
+                                              delayed_related_goal.status, 'type',
+                                              related_goal.type))
                                   filter (where delayed_related_goal.id is not null)   as delayed_related_goals,
                  json_group_array(json_object('id', completed_related_goal.id, 'name',
-                                              completed_related_goal.name))
+                                              completed_related_goal.name, 'type',
+                                              related_goal.type))
                                   filter (where completed_related_goal.id is not null) as completed_related_goals,
                  json_group_array(json_object('id', abandoned_related_goal.id, 'name',
-                                              abandoned_related_goal.name))
+                                              abandoned_related_goal.name, 'type',
+                                              related_goal.type))
                                   filter (where abandoned_related_goal.id is not null) as abandoned_related_goals
           from goal
                  left join goal_relation gl on goal_id = goal.id
@@ -221,15 +228,18 @@ export async function getGoal(db: SQLiteDatabase, id: number): Promise<Goal> {
                  goal.status,
                  json_group_array(distinct json_object('id', prerequisite.id, 'name',
                                                        prerequisite.name, 'status',
-                                                       prerequisite.status))
+                                                       prerequisite.status, 'type',
+                                                       prerequisite.type))
                                   filter (where prerequisite.id is not null)    as prerequisites,
                  json_group_array(distinct json_object('id', consequence.id, 'name',
                                                        consequence.name, 'status',
-                                                       consequence.status))
+                                                       consequence.status, 'type',
+                                                       consequence.type))
                                   filter (where consequence.id is not null)     as consequences,
                  json_group_array(distinct json_object('id', related_lt_goal.id, 'name',
                                                        related_lt_goal.name, 'status',
-                                                       related_lt_goal.status))
+                                                       related_lt_goal.status, 'type',
+                                                       related_lt_goal.type))
                                   filter (where related_lt_goal.id is not null) as related_lt_goals
           from goal
                  left join goal_link gl on gl.goal_id = goal.id
@@ -279,7 +289,8 @@ export async function getGoalsLinkedToTracker(
     `
       select id,
              name,
-             render_data
+             render_data,
+             type
       from goal
              left join goal_tracker gt on goal.id = gt.goal_id
       where status = 'active'
@@ -444,4 +455,26 @@ export async function changeGoalStatus(
 
     await Promise.all([...metastatChangesPromise, statusChangePromise, goalUpdatePromise])
   })
+}
+
+export async function linkLtGoal(db: SQLiteDatabase, ltGoalId: number, goalId: number) {
+  await db.runAsync(
+    `
+      insert into goal_relation(goal_id, related_goal_id)
+      values ($goal_id, $related_goal_id)
+    `,
+    { $goal_id: ltGoalId, $related_goal_id: goalId }
+  )
+}
+
+export async function unlinkLtGoal(db: SQLiteDatabase, ltGoalId: number, goalId: number) {
+  await db.runAsync(
+    `
+      delete
+      from goal_relation
+      where related_goal_id = $related_goal_id
+        and goal_id = $goal_id
+    `,
+    { $goal_id: ltGoalId, $related_goal_id: goalId }
+  )
 }

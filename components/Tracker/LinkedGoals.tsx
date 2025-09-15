@@ -41,9 +41,9 @@ export function LinkedGoals({ trackerId }: { trackerId: number }) {
               <View key={goal.id} className='flex flex-row gap-4 items-center'>
                 <GoalPreviewItem
                   {...goal}
-                  color={getGoalColor('active')}
                   small
                   className='w-[80%] grow'
+                  color={getGoalColor('active', goal.type === 'longterm')}
                 />
                 <LinkedGoalsDelete
                   trackerId={trackerId}

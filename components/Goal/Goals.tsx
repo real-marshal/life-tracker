@@ -25,6 +25,7 @@ export function GoalPreviewItem({
   disableLink,
   className,
   draggable,
+  type,
 }: Omit<GoalPreview, 'status'> & {
   color: string
   small?: boolean
@@ -36,7 +37,13 @@ export function GoalPreviewItem({
 
   return (
     <PressableWrapper
-      onPress={() => !disableLink && router.navigate({ pathname: '/goal/[id]', params: { id } })}
+      onPress={() =>
+        !disableLink &&
+        router.navigate({
+          pathname: '/goal/[id]',
+          params: { id, type },
+        })
+      }
       className={cn(
         'flex flex-row gap-3 items-center py-1 px-2 rounded-lg w-full',
         {
