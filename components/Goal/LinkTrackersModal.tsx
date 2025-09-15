@@ -70,7 +70,6 @@ export function LinkTrackersModal({
                 />
                 <TrackerItem
                   {...tracker}
-                  isLast={ind === trackers.length - 1}
                   onPress={() =>
                     changeLinkingMutator({
                       link: !value,

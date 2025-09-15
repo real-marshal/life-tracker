@@ -2,6 +2,7 @@ import { SQLiteDatabase } from 'expo-sqlite'
 import { Row, RowCamelCase } from '@/common/utils/types'
 import { toCamelCase } from '@/common/utils/object'
 import { formatISO } from 'date-fns'
+import { sortWithIndex } from '@/common/utils/array'
 
 export interface TrackerRenderData {
   index: number
@@ -70,22 +71,24 @@ export async function getTrackers(db: SQLiteDatabase, goalId?: number): Promise<
       )
     : db.getAllAsync<Row<Tracker>>(query))
 
-  return rows.map(toCamelCase<RowCamelCase<Tracker>>).map((rowTracker) => {
-    if (rowTracker.type === 'stat') {
-      return {
-        ...rowTracker,
-        renderData: JSON.parse(rowTracker.renderData),
+  return sortWithIndex(
+    rows.map(toCamelCase<RowCamelCase<Tracker>>).map((rowTracker) => {
+      if (rowTracker.type === 'stat') {
+        return {
+          ...rowTracker,
+          renderData: JSON.parse(rowTracker.renderData),
+        }
       }
-    }
 
-    const { date, ...dateTrackerRest } = rowTracker
+      const { date, ...dateTrackerRest } = rowTracker
 
-    return {
-      ...dateTrackerRest,
-      date: new Date(date),
-      renderData: JSON.parse(dateTrackerRest.renderData),
-    }
-  })
+      return {
+        ...dateTrackerRest,
+        date: new Date(date),
+        renderData: JSON.parse(dateTrackerRest.renderData),
+      }
+    })
+  )
 }
 
 type RowStatTracker = Omit<DetailedStatTracker, 'values'> & {
@@ -370,4 +373,23 @@ export async function unlinkTracker(db: SQLiteDatabase, trackerId: number, goalI
     `,
     { $goal_id: goalId, $tracker_id: trackerId }
   )
+}
+
+export async function updateTrackerIndices(
+  db: SQLiteDatabase,
+  updates: { id: number; index: number }[]
+) {
+  const statement = await db.prepareAsync(
+    `update tracker
+     set render_data = json_set(render_data, '$.index', $index)
+     where id = $id`
+  )
+
+  try {
+    await Promise.all(
+      updates.map(({ id, index }) => statement.executeAsync({ $index: index, $id: id }))
+    )
+  } finally {
+    await statement.finalizeAsync()
+  }
 }

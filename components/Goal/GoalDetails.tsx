@@ -1,7 +1,7 @@
 import { Text, View } from 'react-native'
 import { progressTextMap } from '@/components/Goal/constants'
 import { formatDurationTwoLongValues } from '@/common/utils/date'
-import { Trackers } from '@/components/Tracker/Trackers'
+import { TrackerItem, Trackers } from '@/components/Tracker/Trackers'
 import { Goal, LtGoal } from '@/models/goal'
 import { RelatedGoals } from './RelatedGoals'
 import { colors, getGoalColor } from '@/common/theme'
@@ -48,7 +48,11 @@ export function GoalDetails({
       {!!goal?.relatedTrackers?.length && (
         <View className='flex flex-col gap-1'>
           <Text className='text-fgSecondary text-sm'>Related trackers:</Text>
-          <Trackers trackers={goal.relatedTrackers} />
+          <View className='flex flex-row gap-2'>
+            {goal.relatedTrackers?.map((tracker) => (
+              <TrackerItem {...tracker} key={tracker.id} />
+            ))}
+          </View>
         </View>
       )}
       {!isLongTerm && !!(goal as Goal)?.relatedLtGoals?.length && (

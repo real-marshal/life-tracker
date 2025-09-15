@@ -1,5 +1,5 @@
-import { Pressable, Text, View } from 'react-native'
-import { DateTracker, StatTracker, Tracker } from '@/models/tracker'
+import { Pressable, Text } from 'react-native'
+import { DateTracker, StatTracker, Tracker, updateTrackerIndices } from '@/models/tracker'
 import { formatDurationShort } from '@/common/utils/date'
 import { BottomSheetModal } from '@gorhom/bottom-sheet'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -10,25 +10,61 @@ import { DateTrackerSheet } from '@/components/Tracker/DateTrackerSheet'
 import { Duration, formatDuration, intervalToDuration, interval } from 'date-fns'
 import { cn } from '@/common/utils/css'
 import { useFocusEffect } from 'expo-router'
+import Sortable from 'react-native-sortables'
+import { performContextMenuHaptics } from '@/common/utils/haptics'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useSQLiteContext } from 'expo-sqlite'
+import { useErrorToasts } from '@/hooks/useErrorToasts'
 
 export function Trackers({ trackers }: { trackers: Tracker[] }) {
+  const db = useSQLiteContext()
+  const queryClient = useQueryClient()
+
+  const { mutate: updateIndicesMutator, error: updatingIndicesError } = useMutation({
+    mutationFn: (param: { id: number; index: number }[]) => updateTrackerIndices(db, param),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['trackers'] }),
+  })
+
+  useErrorToasts({ title: 'Error updating indices', errorData: updatingIndicesError })
+
   return (
-    <View className='flex flex-row gap-2 flex-wrap'>
-      {trackers?.map((tracker, ind) => (
-        <TrackerItem {...tracker} key={tracker.id} isLast={ind === trackers.length - 1} />
+    <Sortable.Flex
+      overDrag='none'
+      activeItemScale={1}
+      gap={8}
+      onDragStart={performContextMenuHaptics}
+      onDragEnd={({ fromIndex, toIndex }) => {
+        if (!trackers.length) return
+
+        const updates = [{ id: trackers[fromIndex].id, index: toIndex }]
+
+        if (fromIndex > toIndex) {
+          for (let i = toIndex; i < fromIndex; i++) {
+            updates.push({ id: trackers[i].id, index: i + 1 })
+          }
+        } else {
+          for (let i = fromIndex + 1; i <= toIndex; i++) {
+            updates.push({ id: trackers[i].id, index: i - 1 })
+          }
+        }
+
+        updateIndicesMutator(updates)
+      }}
+    >
+      {trackers?.map((tracker) => (
+        <TrackerItem {...tracker} key={tracker.id} />
       ))}
-    </View>
+    </Sortable.Flex>
   )
 }
 
 export function TrackerItem({
-  isLast,
   id,
   name,
   renderData,
   onPress,
   ...typeSpecificData
-}: Tracker & { isLast: boolean; onPress?: () => void }) {
+}: Tracker & { onPress?: () => void }) {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null)
   const isSheetModalTemporarilyHiddenRef = useRef(false)
 
@@ -54,9 +90,8 @@ export function TrackerItem({
     <>
       <Pressable
         // why does active modifier just not work sometimes, fucking nativewind...
-        className='flex flex-row grow gap-2 bg-bgTertiary p-2 px-4 rounded-lg justify-between'
+        className='flex flex-row gap-2 bg-bgTertiary p-2 px-4 rounded-lg justify-between'
         style={({ pressed }) => ({
-          ...(isLast && name.length < 20 && { width: '50%', flexGrow: 0 }),
           ...(pressed && { backgroundColor: colors.bgSecondary }),
         })}
         onPress={onPress ? onPress : onTrackerPress}
