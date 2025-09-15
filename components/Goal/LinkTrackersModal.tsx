@@ -53,7 +53,7 @@ export function LinkTrackersModal({
           </Pressable>
         </View>
         <ScrollView className='max-h-[100%] grow-0 px-5 pb-12' contentContainerClassName='gap-4'>
-          {trackers?.map((tracker, ind) => {
+          {trackers?.map((tracker) => {
             const value = relatedTrackerIds.includes(tracker.id)
 
             return (

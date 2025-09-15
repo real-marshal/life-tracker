@@ -1,7 +1,7 @@
 import { Text, View } from 'react-native'
 import { progressTextMap } from '@/components/Goal/constants'
 import { formatDurationTwoLongValues } from '@/common/utils/date'
-import { TrackerItem, Trackers } from '@/components/Tracker/Trackers'
+import { TrackerItem } from '@/components/Tracker/Trackers'
 import { Goal, LtGoal } from '@/models/goal'
 import { RelatedGoals } from './RelatedGoals'
 import { colors, getGoalColor } from '@/common/theme'

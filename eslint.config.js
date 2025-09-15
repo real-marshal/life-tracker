@@ -7,6 +7,9 @@ module.exports = defineConfig([
   expoConfig,
   // ...pluginQuery.configs['flat/recommended'],
   {
+    rules: {
+      'react/no-unescaped-entities': 'off',
+    },
     ignores: ['dist/*', '.expo'],
   },
 ])

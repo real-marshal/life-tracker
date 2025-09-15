@@ -8,6 +8,16 @@ export async function initSqlite(db: SQLiteDatabase) {
   return db.execAsync('PRAGMA foreign_keys = ON')
 }
 
+export async function initUser(db: SQLiteDatabase, name: string) {
+  return db.runAsync(
+    `
+    insert into user(name)
+    values ($username)
+  `,
+    { $username: name }
+  )
+}
+
 const makeAccumulatingDate = () => {
   let date = new Date()
 
@@ -22,9 +32,6 @@ const statAccDate = makeAccumulatingDate()
 
 export async function seed(db: SQLiteDatabase) {
   return db.execAsync(`
-    insert into user(name)
-    values ('Real_Marshal');
-
     -- metastats
     insert into metastat(name, value, level, auto_decay, decay_data, render_data)
     values ('Health', 0.5, 0, 'slow',
@@ -220,7 +227,12 @@ export async function dropDb(db: SQLiteDatabase) {
   await deleteDatabaseAsync('main.db')
 }
 
-export async function initNewDb(db: SQLiteDatabase, shouldSeed: boolean = true) {
+export async function initNewDb(
+  db: SQLiteDatabase,
+  { name, shouldSeed }: { name: string; shouldSeed: boolean }
+) {
   shouldSeed && (await seed(db))
+
+  await initUser(db, name)
   await markUserAsOnboarded(db)
 }
