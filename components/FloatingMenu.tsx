@@ -13,11 +13,13 @@ import Animated, {
 export function FloatingMenuItem({
   description,
   onPress,
+  first,
   last,
   children,
 }: {
   description: string
   onPress: () => void
+  first?: boolean
   last?: boolean
   children: ReactNode
 }) {
@@ -25,8 +27,9 @@ export function FloatingMenuItem({
     <Pressable onPress={onPress}>
       {({ pressed }) => (
         <View
-          className={cn('flex flex-col pl-5 pr-8 py-3 border-bgTertiary', {
+          className={cn('flex flex-col pl-5 pr-8 py-3 border-bgTertiary overflow-hidden', {
             'bg-bgTertiary': pressed,
+            'rounded-t-lg': first,
             'rounded-b-lg': last,
             'border-b-hairline': !last,
           })}

@@ -114,8 +114,8 @@ export function StatTrackerSheet({ id, hideSheet }: { id: number; hideSheet?: ()
           label='Delete tracker'
           iconName='trash'
           color={colors.negative}
-          last
           onPress={showDeleteTrackerModal}
+          last
         />
       </Popover>
       <ConfirmModal

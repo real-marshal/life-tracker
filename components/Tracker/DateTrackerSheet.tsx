@@ -86,8 +86,8 @@ export function DateTrackerSheet({
           label='Delete tracker'
           iconName='trash'
           color={colors.negative}
-          last
           onPress={showDeleteTrackerModal}
+          last
         />
       </Popover>
       <ConfirmModal

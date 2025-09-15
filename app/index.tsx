@@ -203,6 +203,7 @@ export default function HomeScreen() {
             router.navigate('/add-metastat')
             hidePopover()
           }}
+          first
         >
           <FloatingMenuItem.Text>Add a </FloatingMenuItem.Text>
           <FloatingMenuItem.Text color={colors.accent}>meta stat</FloatingMenuItem.Text>
@@ -235,14 +236,15 @@ export default function HomeScreen() {
             showNewGoalModal()
             hidePopover()
           }}
+          last
         >
           <FloatingMenuItem.Text>Add a </FloatingMenuItem.Text>
           <FloatingMenuItem.Text color={colors.accent}>goal</FloatingMenuItem.Text>
         </FloatingMenuItem>
-        <FloatingMenuItem description='Made some progress?' onPress={() => null}>
-          <FloatingMenuItem.Text>Add </FloatingMenuItem.Text>
-          <FloatingMenuItem.Text color={colors.accent}>updates</FloatingMenuItem.Text>
-        </FloatingMenuItem>
+        {/*<FloatingMenuItem description='Made some progress?' onPress={() => null}>*/}
+        {/*  <FloatingMenuItem.Text>Add </FloatingMenuItem.Text>*/}
+        {/*  <FloatingMenuItem.Text color={colors.accent}>updates</FloatingMenuItem.Text>*/}
+        {/*</FloatingMenuItem>*/}
       </Popover>
 
       <NewGoalModal

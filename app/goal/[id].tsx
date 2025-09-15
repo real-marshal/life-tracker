@@ -344,6 +344,7 @@ export default function GoalScreen() {
             <FloatingMenuItem
               description='Obstacles are inevitable'
               onPress={() => onAddGoalUpdate('negative')}
+              first
             >
               <FloatingMenuItem.Text>Add a </FloatingMenuItem.Text>
               <FloatingMenuItem.Text color={colors.negative}>negative update</FloatingMenuItem.Text>
@@ -357,6 +358,7 @@ export default function GoalScreen() {
             <FloatingMenuItem
               description='One stop closer to success'
               onPress={() => onAddGoalUpdate('positive')}
+              last
             >
               <FloatingMenuItem.Text>Add a </FloatingMenuItem.Text>
               <FloatingMenuItem.Text color={colors.positive}>positive update</FloatingMenuItem.Text>
@@ -391,6 +393,7 @@ export default function GoalScreen() {
             setGoalUpdateModificationState(undefined)
           }}
           rnPressable
+          first
         />
         <ContextMenuItem
           label='Edit'
@@ -426,8 +429,8 @@ export default function GoalScreen() {
             })
             showDeleteModal()
           }}
-          last
           rnPressable
+          last
         />
       </Popover>
       <ConfirmModal
@@ -552,6 +555,7 @@ export default function GoalScreen() {
             setContinuationToAdd('consequence')
             showNewGoalModal()
           }}
+          last
         />
       </Popover>
 
