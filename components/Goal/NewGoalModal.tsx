@@ -1,13 +1,15 @@
 import { Modal, RestModalProps } from '@/components/Modal'
-import { Dimensions, Keyboard, Text, TextInput, View } from 'react-native'
+import { Dimensions, Keyboard, Pressable, Text, TextInput, View } from 'react-native'
 import { colors } from '@/common/theme'
 import { AppButton } from '@/components/AppButton'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { addGoal, AddGoalParam } from '@/models/goal'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { addGoal, AddGoalParam, getLtGoals } from '@/models/goal'
 import { useErrorToasts } from '@/hooks/useErrorToasts'
 import { useSQLiteContext } from 'expo-sqlite'
-import { useState } from 'react'
+import { Dispatch, SetStateAction, useState } from 'react'
 import { showErrorToast } from '@/common/toast'
+import { cn } from '@/common/utils/css'
+import { ScrollView } from 'react-native-gesture-handler'
 
 export function NewGoalModal({
   modalProps,
@@ -35,8 +37,16 @@ export function NewGoalModal({
   const [text, setText] = useState<string>('')
   const [why, setWhy] = useState<string>('')
 
+  const [pickedGoals, setPickedGoals] = useState<number[]>([])
+
   const accentColor = isLongTerm ? colors.ltGoal : colors.currentGoal
   const accentColorActive = isLongTerm ? colors.ltGoalActive : colors.currentGoalActive
+
+  const resetForm = () => {
+    setText('')
+    setWhy('')
+    setPickedGoals([])
+  }
 
   return (
     <Modal
@@ -45,73 +55,126 @@ export function NewGoalModal({
       onPress={() => {
         Keyboard.dismiss()
         modalProps.onCancel()
-        setText('')
-        setWhy('')
+        resetForm()
       }}
       onCancel={() => {
         modalProps.onCancel()
-        setText('')
-        setWhy('')
+        resetForm()
       }}
     >
-      <View className='flex flex-col gap-5' style={{ width: Dimensions.get('window').width * 0.8 }}>
-        <View className='flex flex-col gap-2'>
-          <Text className='text-xl font-light' style={{ color: accentColor }}>
-            New{' '}
-            {isLongTerm
-              ? 'longterm '
-              : consequence
-                ? 'prerequisite '
-                : prerequisite
-                  ? 'consequence '
-                  : ''}
-            goal
-          </Text>
-          <TextInput
-            className='text-fg text-xl p-1 py-2 border-b-2 rounded-md'
-            autoFocus
-            multiline
-            value={text}
-            onChangeText={setText}
-            style={{ borderColor: accentColor }}
+      <Pressable onPress={() => Keyboard.dismiss()}>
+        <View
+          className='flex flex-col gap-5'
+          style={{ width: Dimensions.get('window').width * 0.8 }}
+        >
+          <View className='flex flex-col gap-2'>
+            <Text className='text-xl font-light' style={{ color: accentColor }}>
+              New{' '}
+              {isLongTerm
+                ? 'longterm '
+                : consequence
+                  ? 'prerequisite '
+                  : prerequisite
+                    ? 'consequence '
+                    : ''}
+              goal
+            </Text>
+            <TextInput
+              className='text-fg text-xl p-1 py-2 border-b-2 rounded-md'
+              autoFocus
+              multiline
+              value={text}
+              onChangeText={setText}
+              style={{ borderColor: accentColor }}
+            />
+          </View>
+          <View className='flex flex-col gap-2'>
+            <Text className='text-fgSecondary'>Why:</Text>
+            <TextInput
+              className='text-fg bg-bgTertiary rounded-md min-h-16 p-3'
+              multiline
+              textAlignVertical='top'
+              value={why}
+              onChangeText={setWhy}
+            />
+          </View>
+
+          {!isLongTerm && (
+            <RelatedLtGoalsPicker pickedGoals={pickedGoals} setPickedGoals={setPickedGoals} />
+          )}
+
+          <AppButton
+            text='Add'
+            onPress={() => {
+              if (!text) {
+                showErrorToast('Empty goal name', "Can't add new goal")
+
+                return
+              }
+
+              addGoalMutator({
+                text: text.trim(),
+                why: !why ? null : why.trim(),
+                isLongTerm,
+                prerequisite,
+                consequence,
+                relatedLtGoals: pickedGoals,
+              })
+
+              resetForm()
+              hideModal()
+            }}
+            color={accentColor}
+            activeColor={accentColorActive}
           />
         </View>
-        <View className='flex flex-col gap-2'>
-          <Text className='text-fgSecondary'>Why:</Text>
-          <TextInput
-            className='text-fg bg-bgTertiary rounded-md min-h-16 p-3'
-            multiline
-            textAlignVertical='top'
-            value={why}
-            onChangeText={setWhy}
-          />
-        </View>
-
-        <AppButton
-          text='Add'
-          onPress={() => {
-            if (!text) {
-              showErrorToast('Empty goal name', "Can't add new goal")
-
-              return
-            }
-
-            addGoalMutator({
-              text: text.trim(),
-              why: !why ? null : why.trim(),
-              isLongTerm,
-              prerequisite,
-              consequence,
-            })
-
-            setText('')
-            setWhy('')
-            hideModal()
-          }}
-          color={accentColor}
-          activeColor={accentColorActive}
-        />
-      </View>
+      </Pressable>
     </Modal>
+  )
+}
+
+function RelatedLtGoalsPicker({
+  pickedGoals,
+  setPickedGoals,
+}: {
+  pickedGoals: number[]
+  setPickedGoals: Dispatch<SetStateAction<number[]>>
+}) {
+  const db = useSQLiteContext()
+
+  const { data: ltGoals, error: ltGoalsError } = useQuery({
+    queryKey: ['goals', 'longterm'],
+    queryFn: () => getLtGoals(db),
+  })
+
+  useErrorToasts({ title: 'Error loading long-term goals', errorData: ltGoalsError })
+
+  return (
+    <View className='flex flex-col gap-2'>
+      <Text className='text-fgSecondary'>Related long-term goals ({pickedGoals.length}):</Text>
+      <ScrollView
+        className='max-h-[64] grow-0'
+        contentContainerClassName='flex flex-row gap-2 flex-wrap'
+      >
+        {ltGoals?.map(({ id, name }) => (
+          <Pressable
+            key={id}
+            onPress={() =>
+              setPickedGoals((goals) =>
+                goals.includes(id) ? goals.filter((goal) => goal !== id) : [...goals, id]
+              )
+            }
+          >
+            <Text
+              className={cn('bg-bgTertiary text-fgSecondary py-2 px-3 rounded-md', {
+                'text-ltGoal bg-bg': pickedGoals.includes(id),
+              })}
+            >
+              {name}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+    </View>
   )
 }

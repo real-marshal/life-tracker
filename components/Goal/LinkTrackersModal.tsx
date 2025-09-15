@@ -45,7 +45,7 @@ export function LinkTrackersModal({
     <Modal {...modalProps} containerClassName='justify-start px-4'>
       <View className='flex flex-col gap-6'>
         <View className='flex flex-row gap-6 items-center justify-between px-5'>
-          <Text className='text-fg text-2xl font-bold'>Link trackers</Text>
+          <Text className='text-accent text-2xl font-bold'>Link trackers</Text>
           <Pressable onPress={hideModal}>
             {({ pressed }) => (
               <Feather name='x' size={24} color={pressed ? colors.fgSecondary : colors.fg} />

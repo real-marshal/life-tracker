@@ -319,11 +319,12 @@ export type AddGoalParam = {
   isLongTerm: boolean
   consequence?: number
   prerequisite?: number
+  relatedLtGoals: number[]
 }
 
 export async function addGoal(
   db: SQLiteDatabase,
-  { text, why, isLongTerm, consequence, prerequisite }: AddGoalParam
+  { text, why, isLongTerm, consequence, prerequisite, relatedLtGoals }: AddGoalParam
 ) {
   await db.withExclusiveTransactionAsync(async (tx) => {
     const result = await db.getFirstAsync<{ id: number }>(
@@ -340,18 +341,35 @@ export async function addGoal(
       }
     )
 
-    if (!consequence && !prerequisite) return
-
-    await tx.runAsync(
-      `
+    if (consequence || prerequisite) {
+      await tx.runAsync(
+        `
         insert into goal_link(goal_id, next_goal_id)
         values ($goal_id, $next_goal_id)
       `,
-      {
-        $goal_id: prerequisite ? prerequisite : result!.id,
-        $next_goal_id: consequence ? consequence : result!.id,
-      }
-    )
+        {
+          $goal_id: prerequisite ? prerequisite : result!.id,
+          $next_goal_id: consequence ? consequence : result!.id,
+        }
+      )
+    }
+
+    if (relatedLtGoals.length) {
+      await Promise.all(
+        relatedLtGoals.map((id) =>
+          tx.runAsync(
+            `
+              insert into goal_relation(goal_id, related_goal_id)
+              values ($goal_id, $related_goal_id)
+            `,
+            {
+              $goal_id: id,
+              $related_goal_id: result!.id,
+            }
+          )
+        )
+      )
+    }
   })
 }
 
