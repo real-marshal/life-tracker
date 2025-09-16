@@ -222,8 +222,12 @@ function InteractiveLine({
   })
 
   const textWidth = useDerivedValue(() => {
-    return (
-      font?.getGlyphWidths(font.getGlyphIDs(text.value)).reduce((sum, value) => sum + value, 0) ?? 0
+    return Math.max(
+      font?.getGlyphWidths(font.getGlyphIDs(text.value)).reduce((sum, value) => sum + value, 0) ??
+        0,
+      fontSmall
+        ?.getGlyphWidths(fontSmall.getGlyphIDs(dateText.value))
+        .reduce((sum, value) => sum + value, 0) ?? 0
     )
   })
 
