@@ -481,3 +481,13 @@ export async function unlinkLtGoal(db: SQLiteDatabase, ltGoalId: number, goalId:
     { $goal_id: ltGoalId, $related_goal_id: goalId }
   )
 }
+
+export async function deleteGoal(db: SQLiteDatabase, id: number) {
+  await db.runAsync(
+    `delete
+     from goal
+     where id = $id
+    `,
+    { $id: id }
+  )
+}

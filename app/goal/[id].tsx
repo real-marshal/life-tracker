@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { getGoal, getLtGoal, Goal, LtGoal } from '@/models/goal'
+import { deleteGoal, getGoal, getLtGoal, Goal, LtGoal } from '@/models/goal'
 import { useSQLiteContext } from 'expo-sqlite'
 import { useErrorToasts } from '@/hooks/useErrorToasts'
 import { colors, goalStatusActiveColorMap, goalStatusColorMap } from '@/common/theme'
@@ -99,12 +99,18 @@ export default function GoalScreen() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['goalUpdates'] }),
   })
 
+  const { mutate: deleteGoalMutator, error: goalDeletingError } = useMutation({
+    mutationFn: () => deleteGoal(db, id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['goals'] }),
+  })
+
   useErrorToasts(
     { title: 'Error loading a goal', errorData: goalError },
     { title: 'Error loading goal updates', errorData: goalUpdatesError },
     { title: 'Error adding a goal update', errorData: goalUpdateAddingError },
     { title: 'Error updating a goal update', errorData: goalUpdateUpdatingError },
-    { title: 'Error deleting a goal update', errorData: goalUpdateDeletingError }
+    { title: 'Error deleting a goal update', errorData: goalUpdateDeletingError },
+    { title: 'Error deleting a goal', errorData: goalDeletingError }
   )
 
   useEffect(() => {
@@ -205,6 +211,12 @@ export default function GoalScreen() {
     showModal: showLinkLtGoalsModal,
     hideModal: hideLinkLtGoalsModal,
     ...linkLtGoalsModalProps
+  } = useModal()
+
+  const {
+    showModal: showDeleteGoalModal,
+    hideModal: hideDeleteGoalModal,
+    ...deleteGoalModalProps
   } = useModal()
 
   const [continuationToAdd, setContinuationToAdd] = useState<'prerequisite' | 'consequence'>()
@@ -510,7 +522,7 @@ export default function GoalScreen() {
             showLinkTrackersModal()
           }}
         />
-        {goal?.status !== 'completed' && <ContextMenuSection label='Change status' />}
+        <ContextMenuSection label='Change status' />
         {(goal?.status === 'active' || goal?.status === 'delayed') && (
           <ContextMenuItem
             label='Abandon'
@@ -541,6 +553,17 @@ export default function GoalScreen() {
             onPress={() => {
               hideMenu()
               bottomSheetModalRef.current?.present({ action: 'delay' })
+            }}
+          />
+        )}
+        {(goal?.status === 'abandoned' || goal?.status === 'completed') && (
+          <ContextMenuItem
+            label='Delete'
+            iconName='trash'
+            color={colors.negative}
+            onPress={() => {
+              hideMenu()
+              showDeleteGoalModal()
             }}
           />
         )}
@@ -582,6 +605,17 @@ export default function GoalScreen() {
           </>
         )}
       </Popover>
+
+      <ConfirmModal
+        text='Are you sure you want to delete this goal?'
+        hideModal={hideDeleteGoalModal}
+        modalProps={deleteGoalModalProps}
+        onConfirm={() => {
+          deleteGoalMutator()
+          router.back()
+        }}
+        deletion
+      />
 
       <SheetModal<SheetModalData> ref={bottomSheetModalRef}>
         {({ data }) => (

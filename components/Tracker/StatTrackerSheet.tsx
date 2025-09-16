@@ -89,7 +89,7 @@ export function StatTrackerSheet({ id, hideSheet }: { id: number; hideSheet?: ()
         />
       </Pressable>
       <Popover isOpen={isPopoverShown} className='top-10 right-6' animatedStyle={animatedStyle}>
-        <ContextMenuSection label='Tracker' first />
+        <ContextMenuSection label='Modify' first />
         <ContextMenuItem
           label='Edit tracker'
           iconName='edit-3'
