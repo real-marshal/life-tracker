@@ -388,8 +388,9 @@ export async function closeGoal(db: SQLiteDatabase, id: number, status: 'abandon
   await db.runAsync(
     `
       update goal
-      set status = $status,
-          close_date = $close_date
+      set status      = $status,
+          close_date = $close_date,
+          render_data = '{}'
       where id = $id
     `,
     { $id: id, $status: status, $close_date: formatISO(new Date()) }
@@ -401,7 +402,8 @@ export async function reopenGoal(db: SQLiteDatabase, id: number) {
     `
       update goal
       set status = 'active',
-          close_date = null
+          render_data = '{}',
+          close_date  = null
       where id = $id
     `,
     { $id: id }
@@ -412,7 +414,8 @@ export async function delayGoal(db: SQLiteDatabase, id: number) {
   await db.runAsync(
     `
       update goal
-      set status = 'delayed'
+      set status = 'delayed',
+          render_data = '{}'
       where id = $id
     `,
     { $id: id }
