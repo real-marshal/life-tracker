@@ -2,7 +2,7 @@ const IS_DEV = process.env.APP_VARIANT === 'development'
 
 export default {
   expo: {
-    name: 'Lumex',
+    name: IS_DEV ? 'Lumex Dev' : 'Lumex',
     slug: 'lumex',
     version: '1.0.0',
     orientation: 'portrait',
