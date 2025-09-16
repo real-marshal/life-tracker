@@ -196,6 +196,7 @@ export function GoalStatusChangeSheet({
                   .map(([id, value]) => ({ id: Number.parseInt(id), value }))
                   .filter(({ value }) => !!value),
                 sentiment: actionDetailsMap[action].sentiment,
+                message: closingMessage,
               })
             }
             color={actionDetails.color}
