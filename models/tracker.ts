@@ -56,7 +56,6 @@ export async function getTrackers(db: SQLiteDatabase, goalId?: number): Promise<
             order by created_at desc
             limit 1)  as value
     from tracker
-           left join goal_tracker on tracker.id = goal_tracker.tracker_id
            left join date_tracker on tracker.id = date_tracker.tracker_id
            left join stat_tracker on tracker.id = stat_tracker.tracker_id
   `
@@ -65,6 +64,7 @@ export async function getTrackers(db: SQLiteDatabase, goalId?: number): Promise<
     ? db.getAllAsync<Row<Tracker>>(
         `
         ${query}
+        left join goal_tracker on tracker.id = goal_tracker.tracker_id
         where goal_id = $goalId
         `,
         { $goalId: goalId }
