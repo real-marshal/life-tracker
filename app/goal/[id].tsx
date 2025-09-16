@@ -511,36 +511,38 @@ export default function GoalScreen() {
           }}
         />
         {goal?.status !== 'completed' && <ContextMenuSection label='Change status' />}
+        {(goal?.status === 'active' || goal?.status === 'delayed') && (
+          <ContextMenuItem
+            label='Abandon'
+            iconName='x'
+            color={colors.negative}
+            onPress={() => {
+              hideMenu()
+              bottomSheetModalRef.current?.present({ action: 'abandon' })
+            }}
+          />
+        )}
         {goal?.status === 'active' && (
-          <>
-            <ContextMenuItem
-              label='Abandon'
-              iconName='x'
-              color={colors.negative}
-              onPress={() => {
-                hideMenu()
-                bottomSheetModalRef.current?.present({ action: 'abandon' })
-              }}
-            />
-            <ContextMenuItem
-              label='Complete'
-              iconName='check'
-              color={colors.positive}
-              onPress={() => {
-                hideMenu()
-                bottomSheetModalRef.current?.present({ action: 'complete' })
-              }}
-            />
-            <ContextMenuItem
-              label='Delay'
-              iconName='clock'
-              color={colors.delayedGoal}
-              onPress={() => {
-                hideMenu()
-                bottomSheetModalRef.current?.present({ action: 'delay' })
-              }}
-            />
-          </>
+          <ContextMenuItem
+            label='Complete'
+            iconName='check'
+            color={colors.positive}
+            onPress={() => {
+              hideMenu()
+              bottomSheetModalRef.current?.present({ action: 'complete' })
+            }}
+          />
+        )}
+        {goal?.status === 'active' && (
+          <ContextMenuItem
+            label='Delay'
+            iconName='clock'
+            color={colors.delayedGoal}
+            onPress={() => {
+              hideMenu()
+              bottomSheetModalRef.current?.present({ action: 'delay' })
+            }}
+          />
         )}
         {(goal?.status === 'abandoned' || goal?.status === 'delayed') && (
           <ContextMenuItem
@@ -548,6 +550,7 @@ export default function GoalScreen() {
             iconName='refresh-cw'
             color={colors.positive}
             onPress={() => {
+              hideMenu()
               bottomSheetModalRef.current?.present({ action: 'reopen' })
             }}
           />
