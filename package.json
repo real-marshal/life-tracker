@@ -12,7 +12,7 @@
     "lint": "expo lint",
     "make-migration": "node tools/create-migration.js",
     "sync-device-db": "./tools/sync_device_db.sh",
-    "remove-device-db": "adb shell \"run-as com.real_marshal.lumex rm ./files/SQLite/main.db\"",
+    "remove-device-db": "adb shell \"run-as com.realmarshal.lumex.dev rm ./files/SQLite/main.db\"",
     "eas-build-pre-install": "corepack enable && yarn set version 4.9.4"
   },
   "dependencies": {

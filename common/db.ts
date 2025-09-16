@@ -31,6 +31,7 @@ const makeAccumulatingDate = () => {
 const statAccDate = makeAccumulatingDate()
 
 export async function seed(db: SQLiteDatabase) {
+  // language=SQLite
   return db.execAsync(`
     -- metastats
     insert into metastat(name, value, level, auto_decay, decay_data, render_data)
@@ -67,10 +68,10 @@ export async function seed(db: SQLiteDatabase) {
             '2025-07-21T14:46:00.000Z', '{"index":0}');
 
     insert into goal(name, type, status, created_at, render_data)
-    values ('Resolve army problems', 'normal', 'active', '2025-07-20T15:12:00.000Z', '{"index":1}');
+    values ('Resolve tax problems', 'normal', 'active', '2025-07-20T15:12:00.000Z', '{"index":1}');
 
     insert into goal(name, type, status, created_at, render_data)
-    values ('Fix eyes', 'normal', 'active', '2025-07-20T15:13:00.000Z', '{"index":2}');
+    values ('Read that book', 'normal', 'active', '2025-07-20T15:13:00.000Z', '{"index":2}');
 
     insert into goal(name, type, status, created_at, render_data)
     values ('Build a goal tracking app', 'normal', 'active', '2025-07-22T13:41:00.000Z',
@@ -81,7 +82,7 @@ export async function seed(db: SQLiteDatabase) {
 
     -- delayed goals
     insert into goal(name, type, status, created_at, render_data)
-    values ('Finish connectiqa?', 'normal', 'delayed', '2025-07-20T15:13:00.000Z', '{"index":0}');
+    values ('Finish the project?', 'normal', 'delayed', '2025-07-20T15:13:00.000Z', '{"index":0}');
 
     -- completed goals
     insert into goal(name, type, status, created_at, close_date, render_data)
@@ -90,7 +91,7 @@ export async function seed(db: SQLiteDatabase) {
 
     -- abandoned goals
     insert into goal(name, type, status, created_at, close_date, render_data)
-    values ('Build a VPN service', 'normal', 'abandoned', '2025-06-11T12:18:00.000Z',
+    values ('Build a spaceship', 'normal', 'abandoned', '2025-06-11T12:18:00.000Z',
             '2025-07-22T15:53:00.000Z', '{}');
 
     -- other goals
@@ -148,10 +149,10 @@ export async function seed(db: SQLiteDatabase) {
     insert into stat_value (tracker_id, value, created_at)
     values (2, 0, '${formatISO(subDays(new Date(), 13))}');
     insert into stat_value (tracker_id, value, created_at)
-    values (2, 3, '${formatISO(subDays(new Date(), 5))}');
+    values (2, 10, '${formatISO(subDays(new Date(), 5))}');
 
     insert into tracker (name, render_data)
-    values ('Time till next conscription', '{"index":2,"size":2}');
+    values ('Time till next tax period', '{"index":2,"size":2}');
 
     insert into date_tracker (tracker_id, date)
     values (3, '2025-10-01T00:00:00.000Z');
