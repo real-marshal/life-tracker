@@ -51,13 +51,11 @@ export default function SettingsScreen() {
             description='Update the name shown in the greeting'
             onPress={showUpdateNameModal}
             first
-            last
           />
           <SettingsItem
             text='Edit meta stats'
             description='Modify or remove existing meta stats'
             onPress={() => router.navigate('/settings/edit-metastats')}
-            first
             last
           />
         </SettingsSection>
