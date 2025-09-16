@@ -510,7 +510,7 @@ export default function GoalScreen() {
             showLinkTrackersModal()
           }}
         />
-        <ContextMenuSection label='Change status' />
+        {goal?.status !== 'completed' && <ContextMenuSection label='Change status' />}
         {goal?.status === 'active' && (
           <>
             <ContextMenuItem
