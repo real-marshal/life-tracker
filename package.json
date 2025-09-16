@@ -3,15 +3,17 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
-    "prebuild": "yarn expo prebuild --clean && yarn expo run:android",
-    "start:prod": "yarn expo start --no-dev --minify",
-    "android": "expo run:android",
-    "ios": "expo run:ios",
+    "start": "APP_VARIANT=development expo start",
+    "prebuild": "APP_VARIANT=development yarn expo prebuild --clean && yarn expo run:android",
+    "prod": "eas build -p android --profile preview --local",
+    "android": "APP_VARIANT=development expo run:android",
+    "ios": "APP_VARIANT=development expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
     "make-migration": "node tools/create-migration.js",
-    "sync-device-db": "./tools/sync_device_db.sh"
+    "sync-device-db": "./tools/sync_device_db.sh",
+    "remove-device-db": "adb shell \"run-as com.real_marshal.lumex rm ./files/SQLite/main.db\"",
+    "eas-build-pre-install": "corepack enable && yarn set version 4.9.4"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
@@ -60,7 +62,7 @@
     "react-native-web": "~0.20.0",
     "react-native-webview": "13.13.5",
     "tailwind-merge": "^3.3.1",
-    "victory-native": "git@github.com:real-marshal/victory-native-xl.git#0ccca9929a8f449da2d77a22931ca7f80df00627"
+    "victory-native": "git@github.com:real-marshal/victory-native-xl.git#dc557388e4c7bc055a85b4d4e05190bd6158486d"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
@@ -80,5 +82,6 @@
     "tailwindcss": "^3.4.17",
     "typescript": "~5.8.3"
   },
-  "private": true
+  "private": true,
+  "packageManager": "yarn@4.9.4"
 }

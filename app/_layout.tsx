@@ -17,6 +17,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { KeyboardProvider } from 'react-native-keyboard-controller'
+import * as SplashScreen from 'expo-splash-screen'
 
 const toastConfig = {
   success: AppSuccessToast,
@@ -30,6 +31,8 @@ const queryClient = new QueryClient({
     },
   },
 })
+
+SplashScreen.preventAutoHideAsync()
 
 // noinspection JSUnusedGlobalSymbols
 export default function RootLayout() {
@@ -70,27 +73,27 @@ function RootView() {
       <Stack.Screen name='onboard' options={{ headerShown: false }} />
       <Stack.Screen
         name='settings/index'
-        options={{ animation: 'slide_from_right', animationDuration: 200, headerShown: false }}
+        options={{ animation: 'slide_from_right', headerShown: false }}
       />
       <Stack.Screen
         name='settings/edit-metastats'
-        options={{ animation: 'slide_from_right', animationDuration: 200, headerShown: false }}
+        options={{ animation: 'slide_from_right', headerShown: false }}
       />
       <Stack.Screen
         name='add-metastat'
-        options={{ animation: 'slide_from_right', animationDuration: 200, headerShown: false }}
+        options={{ animation: 'slide_from_right', headerShown: false }}
       />
       <Stack.Screen
         name='goal/[id]'
-        options={{ animation: 'slide_from_right', animationDuration: 200, headerShown: false }}
+        options={{ animation: 'slide_from_right', headerShown: false }}
       />
       <Stack.Screen
         name='tracker/[id]/edit'
-        options={{ animation: 'slide_from_right', animationDuration: 200, headerShown: false }}
+        options={{ animation: 'slide_from_right', headerShown: false }}
       />
       <Stack.Screen
         name='tracker/add'
-        options={{ animation: 'slide_from_right', animationDuration: 200, headerShown: false }}
+        options={{ animation: 'slide_from_right', animationDuration: 100, headerShown: false }}
       />
       <Stack.Screen name='+not-found' />
     </Stack>
@@ -98,6 +101,10 @@ function RootView() {
 }
 
 function MigrationsView({ error }: { error?: any }) {
+  useEffect(() => {
+    return () => SplashScreen.hide()
+  }, [])
+
   return (
     <View>
       <Text style={{ color: 'white', fontSize: 40 }}>
