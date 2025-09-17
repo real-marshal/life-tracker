@@ -147,7 +147,7 @@ export function GoalStatusChangeSheet({
               disableLink
             />
           )}
-          {(action === 'abandon' || action === 'complete') && (
+          {!isLongTerm && (action === 'abandon' || action === 'complete') && (
             <View className='flex flex-col gap-2'>
               <Text className='text-fgSecondary text-sm'>Increase meta stats:</Text>
               {metastats?.map(({ name, id }) => (
