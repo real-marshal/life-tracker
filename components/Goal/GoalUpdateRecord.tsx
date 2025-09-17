@@ -88,7 +88,7 @@ function GoalUpdateRecordUnmemoed({
       <Text className='text-fgSecondary text-xs'>{time}</Text>
       {editable ? (
         <View
-          className='bg-bgTertiary p-3 border-l-2 rounded-md leading-5 z-[999999]'
+          className='bg-bgTertiary px-4 py-2 border-l-2 rounded-md leading-5 z-[999999]'
           style={{ borderColor: goalUpdateColorMap[sentiment] }}
         >
           <TextInput
@@ -96,7 +96,7 @@ function GoalUpdateRecordUnmemoed({
             value={value ?? ''}
             multiline
             autoFocus
-            className='text-fg p-0'
+            className='text-fg p-0 leading-6'
             textAlignVertical='top'
             scrollEnabled={false}
             onBlur={() => {
@@ -112,7 +112,7 @@ function GoalUpdateRecordUnmemoed({
       ) : (
         <GestureDetector gesture={gesture}>
           <Animated.View
-            className='bg-bgSecondary p-3 border-l-2 rounded-md leading-5 gap-2'
+            className='bg-bgSecondary px-4 py-2 border-l-2 rounded-md gap-2'
             style={contentAnimatedStyle}
           >
             {type === 'status_change' && (
@@ -134,7 +134,7 @@ function GoalUpdateRecordUnmemoed({
                 {value ? ':' : '.'}
               </Text>
             )}
-            {value && <Text className='text-fg'>{value}</Text>}
+            {value && <Text className='text-fg leading-6'>{value}</Text>}
           </Animated.View>
         </GestureDetector>
       )}

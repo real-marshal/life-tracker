@@ -81,7 +81,7 @@ export function OnboardingTooltip<T extends string>({
           </Pressable>
         </View>
       </Animated.View>
-      <Backdrop onPress={() => null} className='-top-96 -left-96 h-[5000] w-[2000]' overlay />
+      <Backdrop onPress={() => null} className='-top-[1000] -left-96 h-[5000] w-[2000]' overlay />
     </View>
   )
 }

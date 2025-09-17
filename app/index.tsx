@@ -172,11 +172,11 @@ export default function HomeScreen() {
             label='metastats'
             renderTooltip={() => (
               <>
-                <Text className='text-fg'>
+                <Text className='text-fg leading-6'>
                   <Text className='text-accent'>Meta stats</Text> are used to track something that
                   is not tangible and may increase as a result of completing your goals.
                 </Text>
-                <Text className='text-fg'>
+                <Text className='text-fg leading-6'>
                   You can <Text className='text-accent'>reorder</Text> them by long-pressing and
                   dragging one. Try now!
                 </Text>
@@ -195,12 +195,12 @@ export default function HomeScreen() {
             label='trackers'
             renderTooltip={() => (
               <>
-                <Text className='text-fg'>
+                <Text className='text-fg leading-6'>
                   <Text className='text-accent'>Stat trackers</Text> help you to see your progress
                   over time while <Text className='text-accent'>date trackers</Text> serve as a
                   constant reminder about some specific day.
                 </Text>
-                <Text className='text-fg'>
+                <Text className='text-fg leading-6'>
                   They can be <Text className='text-accent'>reordered</Text> in the same way by
                   dragging and <Text className='text-accent'>linked</Text> to specific goals on the
                   goal screen menu.
@@ -218,18 +218,18 @@ export default function HomeScreen() {
             label='lt-goals'
             renderTooltip={() => (
               <>
-                <Text className='text-fg'>
+                <Text className='text-fg leading-6'>
                   <Text className='text-accent'>Long-term</Text> are goals that you want to achieve
                   at some point in the future. They lack clear, specific steps and exist mostly as{' '}
                   <Text className='text-accent'>a reminder, a beacon of sorts</Text>, that guides
                   you to your desired self.
                 </Text>
-                <Text className='text-fg'>
+                <Text className='text-fg leading-6'>
                   Your current goals should reflect these long-term goals. There’s{' '}
                   <Text className='text-accent'>no point in creating too many of them</Text>, 2-4
                   should be plenty enough, otherwise, you will always wonder what to focus on.
                 </Text>
-                <Text className='text-fg'>
+                <Text className='text-fg leading-6'>
                   Long-term goals can be <Text className='text-accent'>reordered</Text> too.
                 </Text>
               </>
@@ -255,16 +255,16 @@ export default function HomeScreen() {
             top
             renderTooltip={() => (
               <>
-                <Text className='text-fg'>
+                <Text className='text-fg leading-6'>
                   And finally, <Text className='text-accent'>current</Text> goals are the ones
                   you’re progressing towards right now, consistently making efforts to achieve them.
                 </Text>
-                <Text className='text-fg'>
+                <Text className='text-fg leading-6'>
                   As you move forward, you will inevitably face challenges or learn something new
                   about the topic. You can make notes of these new developments by creating{' '}
                   <Text className='text-accent'>goal updates</Text> on the goal screen.
                 </Text>
-                <Text className='text-fg'>
+                <Text className='text-fg leading-6'>
                   As always, you can also <Text className='text-accent'>reorder</Text> current goals
                   by dragging.
                 </Text>
