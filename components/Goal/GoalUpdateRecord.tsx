@@ -88,7 +88,7 @@ function GoalUpdateRecordUnmemoed({
       <Text className='text-fgSecondary text-xs'>{time}</Text>
       {editable ? (
         <View
-          className='bg-bgTertiary p-3 border-l-2 rounded-md leading-5'
+          className='bg-bgTertiary p-3 border-l-2 rounded-md leading-5 z-[999999]'
           style={{ borderColor: goalUpdateColorMap[sentiment] }}
         >
           <TextInput
