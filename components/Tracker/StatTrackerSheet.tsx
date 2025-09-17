@@ -34,11 +34,17 @@ export function StatTrackerSheet({ id, hideSheet }: { id: number; hideSheet?: ()
 
   const { mutate: addStatValueMutator, error: addingError } = useMutation({
     mutationFn: (param: AddStatValueParam) => addStatValue(db, param),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['trackers'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trackers'] })
+      queryClient.invalidateQueries({ queryKey: ['goals'] })
+    },
   })
   const { mutate: updateStatValueMutator, error: updatingError } = useMutation({
     mutationFn: (param: UpdateStatValueParam) => updateStatValue(db, param),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['trackers'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trackers'] })
+      queryClient.invalidateQueries({ queryKey: ['goals'] })
+    },
   })
   const { mutate: deleteTrackerMutator, error: deletionError } = useMutation({
     mutationFn: (id: number) => deleteTracker(db, id),
