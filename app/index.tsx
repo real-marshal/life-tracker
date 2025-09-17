@@ -1,6 +1,6 @@
 import { View, Text, ScrollView } from 'react-native'
 import { useSQLiteContext } from 'expo-sqlite'
-import { getUser } from '@/models/user'
+import { getUser, markUserAsFinishedOnboardingTooltips } from '@/models/user'
 import { useRouter } from 'expo-router'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Feather from '@expo/vector-icons/Feather'
@@ -35,6 +35,7 @@ import { useModal } from '@/components/Modal'
 import { useMetastatsAutodecay } from '@/components/Metastat/common'
 import { SheetModalSelect } from '@/components/SheetModalSelect'
 import { BottomSheetModal } from '@gorhom/bottom-sheet'
+import { OnboardingTooltip, useOnboardingTooltips } from '@/components/OnboardingTooltip'
 
 export default function HomeScreen() {
   const db = useSQLiteContext()
@@ -81,6 +82,14 @@ export default function HomeScreen() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['goals', 'active'] }),
   })
 
+  const {
+    mutate: markUserAsFinishedOnboardingTooltipsMutator,
+    error: finishingOnboardingTooltipsError,
+  } = useMutation({
+    mutationFn: () => markUserAsFinishedOnboardingTooltips(db),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['user'] }),
+  })
+
   useEffect(() => {
     if (!userIsLoading && !userIsFetching && !userError && !user?.isOnboarded) {
       router.replace('/onboard')
@@ -96,7 +105,11 @@ export default function HomeScreen() {
     { title: 'Error getting delayed goals', errorData: delayedGoalsError },
     { title: 'Error getting archive goals', errorData: archiveGoalsError },
     { title: 'Error updating LT goal indexes', errorData: updatingLtError },
-    { title: 'Error updating goal indexes', errorData: updatingError }
+    { title: 'Error updating goal indexes', errorData: updatingError },
+    {
+      title: 'Error marking user as finished onboarding tooltips',
+      errorData: finishingOnboardingTooltipsError,
+    }
   )
 
   useMetastatsAutodecay(metastats ?? [])
@@ -111,6 +124,30 @@ export default function HomeScreen() {
   const [newGoalType, setNewGoalType] = useState<'normal' | 'longterm'>('normal')
 
   const trackerTypeSheetRef = useRef<BottomSheetModal>(null)
+
+  const [shouldShowOnboardingTooltips, setShouldShowOnboardingTooltips] = useState<boolean>(false)
+
+  const onboardingTooltipsTimeoutRef = useRef<number>(null)
+
+  useEffect(() => {
+    onboardingTooltipsTimeoutRef.current = setTimeout(
+      () => !user?.areOnboardingTooltipsFinished && setShouldShowOnboardingTooltips(true),
+      1000
+    )
+
+    return () => {
+      onboardingTooltipsTimeoutRef.current && clearTimeout(onboardingTooltipsTimeoutRef.current)
+    }
+  }, [user?.areOnboardingTooltipsFinished])
+
+  const onboardingTooltipsControls = useOnboardingTooltips({
+    labels: ['metastats', 'trackers', 'lt-goals', 'goals'] as const,
+    areShown: shouldShowOnboardingTooltips,
+    onFinish: () => {
+      markUserAsFinishedOnboardingTooltipsMutator()
+      setShouldShowOnboardingTooltips(false)
+    },
+  })
 
   return (
     <>
@@ -131,40 +168,123 @@ export default function HomeScreen() {
             </View>
             <Text className='text-accent text-4xl'>Hi, {user?.name}</Text>
           </View>
-          <View className='flex flex-col gap-2 px-2'>
-            <SectionTitle>Meta stats</SectionTitle>
-            <View className='flex flex-col'>
-              {metastats && <Metastats metastats={metastats} />}
+          <OnboardingTooltip
+            label='metastats'
+            renderTooltip={() => (
+              <>
+                <Text className='text-fg'>
+                  <Text className='text-accent'>Meta stats</Text> are used to track something that
+                  is not tangible and may increase as a result of completing your goals.
+                </Text>
+                <Text className='text-fg'>
+                  You can <Text className='text-accent'>reorder</Text> them by long-pressing and
+                  dragging one. Try now!
+                </Text>
+              </>
+            )}
+            {...onboardingTooltipsControls}
+          >
+            <View className='flex flex-col gap-2 px-2'>
+              <SectionTitle>Meta stats</SectionTitle>
+              <View className='flex flex-col'>
+                {metastats && <Metastats metastats={metastats} />}
+              </View>
             </View>
-          </View>
-          <View className='flex flex-col gap-2 px-2'>
-            <SectionTitle>Trackers</SectionTitle>
-            {trackers && <Trackers trackers={trackers} />}
-          </View>
-          <GoalSection title='Long-term'>
-            <SortableList
-              data={ltGoals ?? []}
-              renderItem={useCallback<SortableGridRenderItem<LtGoalPreviewRender>>(
-                ({ item }) => (
-                  <LtGoalPreviewItem {...item} />
-                ),
-                []
-              )}
-              updateIndexes={updateLtGoalIndexMutator}
-            />
-          </GoalSection>
-          <GoalSection title='Current'>
-            <SortableList
-              data={goals ?? []}
-              renderItem={useCallback<SortableGridRenderItem<GoalPreviewRender>>(
-                ({ item }) => (
-                  <GoalPreviewItem {...item} color={getGoalColor(item.status)} draggable />
-                ),
-                []
-              )}
-              updateIndexes={updateGoalIndexMutator}
-            />
-          </GoalSection>
+          </OnboardingTooltip>
+          <OnboardingTooltip
+            label='trackers'
+            renderTooltip={() => (
+              <>
+                <Text className='text-fg'>
+                  <Text className='text-accent'>Stat trackers</Text> help you to see your progress
+                  over time while <Text className='text-accent'>date trackers</Text> serve as a
+                  constant reminder about some specific day.
+                </Text>
+                <Text className='text-fg'>
+                  They can be <Text className='text-accent'>reordered</Text> in the same way by
+                  dragging and <Text className='text-accent'>linked</Text> to specific goals on the
+                  goal screen menu.
+                </Text>
+              </>
+            )}
+            {...onboardingTooltipsControls}
+          >
+            <View className='flex flex-col gap-2 px-2'>
+              <SectionTitle>Trackers</SectionTitle>
+              {trackers && <Trackers trackers={trackers} />}
+            </View>
+          </OnboardingTooltip>
+          <OnboardingTooltip
+            label='lt-goals'
+            renderTooltip={() => (
+              <>
+                <Text className='text-fg'>
+                  <Text className='text-accent'>Long-term</Text> are goals that you want to achieve
+                  at some point in the future. They lack clear, specific steps and exist mostly as{' '}
+                  <Text className='text-accent'>a reminder, a beacon of sorts</Text>, that guides
+                  you to your desired self.
+                </Text>
+                <Text className='text-fg'>
+                  Your current goals should reflect these long-term goals. There’s{' '}
+                  <Text className='text-accent'>no point in creating too many of them</Text>, 2-4
+                  should be plenty enough, otherwise, you will always wonder what to focus on.
+                </Text>
+                <Text className='text-fg'>
+                  Long-term goals can be <Text className='text-accent'>reordered</Text> too.
+                </Text>
+              </>
+            )}
+            {...onboardingTooltipsControls}
+          >
+            <GoalSection title='Long-term'>
+              <SortableList
+                data={ltGoals ?? []}
+                renderItem={useCallback<SortableGridRenderItem<LtGoalPreviewRender>>(
+                  ({ item }) => (
+                    <LtGoalPreviewItem {...item} />
+                  ),
+                  []
+                )}
+                updateIndexes={updateLtGoalIndexMutator}
+              />
+            </GoalSection>
+          </OnboardingTooltip>
+
+          <OnboardingTooltip
+            label='goals'
+            top
+            renderTooltip={() => (
+              <>
+                <Text className='text-fg'>
+                  And finally, <Text className='text-accent'>current</Text> goals are the ones
+                  you’re progressing towards right now, consistently making efforts to achieve them.
+                </Text>
+                <Text className='text-fg'>
+                  As you move forward, you will inevitably face challenges or learn something new
+                  about the topic. You can make notes of these new developments by creating{' '}
+                  <Text className='text-accent'>goal updates</Text> on the goal screen.
+                </Text>
+                <Text className='text-fg'>
+                  As always, you can also <Text className='text-accent'>reorder</Text> current goals
+                  by dragging.
+                </Text>
+              </>
+            )}
+            {...onboardingTooltipsControls}
+          >
+            <GoalSection title='Current'>
+              <SortableList
+                data={goals ?? []}
+                renderItem={useCallback<SortableGridRenderItem<GoalPreviewRender>>(
+                  ({ item }) => (
+                    <GoalPreviewItem {...item} color={getGoalColor(item.status)} draggable />
+                  ),
+                  []
+                )}
+                updateIndexes={updateGoalIndexMutator}
+              />
+            </GoalSection>
+          </OnboardingTooltip>
           <GoalSection title='Delayed'>
             {delayedGoals?.map((goal) => (
               <GoalPreviewItem {...goal} color={getGoalColor('delayed')} key={goal.id} />

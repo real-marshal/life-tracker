@@ -13,7 +13,7 @@ import { Modal, RestModalProps, useModal } from '@/components/Modal'
 import { showErrorToast } from '@/common/toast'
 import { stringifyError } from '@/common/utils/error'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { getUser, updateUserName } from '@/models/user'
+import { getUser, resetUserFinishedOnboardingTooltips, updateUserName } from '@/models/user'
 import { useErrorToasts } from '@/hooks/useErrorToasts'
 import { SettingsItem, SettingsSection } from '@/components/Settings/Settings'
 import { useEffect, useRef, useState } from 'react'
@@ -23,6 +23,23 @@ import { AppButton } from '@/components/AppButton'
 export default function SettingsScreen() {
   const db = useSQLiteContext()
   const router = useRouter()
+  const queryClient = useQueryClient()
+
+  const {
+    mutate: resetUserFinishedOnboardingTooltipsMutator,
+    error: resetUserFinishedOnboardingTooltipsError,
+  } = useMutation({
+    mutationFn: () => resetUserFinishedOnboardingTooltips(db),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['user'] })
+      router.back()
+    },
+  })
+
+  useErrorToasts({
+    title: 'Error resetting user onboarding tooltips',
+    errorData: resetUserFinishedOnboardingTooltipsError,
+  })
 
   const {
     showModal: showUpdateNameModal,
@@ -56,6 +73,11 @@ export default function SettingsScreen() {
             text='Edit meta stats'
             description='Modify or remove existing meta stats'
             onPress={() => router.navigate('/settings/edit-metastats')}
+          />
+          <SettingsItem
+            text='Show tooltips'
+            description='Help tooltips will be shown again'
+            onPress={resetUserFinishedOnboardingTooltipsMutator}
             last
           />
         </SettingsSection>

@@ -95,9 +95,10 @@ module.exports = (db) => {
 
     create table if not exists user
     (
-      id           integer primary key autoincrement,
-      name         text    not null check (length(name) < 255),
-      is_onboarded integer not null check (is_onboarded in (0, 1)) default 0
+      id                               integer primary key autoincrement,
+      name                             text    not null check (length(name) < 255),
+      is_onboarded                     integer not null check (is_onboarded in (0, 1))                     default 0,
+      are_onboarding_tooltips_finished integer not null check (are_onboarding_tooltips_finished in (0, 1)) default 0
     )
   `)
 }

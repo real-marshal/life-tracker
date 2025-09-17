@@ -6,11 +6,12 @@ export interface User {
   id: number
   name: string
   isOnboarded: boolean
+  areOnboardingTooltipsFinished: boolean
 }
 
 export async function getUser(db: SQLiteDatabase): Promise<User | null> {
   const row = await db.getFirstAsync<Row<User>>(`
-    select id, name, is_onboarded
+    select id, name, is_onboarded, are_onboarding_tooltips_finished
     from user
     limit 1
   `)
@@ -29,4 +30,12 @@ export async function updateUserName(db: SQLiteDatabase, name: string) {
     set name = $name`,
     { $name: name }
   )
+}
+
+export async function markUserAsFinishedOnboardingTooltips(db: SQLiteDatabase) {
+  await db.execAsync('update user set are_onboarding_tooltips_finished = 1')
+}
+
+export async function resetUserFinishedOnboardingTooltips(db: SQLiteDatabase) {
+  await db.execAsync('update user set are_onboarding_tooltips_finished = 0')
 }
