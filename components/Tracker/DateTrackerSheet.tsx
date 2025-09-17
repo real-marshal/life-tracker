@@ -27,7 +27,10 @@ export function DateTrackerSheet({
 
   const { mutate: deleteTrackerMutator, error: deletionError } = useMutation({
     mutationFn: (id: number) => deleteTracker(db, id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['trackers'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trackers'] })
+      queryClient.invalidateQueries({ queryKey: ['goals'] })
+    },
   })
 
   useErrorToasts({ title: 'Error deleting a tracker', errorData: deletionError })

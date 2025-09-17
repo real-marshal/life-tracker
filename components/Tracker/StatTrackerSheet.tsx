@@ -42,7 +42,10 @@ export function StatTrackerSheet({ id, hideSheet }: { id: number; hideSheet?: ()
   })
   const { mutate: deleteTrackerMutator, error: deletionError } = useMutation({
     mutationFn: (id: number) => deleteTracker(db, id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['trackers'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trackers'] })
+      queryClient.invalidateQueries({ queryKey: ['goals'] })
+    },
   })
 
   useErrorToasts(
