@@ -36,7 +36,11 @@ export default function EditTrackerScreen() {
       type === 'stat'
         ? updateStatTracker(db, param as UpdateStatTrackerParam)
         : updateDateTracker(db, param as UpdateDateTrackerParam),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['trackers'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trackers'] })
+      // for goal.relatedTrackers
+      queryClient.invalidateQueries({ queryKey: ['goals'] })
+    },
   })
 
   useErrorToasts(
