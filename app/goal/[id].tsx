@@ -545,7 +545,7 @@ export default function GoalScreen() {
             }}
           />
         )}
-        {goal?.status === 'active' && (
+        {goal?.status === 'active' && !isLongTerm && (
           <ContextMenuItem
             label='Delay'
             iconName='clock'
