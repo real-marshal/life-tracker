@@ -5,7 +5,7 @@
   "scripts": {
     "start": "APP_VARIANT=development expo start",
     "prebuild": "APP_VARIANT=development yarn expo prebuild --clean && yarn expo run:android",
-    "prod": "eas build -p android --profile preview --local",
+    "prod": "eas build -p android --profile preview --local && adb install $(/bin/ls -t | grep build | head -n 1)",
     "android": "APP_VARIANT=development expo run:android",
     "ios": "APP_VARIANT=development expo run:ios",
     "web": "expo start --web",
