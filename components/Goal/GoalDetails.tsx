@@ -48,7 +48,7 @@ export function GoalDetails({
       {!!goal?.relatedTrackers?.length && (
         <View className='flex flex-col gap-1'>
           <Text className='text-fgSecondary text-sm'>Related trackers:</Text>
-          <View className='flex flex-row gap-2'>
+          <View className='flex flex-row gap-2 flex-wrap'>
             {goal.relatedTrackers?.map((tracker) => (
               <TrackerItem {...tracker} key={tracker.id} />
             ))}
