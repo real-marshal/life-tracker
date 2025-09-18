@@ -11,6 +11,7 @@ import { capitalize } from 'lodash'
 import { AppButton } from '@/components/AppButton'
 import { SheetModalSelect } from '@/components/SheetModalSelect'
 import { cn } from '@/common/utils/css'
+import { showErrorToast } from '@/common/toast'
 
 export function MetastatDetails({
   metastat,
@@ -154,14 +155,18 @@ export function MetastatForm({
             )}
             <AppButton
               text='Save'
-              onPress={() =>
+              onPress={() => {
+                if (!name) {
+                  return showErrorToast('Invalid name', `Name can't be empty`)
+                }
+
                 onSave({
                   id: metastat.id,
                   name: name.trim(),
                   level: isCapped ? null : (metastat.level ?? 0),
                   autoDecay,
                 })
-              }
+              }}
               color={colors.positive}
               activeColor={colors.positiveActive}
               className='py-2 px-6'

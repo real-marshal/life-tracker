@@ -12,6 +12,7 @@ import {
 } from '@/models/tracker'
 import { cn } from '@/common/utils/css'
 import { DateInput } from '../DateInput'
+import { showErrorToast } from '@/common/toast'
 
 export function TrackerForm({
   id,
@@ -122,6 +123,10 @@ export function TrackerForm({
           <AppButton
             text='Save'
             onPress={() => {
+              if (!name) {
+                return showErrorToast('Invalid name', `Name can't be empty`)
+              }
+
               onSave(
                 type === 'stat'
                   ? {
