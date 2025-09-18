@@ -22,6 +22,9 @@ export function SheetModal<T = any>({
       }}
       handleIndicatorStyle={{ backgroundColor: colors.accent, width: 100, height: 3 }}
       keyboardBlurBehavior='restore'
+      // fixes this bug with the sheet not returning back after the keyboard gets hidden
+      // https://github.com/gorhom/react-native-bottom-sheet/issues/2465
+      snapPoints={['100%']}
       enableBlurKeyboardOnGesture
       backdropComponent={SheetBackdrop}
       onChange={onSheetChange}
