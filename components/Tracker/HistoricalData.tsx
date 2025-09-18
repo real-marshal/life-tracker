@@ -42,7 +42,7 @@ export function HistoricalData({ trackerId }: { trackerId: number }) {
   )
 
   return (
-    <View className='flex flex-col gap-6 max-h-[500]'>
+    <View className='flex flex-col gap-6 max-h-[400]'>
       <FlatList
         className='px-5 grow-0'
         contentContainerClassName='flex flex-col gap-2 py-5'
