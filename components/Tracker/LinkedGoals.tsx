@@ -1,16 +1,17 @@
 import { useSQLiteContext } from 'expo-sqlite'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useErrorToasts } from '@/hooks/useErrorToasts'
-import { Pressable, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import Feather from '@expo/vector-icons/Feather'
 import { colors, getGoalColor } from '@/common/theme'
 import { ScrollView } from 'react-native-gesture-handler'
 import { getGoalsLinkedToTracker } from '@/models/goal'
 import { GoalPreviewItem } from '@/components/Goal/Goals'
 import { deleteGoalLink, DeleteGoalLinkParam } from '@/models/tracker'
-import { Popover } from '@/components/Popover'
 import { ContextMenuItem } from '@/components/ContextMenu'
-import { useContextMenu } from '@/hooks/useContextMenu'
+import { Modal, useModal } from '@/components/Modal'
+import { useState } from 'react'
+import hairlineWidth = StyleSheet.hairlineWidth
 
 export function LinkedGoals({ trackerId }: { trackerId: number }) {
   const db = useSQLiteContext()
@@ -23,8 +24,7 @@ export function LinkedGoals({ trackerId }: { trackerId: number }) {
 
   const { mutate: deleteGoalLinkMutator, error: deletingError } = useMutation({
     mutationFn: (param: DeleteGoalLinkParam) => deleteGoalLink(db, param),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['goals', 'goalTrackers', trackerId] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['goals'] }),
   })
 
   useErrorToasts(
@@ -33,7 +33,7 @@ export function LinkedGoals({ trackerId }: { trackerId: number }) {
   )
 
   return (
-    <View className='flex flex-col gap-6 max-h-[500]'>
+    <View className='flex flex-col gap-6 max-h-[350]'>
       {goals?.length ? (
         <ScrollView className='px-5 grow-0' contentContainerClassName='flex flex-col gap-2 py-5'>
           <View className='flex flex-col gap-2' onStartShouldSetResponder={() => true}>
@@ -72,36 +72,53 @@ function LinkedGoalsDelete({
   goalId: number
   deleteGoalLink: (param: DeleteGoalLinkParam) => void
 }) {
-  const { isPopoverShown, hidePopover, showPopover, animatedStyle } = useContextMenu()
+  const { showModal, hideModal, ...modalProps } = useModal()
+
+  const [contextMenuPosition, setContextMenuPosition] = useState(0)
 
   return (
     <>
-      <Pressable onPress={showPopover} hitSlop={4} className='flex-1'>
+      <Pressable
+        onPress={(e) => {
+          setContextMenuPosition(e.nativeEvent.pageY - e.nativeEvent.locationY)
+          showModal()
+        }}
+        hitSlop={4}
+        className='flex-1'
+      >
         {({ pressed }) => (
           <Feather
             name='trash'
             size={16}
-            color={pressed || isPopoverShown ? colors.negativeActive : colors.negative}
+            color={pressed || modalProps.isModalShown ? colors.negativeActive : colors.negative}
           />
         )}
       </Pressable>
-      <Popover
-        isOpen={isPopoverShown}
-        className='top-10 -right-5 z-[9999999]'
-        animatedStyle={animatedStyle}
+      <Modal
+        {...modalProps}
+        onPress={hideModal}
+        containerClassName='absolute p-0 m-0 border-hairline border-bgTertiary'
+        containerStyle={{
+          top: contextMenuPosition,
+          right: 30,
+          borderColor: colors.bgTertiary,
+          borderWidth: hairlineWidth,
+        }}
+        disableOverlay
       >
         <ContextMenuItem
           label='Delete this value?'
           iconName='trash'
           color={colors.negative}
           onPress={() => {
-            hidePopover()
+            hideModal()
             deleteGoalLink({ trackerId, goalId })
           }}
+          first
           last
           rnPressable
         />
-      </Popover>
+      </Modal>
     </>
   )
 }
