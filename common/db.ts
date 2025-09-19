@@ -67,18 +67,18 @@ export async function seed(db: SQLiteDatabase) {
             'Tweets nowadays can be monetized so there''s a chance to make some passive money...',
             '2025-07-21T14:46:00.000Z', '{"index":0}');
 
-    insert into goal(name, type, status, created_at, render_data)
-    values ('Resolve tax problems', 'normal', 'active', '2025-07-20T15:12:00.000Z', '{"index":1}');
+    insert into goal(name, type, status, why, created_at, render_data)
+    values ('Resolve some old problems', 'normal', 'active', 'You know what I''m talking about', '2025-07-20T15:12:00.000Z', '{"index":1}');
 
     insert into goal(name, type, status, created_at, render_data)
     values ('Read that book', 'normal', 'active', '2025-07-20T15:13:00.000Z', '{"index":2}');
 
-    insert into goal(name, type, status, created_at, render_data)
-    values ('Build a goal tracking app', 'normal', 'active', '2025-07-22T13:41:00.000Z',
+    insert into goal(name, type, status, why, created_at, render_data)
+    values ('Build a goal tracking app', 'normal', 'active', 'Could be useful', '2025-07-22T13:41:00.000Z',
             '{"index":3}');
 
     insert into goal(name, type, status, created_at, render_data)
-    values ('Gain some weight', 'normal', 'active', '2025-07-20T15:11:00.000Z', '{"index":4}');
+    values ('Gain some muscles', 'normal', 'active', '2025-07-20T15:11:00.000Z', '{"index":4}');
 
     -- delayed goals
     insert into goal(name, type, status, created_at, render_data)
@@ -170,9 +170,20 @@ export async function seed(db: SQLiteDatabase) {
     -- related trackers
     insert into goal_tracker (goal_id, tracker_id)
     values (4, 2);
-
     insert into goal_tracker (goal_id, tracker_id)
     values (1, 1);
+    insert into goal_tracker (goal_id, tracker_id)
+    values (5, 1);
+    insert into goal_tracker (goal_id, tracker_id)
+    values (5, 3);
+    insert into goal_tracker (goal_id, tracker_id)
+    values (8, 4);
+    insert into goal_tracker (goal_id, tracker_id)
+    values (11, 1);
+    insert into goal_tracker (goal_id, tracker_id)
+    values (12, 2);
+    insert into goal_tracker (goal_id, tracker_id)
+    values (2, 1);
 
     -- related goals
     insert into goal_relation (goal_id, related_goal_id)
@@ -187,6 +198,10 @@ export async function seed(db: SQLiteDatabase) {
     values (1, 10);
     insert into goal_relation (goal_id, related_goal_id)
     values (1, 11);
+    insert into goal_relation (goal_id, related_goal_id)
+    values (2, 5);
+    insert into goal_relation (goal_id, related_goal_id)
+    values (2, 9);
 
     -- prerequisites/consequences
     insert into goal_link (goal_id, next_goal_id)
@@ -195,6 +210,10 @@ export async function seed(db: SQLiteDatabase) {
     values (4, 11);
     insert into goal_link (goal_id, next_goal_id)
     values (7, 4);
+    insert into goal_link (goal_id, next_goal_id)
+    values (7, 9);
+    insert into goal_link (goal_id, next_goal_id)
+    values (10, 7);
 
     -- goal updates
     insert into goal_update (goal_id, type, sentiment, content, created_at)
@@ -220,6 +239,27 @@ export async function seed(db: SQLiteDatabase) {
     values (4, 'normal', 'neutral',
             'How much time is actually needed to get somewhere without paying for ads I wonder...',
             strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-1 day', '-1 hour', '-3 minutes'));
+
+    insert into goal_update (goal_id, type, sentiment, content, created_at)
+    values (6, 'normal', 'neutral', 'Hmm, which one did I mean I wonder..',
+            strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-9 days', '-4 hours', '-9 minutes'));
+
+    insert into goal_update (goal_id, type, sentiment, content, created_at)
+    values (7, 'normal', 'positive', 'Got the migrations done',
+            strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-33 days', '-2 hours', '-7 minutes'));
+    insert into goal_update (goal_id, type, sentiment, content, created_at)
+    values (7, 'normal', 'positive', 'Almost done, just needs more testing and bugfixing' ,
+            strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-2 days', '-9 hours', '-12 minutes'));
+
+    insert into goal_update (goal_id, type, status_change, sentiment, content, created_at)
+    values (11, 'status_change', 'abandoned', 'negative', 'Turned out it''s too expensive :(' ,
+            strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-5 days', '-3 hours', '-46 minutes'));
+    insert into goal_update (goal_id, type, status_change, sentiment, created_at)
+    values (10, 'status_change', 'completed', 'positive',
+            strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-72 days', '-2 hours', '-33 minutes'));
+    insert into goal_update (goal_id, type, status_change, sentiment, content, created_at)
+    values (9, 'status_change', 'delayed', 'neutral', 'Need to focus on the life tracker app for now',
+            strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-47 days', '-14 hours', '-8 minutes'));
   `)
 }
 

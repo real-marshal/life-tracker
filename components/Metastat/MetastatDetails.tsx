@@ -128,7 +128,7 @@ export function MetastatForm({
           <View className='flex flex-row gap-2 items-center'>
             <Text className='text-fgSecondary'>Auto decay:</Text>
             <HelpTooltip
-              text={`Automatically decreases the meta stat with each passing day if it wasn't increased in some period of time. Nothing in real life stays forever.\nSlow - very subtle decreases after 2 weeks of no changes\nModerate - small decreases after a week of no changes\nFast - decent decreases after 3 days of no changes`}
+              text={`Automatically decreases the meta stat with each passing day if it wasn't increased in some period of time.\nSlow - very subtle decreases after 2 weeks of no changes\nModerate - small decreases after a week of no changes\nFast - decent decreases after 3 days of no changes`}
               top
             />
           </View>

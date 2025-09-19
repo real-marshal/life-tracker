@@ -174,11 +174,21 @@ export default function HomeScreen() {
               <>
                 <Text className='text-fg leading-6'>
                   <Text className='text-accent'>Meta stats</Text> are used to track something that
-                  is not tangible and may increase as a result of completing your goals.
+                  is not tangible and may increase as a result of completing your goals. If not
+                  increased in some period of time, they start to{' '}
+                  <Text className='text-accent'>decay</Text> daily depending on the speed you set.
+                  Nothing in real life lasts forever.
                 </Text>
                 <Text className='text-fg leading-6'>
-                  You can <Text className='text-accent'>reorder</Text> them by long-pressing and
-                  dragging one. Try now!
+                  The number indicates the meta stat <Text className='text-accent'>level</Text>{' '}
+                  which is increased every time you fill the bar.{' '}
+                  <Text className='text-accent'>Capped</Text> meta stats don't have a level
+                  associated with them, which is useful for tracking things that have a obvious
+                  limit.
+                </Text>
+                <Text className='text-fg leading-6'>
+                  You can <Text className='text-accent'>reorder</Text> meta stats by long-pressing
+                  and dragging one. Try now!
                 </Text>
               </>
             )}
