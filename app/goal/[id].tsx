@@ -37,6 +37,7 @@ import * as Clipboard from 'expo-clipboard'
 import { NewGoalModal } from '@/components/Goal/NewGoalModal'
 import { LinkTrackersModal } from '@/components/Goal/LinkTrackersModal'
 import { LinkLtGoalsModal } from '@/components/Goal/LinkLtGoalsModal'
+import Animated, { LinearTransition } from 'react-native-reanimated'
 
 interface GoalUpdateModificationState {
   id: number
@@ -294,7 +295,11 @@ export default function GoalScreen() {
                   const date = formatDateSmart(dateGoalUpdates[0].createdAt)
 
                   return (
-                    <View key={date} className='flex flex-col gap-2'>
+                    <Animated.View
+                      key={date}
+                      className='flex flex-col gap-2'
+                      layout={LinearTransition}
+                    >
                       <Text className='text-fgSecondary text-center font-light border-b-hairline border-fgSecondary pb-[1] text-lg'>
                         {date}
                       </Text>
@@ -319,7 +324,7 @@ export default function GoalScreen() {
                           />
                         ))}
                       </View>
-                    </View>
+                    </Animated.View>
                   )
                 }),
               [
