@@ -187,8 +187,9 @@ export default function HomeScreen() {
                   limit.
                 </Text>
                 <Text className='text-fg leading-6'>
-                  You can <Text className='text-accent'>reorder</Text> meta stats by long-pressing
-                  and dragging one. Try now!
+                  Meta stats can be edited on the settings screen. You can also{' '}
+                  <Text className='text-accent'>reorder</Text> them by long-pressing and dragging
+                  one. Try now!
                 </Text>
               </>
             )}
@@ -208,11 +209,12 @@ export default function HomeScreen() {
                 <Text className='text-fg leading-6'>
                   <Text className='text-accent'>Stat trackers</Text> help you to see your progress
                   over time while <Text className='text-accent'>date trackers</Text> serve as a
-                  constant reminder about some specific day.
+                  constant reminder about some specific day. You can tap a tracker to see more
+                  details.
                 </Text>
                 <Text className='text-fg leading-6'>
                   They can be <Text className='text-accent'>reordered</Text> in the same way by
-                  dragging and <Text className='text-accent'>linked</Text> to specific goals on the
+                  dragging, and <Text className='text-accent'>linked</Text> to specific goals on the
                   goal screen menu.
                 </Text>
               </>
