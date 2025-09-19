@@ -260,7 +260,7 @@ export default function GoalScreen() {
 
   return (
     <>
-      <KeyboardAwareScrollView bottomOffset={10} stickyHeaderIndices={[0]}>
+      <KeyboardAwareScrollView bottomOffset={21} stickyHeaderIndices={[0]}>
         <View className='flex flex-row gap-2 items-center justify-between pt-safe-offset-3 pb-3 px-3 bg-bg'>
           <View className='flex flex-row gap-4 items-center flex-1'>
             <Pressable onPress={() => router.back()}>
