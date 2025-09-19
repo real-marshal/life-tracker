@@ -123,4 +123,4 @@ export function doesWeekStartWithMonday() {
 }
 
 // this function is surprisingly heavy so I decided to memoize it
-export const uses24hourClock = !getCalendars()[0].uses24hourClock
+export const uses24hourClock = getCalendars()[0].uses24hourClock
