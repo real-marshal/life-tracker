@@ -33,6 +33,7 @@ function GoalUpdateRecordUnmemoed({
   relatedGoalId,
   relatedGoalName,
   relatedGoalStatus,
+  heightRef,
 }: Omit<GoalUpdate, 'statusChange' | 'relatedGoalId' | 'relatedGoalName'> & {
   statusChange?: GoalUpdateStatusChange['statusChange']
   relatedGoalId?: GoalUpdateStatusChange['relatedGoalId']
@@ -47,6 +48,7 @@ function GoalUpdateRecordUnmemoed({
   }) => void
   editable?: boolean
   onSubmit: (newContent?: string | null) => void
+  heightRef: RefObject<number>
 }) {
   const isNew = id === NEW_ID
 
@@ -114,6 +116,7 @@ function GoalUpdateRecordUnmemoed({
           <Animated.View
             className='bg-bgSecondary px-4 py-2 border-l-2 rounded-md gap-2'
             style={contentAnimatedStyle}
+            onLayout={(e) => (heightRef.current = e.nativeEvent.layout.height)}
           >
             {type === 'status_change' && (
               <Text className='text-fgSecondary italic text-sm'>
@@ -237,6 +240,8 @@ export function GoalUpdateRecordWrapper({
   relatedGoalStatus?: GoalUpdateStatusChange['relatedGoalStatus']
   contextMenuHeight: number
 }) {
+  const heightRef = useRef(200)
+
   const onContextMenu = useCallback(
     ({
       event,
@@ -246,10 +251,14 @@ export function GoalUpdateRecordWrapper({
       resetAnimation: () => void
     }) => {
       setGoalUpdateModificationState({ id })
+
+      const actualY = event.absoluteY - event.y
+      const screenHeight = Dimensions.get('screen').height
+
       setGoalUpdateContextMenuPosition(
-        event.absoluteY + contextMenuHeight > Dimensions.get('screen').height
-          ? event.absoluteY - contextMenuHeight - 10
-          : event.absoluteY
+        actualY + contextMenuHeight > screenHeight
+          ? screenHeight - contextMenuHeight
+          : actualY + heightRef.current + 5
       )
 
       onContextMenuCancelRef.current !== resetAnimation && onContextMenuCancelRef.current()
@@ -325,6 +334,7 @@ export function GoalUpdateRecordWrapper({
       relatedGoalStatus={relatedGoalStatus}
       onContextMenu={onContextMenu}
       onSubmit={onSubmit}
+      heightRef={heightRef}
     />
   )
 }

@@ -315,7 +315,7 @@ export default function GoalScreen() {
                             setGoalUpdates={setGoalUpdates}
                             showSaveNewModal={showSaveNewModal}
                             showUpdateModal={showUpdateModal}
-                            contextMenuHeight={100}
+                            contextMenuHeight={150}
                           />
                         ))}
                       </View>
@@ -389,7 +389,7 @@ export default function GoalScreen() {
         isOpen={isContextMenuShown}
         className='left-0 z-[9999999]'
         animatedStyle={contextMenuStyle}
-        style={{ top: goalUpdateContextMenuPosition }}
+        style={{ top: goalUpdateContextMenuPosition, left: 20 }}
       >
         <ContextMenuItem
           label='Copy'
