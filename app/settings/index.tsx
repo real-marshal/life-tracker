@@ -10,7 +10,7 @@ import { colors } from '@/common/theme'
 import { useRouter } from 'expo-router'
 import { ConfirmModal } from '@/components/ConfirmModal'
 import { Modal, RestModalProps, useModal } from '@/components/Modal'
-import { showErrorToast } from '@/common/toast'
+import { showErrorToast, showSuccessToast } from '@/common/toast'
 import { stringifyError } from '@/common/utils/error'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getUser, resetUserFinishedOnboardingTooltips, updateUserName } from '@/models/user'
@@ -139,12 +139,16 @@ function UpdateNameModal({
   })
   const { mutate: updateUserNameMutator, error: updatingError } = useMutation({
     mutationFn: (name: string) => updateUserName(db, name),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['user'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user'] })
+      showSuccessToast('Success', 'Name was updated successfully')
+    },
   })
 
-  useErrorToasts({ title: 'Error updating user name', errorData: updatingError })
-
-  useErrorToasts({ title: 'Error loading user', errorData: userError })
+  useErrorToasts(
+    { title: 'Error loading user', errorData: userError },
+    { title: 'Error updating user name', errorData: updatingError }
+  )
 
   const textInputRef = useRef<TextInput>(null)
 
