@@ -65,9 +65,11 @@ export default function EditTrackerScreen() {
         </View>
         <View className='flex flex-col gap-4'>
           {tracker && <TrackerForm {...tracker} onSave={updateTracker} revertible />}
-          <Expandable title='Historical data'>
-            <HistoricalData trackerId={id} />
-          </Expandable>
+          {type === 'stat' && (
+            <Expandable title='Historical data'>
+              <HistoricalData trackerId={id} />
+            </Expandable>
+          )}
           <Expandable title='Linked goals'>
             <LinkedGoals trackerId={id} />
           </Expandable>
