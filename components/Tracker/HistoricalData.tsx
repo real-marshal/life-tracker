@@ -1,4 +1,6 @@
 import {
+  addStatValue,
+  AddStatValueParam,
   deleteStatValue,
   DetailedStatTracker,
   getDetailedStatTracker,
@@ -12,11 +14,13 @@ import { RefObject, useEffect, useRef, useState } from 'react'
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import Feather from '@expo/vector-icons/Feather'
 import { colors } from '@/common/theme'
-import { format } from 'date-fns'
+import { format, isFuture } from 'date-fns'
 import { makeDateTz } from '@/common/utils/date'
 import { ContextMenuItem } from '@/components/ContextMenu'
 import { Modal, useModal } from '@/components/Modal'
 import hairlineWidth = StyleSheet.hairlineWidth
+import RNDateTimePicker from '@react-native-community/datetimepicker'
+import { showErrorToast } from '@/common/toast'
 
 export function HistoricalData({ trackerId }: { trackerId: number }) {
   const db = useSQLiteContext()
@@ -25,6 +29,13 @@ export function HistoricalData({ trackerId }: { trackerId: number }) {
   const { data: statTracker, error: statTrackerError } = useQuery({
     queryKey: ['trackers', 'detailed', trackerId],
     queryFn: () => getDetailedStatTracker(db, trackerId),
+  })
+  const { mutate: addStatValueMutator, error: addingError } = useMutation({
+    mutationFn: (param: AddStatValueParam) => addStatValue(db, param),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trackers'] })
+      queryClient.invalidateQueries({ queryKey: ['goals'] })
+    },
   })
   const { mutate: updateStatValueMutator, error: updatingError } = useMutation({
     mutationFn: (param: UpdateStatValueParam) => updateStatValue(db, param),
@@ -37,15 +48,19 @@ export function HistoricalData({ trackerId }: { trackerId: number }) {
 
   useErrorToasts(
     { title: 'Error loading a stat tracker', errorData: statTrackerError },
-    { title: 'Error updating a stat tracker', errorData: updatingError },
-    { title: 'Error deleting a stat tracker', errorData: deletingError }
+    { title: 'Error adding a stat value', errorData: addingError },
+    { title: 'Error updating a stat value', errorData: updatingError },
+    { title: 'Error deleting a stat value', errorData: deletingError }
   )
 
   return (
-    <View className='flex flex-col gap-6 max-h-[400]'>
+    <View className='flex flex-col gap-4 max-h-[400]'>
+      <AddHistoricalData
+        onAddValue={(date) => addStatValueMutator({ createdAt: date, value: 0, trackerId })}
+      />
       <FlatList
         className='px-5 grow-0'
-        contentContainerClassName='flex flex-col gap-2 py-5'
+        contentContainerClassName='flex flex-col gap-2 pb-5'
         data={statTracker?.values?.toReversed()}
         renderItem={({ item: trackerValue }) => (
           <View
@@ -196,5 +211,48 @@ function NumberInput({
       onBlur={() => onBlur?.({ value, setValue })}
       ref={ref}
     />
+  )
+}
+
+function AddHistoricalData({ onAddValue }: { onAddValue: (date: Date) => void }) {
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false)
+
+  return (
+    <>
+      <Pressable
+        onPress={() => setIsDatePickerOpen(true)}
+        hitSlop={4}
+        className='self-end px-5 pt-2'
+      >
+        {({ pressed }) => (
+          <View
+            className='flex flex-row items-center gap-2 border-hairline border-bgTertiary rounded-md py-2 px-3'
+            style={{
+              backgroundColor: pressed ? colors.bgTertiary : colors.bgSecondary,
+            }}
+          >
+            <Text className='text-fg text-lg font-medium'>Add more</Text>
+            <Feather name='plus' size={20} color={pressed ? colors.fgSecondary : colors.fg} />
+          </View>
+        )}
+      </Pressable>
+      {isDatePickerOpen && (
+        <RNDateTimePicker
+          value={new Date()}
+          onChange={(_, newDate) => {
+            setIsDatePickerOpen(false)
+
+            if (!newDate) return
+
+            if (isFuture(newDate)) {
+              return showErrorToast('Invalid date', 'Date should not be in the future')
+            }
+
+            onAddValue(newDate)
+          }}
+          mode='date'
+        />
+      )}
+    </>
   )
 }

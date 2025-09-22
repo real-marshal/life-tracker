@@ -106,7 +106,8 @@ export async function getDetailedStatTracker(
              stat_tracker.prefix,
              stat_tracker.suffix,
              json_group_array(json_object('date', stat_value.created_at, 'value',
-                                          stat_value.value, 'id', stat_value.id))
+                                          stat_value.value, 'id', stat_value.id) order by
+                              stat_value.created_at)
                               filter (where stat_value.id is not null) as tracker_values
       from tracker
              left join stat_tracker on tracker.id = stat_tracker.tracker_id
@@ -167,6 +168,7 @@ export async function getTracker(db: SQLiteDatabase, id: number) {
 export type AddStatValueParam = {
   trackerId: number
   value: number
+  createdAt?: Date
 }
 
 export async function deleteTracker(db: SQLiteDatabase, id: number) {
@@ -180,13 +182,16 @@ export async function deleteTracker(db: SQLiteDatabase, id: number) {
   )
 }
 
-export async function addStatValue(db: SQLiteDatabase, { trackerId, value }: AddStatValueParam) {
+export async function addStatValue(
+  db: SQLiteDatabase,
+  { trackerId, value, createdAt }: AddStatValueParam
+) {
   await db.runAsync(
     `
       insert into stat_value(tracker_id, value, created_at)
       values ($trackerId, $value, $createdAt)
     `,
-    { $trackerId: trackerId, $value: value, $createdAt: formatISO(new Date()) }
+    { $trackerId: trackerId, $value: value, $createdAt: formatISO(createdAt ?? new Date()) }
   )
 }
 
