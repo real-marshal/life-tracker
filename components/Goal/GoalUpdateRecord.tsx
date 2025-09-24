@@ -252,13 +252,13 @@ export function GoalUpdateRecordWrapper({
     }) => {
       setGoalUpdateModificationState({ id })
 
-      const actualY = event.absoluteY - event.y
+      const goalUpdateTop = event.absoluteY - event.y
       const screenHeight = Dimensions.get('screen').height
 
       setGoalUpdateContextMenuPosition(
-        actualY + contextMenuHeight > screenHeight
+        goalUpdateTop + heightRef.current + contextMenuHeight > screenHeight
           ? screenHeight - contextMenuHeight
-          : actualY + heightRef.current + 5
+          : goalUpdateTop + heightRef.current + 5
       )
 
       onContextMenuCancelRef.current !== resetAnimation && onContextMenuCancelRef.current()
