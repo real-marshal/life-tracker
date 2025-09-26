@@ -131,6 +131,25 @@ export async function updateGoalUpdate(db: SQLiteDatabase, { id, content }: Upda
   )
 }
 
+export type UpdateGoalUpdateSentimentParam = Pick<GoalUpdate, 'id' | 'sentiment'>
+
+export async function updateGoalUpdateSentiment(
+  db: SQLiteDatabase,
+  { id, sentiment }: UpdateGoalUpdateSentimentParam
+) {
+  await db.runAsync(
+    `
+      update goal_update
+      set sentiment = $sentiment
+      where id = $id
+    `,
+    {
+      $id: id,
+      $sentiment: sentiment,
+    }
+  )
+}
+
 export async function deleteGoalUpdate(db: SQLiteDatabase, id: number) {
   await db.runAsync(
     `

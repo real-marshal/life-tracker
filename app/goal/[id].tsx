@@ -14,6 +14,8 @@ import {
   GoalUpdate,
   updateGoalUpdate,
   UpdateGoalUpdateParam,
+  updateGoalUpdateSentiment,
+  UpdateGoalUpdateSentimentParam,
 } from '@/models/goalUpdate'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FloatingButton, FloatingMenuItem } from '@/components/FloatingMenu'
@@ -38,6 +40,7 @@ import { NewGoalModal } from '@/components/Goal/NewGoalModal'
 import { LinkTrackersModal } from '@/components/Goal/LinkTrackersModal'
 import { LinkLtGoalsModal } from '@/components/Goal/LinkLtGoalsModal'
 import Animated, { LinearTransition } from 'react-native-reanimated'
+import { SheetModalSelect } from '@/components/SheetModalSelect'
 
 interface GoalUpdateModificationState {
   id: number
@@ -99,6 +102,11 @@ export default function GoalScreen() {
     mutationFn: (id: number) => deleteGoalUpdate(db, id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['goalUpdates'] }),
   })
+  const { mutate: updateGoalUpdateSentimentMutator, error: goalUpdateSentimentUpdatingError } =
+    useMutation({
+      mutationFn: (param: UpdateGoalUpdateSentimentParam) => updateGoalUpdateSentiment(db, param),
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['goalUpdates'] }),
+    })
 
   const { mutate: deleteGoalMutator, error: goalDeletingError } = useMutation({
     mutationFn: () => deleteGoal(db, id),
@@ -110,6 +118,7 @@ export default function GoalScreen() {
     { title: 'Error loading goal updates', errorData: goalUpdatesError },
     { title: 'Error adding a goal update', errorData: goalUpdateAddingError },
     { title: 'Error updating a goal update', errorData: goalUpdateUpdatingError },
+    { title: 'Error updating goal update sentiment', errorData: goalUpdateSentimentUpdatingError },
     { title: 'Error deleting a goal update', errorData: goalUpdateDeletingError },
     { title: 'Error deleting a goal', errorData: goalDeletingError }
   )
@@ -244,6 +253,7 @@ export default function GoalScreen() {
   }
 
   const bottomSheetModalRef = useRef<BottomSheetModal<SheetModalData>>(null)
+  const sentimentSheetModalRef = useRef<BottomSheetModal>(null)
 
   const accentColor =
     goal?.status && goal.status !== 'active'
@@ -320,7 +330,7 @@ export default function GoalScreen() {
                             setGoalUpdates={setGoalUpdates}
                             showSaveNewModal={showSaveNewModal}
                             showUpdateModal={showUpdateModal}
-                            contextMenuHeight={150}
+                            contextMenuHeight={200}
                           />
                         ))}
                       </View>
@@ -433,6 +443,20 @@ export default function GoalScreen() {
                 editable: true,
               }
             })
+          }}
+          rnPressable
+        />
+        <ContextMenuItem
+          label='Change sentiment'
+          iconName='smile'
+          onPress={() => {
+            hideContextMenu()
+            onContextMenuCancelRef.current()
+
+            if (!goalUpdateModificationState)
+              throw new Error('shouldnt have happened - state has to contain id')
+
+            sentimentSheetModalRef.current?.present()
           }}
           rnPressable
         />
@@ -633,6 +657,20 @@ export default function GoalScreen() {
           />
         )}
       </SheetModal>
+      {goalUpdateModificationState && (
+        <SheetModalSelect
+          ref={sentimentSheetModalRef}
+          title='Sentiment'
+          options={[{ value: 'positive' }, { value: 'neutral' }, { value: 'negative' }]}
+          onSelect={(sentiment) => {
+            updateGoalUpdateSentimentMutator({ id: goalUpdateModificationState.id, sentiment })
+
+            setGoalUpdateModificationState(undefined)
+            sentimentSheetModalRef.current?.dismiss()
+          }}
+          value={goalUpdates?.find((u) => u.id === goalUpdateModificationState.id)?.sentiment}
+        />
+      )}
 
       <NewGoalModal
         hideModal={hideNewGoalModal}
