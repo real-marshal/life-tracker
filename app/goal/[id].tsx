@@ -41,6 +41,11 @@ import { LinkTrackersModal } from '@/components/Goal/LinkTrackersModal'
 import { LinkLtGoalsModal } from '@/components/Goal/LinkLtGoalsModal'
 import Animated, { LinearTransition } from 'react-native-reanimated'
 import { SheetModalSelect } from '@/components/SheetModalSelect'
+import * as Sharing from 'expo-sharing'
+import * as FileSystem from 'expo-file-system'
+import { showErrorToast } from '@/common/toast'
+import { stringifyError } from '@/common/utils/error'
+import { getGoalExportText } from '@/common/serialization'
 
 interface GoalUpdateModificationState {
   id: number
@@ -629,10 +634,42 @@ export default function GoalScreen() {
                 setContinuationToAdd('consequence')
                 showNewGoalModal()
               }}
-              last
             />
           </>
         )}
+        <ContextMenuSection label='Share' />
+        <ContextMenuItem
+          label='Export contents'
+          iconName='share-2'
+          onPress={async () => {
+            hideMenu()
+
+            if (!goal) return
+
+            const exportText = getGoalExportText(goal, isLongTerm, goalUpdates ?? [])
+
+            const safeName = goal.name
+              .replace(/[^\w\-]+/g, '_')
+              .slice(0, 20)
+              .replace(/_$/, '')
+            const fileUri = `${FileSystem.cacheDirectory}${safeName}-export.txt`
+
+            try {
+              await FileSystem.writeAsStringAsync(fileUri, exportText, {
+                encoding: FileSystem.EncodingType.UTF8,
+              })
+            } catch (err) {
+              return showErrorToast('Error creating the file', stringifyError(err))
+            }
+
+            try {
+              await Sharing.shareAsync(fileUri)
+            } catch (err) {
+              showErrorToast('Sharing error', stringifyError(err))
+            }
+          }}
+          last
+        />
       </Popover>
 
       <ConfirmModal
