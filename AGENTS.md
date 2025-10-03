@@ -22,6 +22,7 @@
 - Tests: run `yarn jest` or `npx jest` (preset: `jest-expo`).
 
 ## Coding Style & Naming
+- When making changes, adhere to the style of the code base.
 - Language: TypeScript (strict). Path alias: `@/*` (see `tsconfig.json`).
 - Formatting: Prettier (no semicolons, single quotes, JSX single quotes, ES5 trailing commas).
 - Linting: ESLint (expo config; `react/no-unescaped-entities` disabled).

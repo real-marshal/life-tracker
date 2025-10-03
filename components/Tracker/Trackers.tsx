@@ -134,27 +134,33 @@ export function TrackerItemValue({
         })
     : formatDurationShort
 
+  const computeDateTrackerValue = () => {
+    if (typeSpecificData.type !== 'date') return ''
+
+    const targetDate = new Date(typeSpecificData.date)
+    const now = new Date()
+    const hasPassed = now >= targetDate
+
+    const duration = intervalToDuration(
+      hasPassed ? interval(targetDate, now) : interval(now, targetDate)
+    )
+
+    if (hasPassed) {
+      return longDuration ? `Happened ${formatDateTrackerDuration(duration)} ago` : '🎉'
+    }
+
+    return formatDateTrackerDuration(duration)
+  }
+
   const [formattedDuration, setFormattedDuration] = useState(
-    typeSpecificData.type === 'date'
-      ? formatDateTrackerDuration(
-          intervalToDuration(interval(new Date(), new Date(typeSpecificData.date)))
-        )
-      : ''
+    typeSpecificData.type === 'date' ? computeDateTrackerValue() : ''
   )
   const intervalRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (typeSpecificData.type !== 'date') return
 
-    intervalRef.current = setInterval(
-      () =>
-        setFormattedDuration(
-          formatDateTrackerDuration(
-            intervalToDuration(interval(new Date(), new Date(typeSpecificData.date)))
-          )
-        ),
-      1000
-    )
+    intervalRef.current = setInterval(() => setFormattedDuration(computeDateTrackerValue()), 1000)
 
     return () => {
       intervalRef.current && clearInterval(intervalRef.current)
