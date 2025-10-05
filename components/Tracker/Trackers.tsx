@@ -146,7 +146,7 @@ export function TrackerItemValue({
     )
 
     if (hasPassed) {
-      return longDuration ? `Happened ${formatDateTrackerDuration(duration)} ago` : '🎉'
+      return longDuration ? `Happened ${formatDateTrackerDuration(duration)} ago` : '✓'
     }
 
     return formatDateTrackerDuration(duration)
