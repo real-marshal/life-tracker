@@ -1,5 +1,9 @@
 # life-tracker
 
+[Download android build](https://github.com/real-marshal/life-tracker/releases/download/1.0.0/build-1768939106644.apk)
+
+https://github.com/user-attachments/assets/f52987cd-db01-40b4-a8e9-32e4eb0fff0c
+
 tips:
  - use `yarn sync-device-db` to have a fresh copy of the device db locally (android only)
  - use `yarn make-migration` to create a new migration - it'll be automatically applied on device on app launch. if you need to rollback, create a new migration.
